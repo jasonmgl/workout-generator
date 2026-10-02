@@ -3,7 +3,7 @@
  * groupes, régions, articulations, matériel, sortes d'exercices, schémas de
  * mouvement.
  */
-import type { JointId, MuscleGroupId, MuscleId, RegionId } from '../../library/anatomy';
+import { isMuscle, isMuscleGroup, type BodyTarget, type JointId, type MuscleGroupId, type MuscleId, type RegionId } from '../../library/anatomy';
 import type { EquipmentId } from '../../library/equipment';
 import type { ExerciseKind, MovementPattern } from '../../library/types';
 
@@ -57,6 +57,14 @@ export const REGION_NAMES: Readonly<Record<RegionId, string>> = {
     trunk: 'Tronc',
     lower: 'Bas du corps',
 };
+
+/** Le nom d'une cible, quel que soit son étage : « Quadriceps », « Cuisses », « Bas du corps ». */
+export function targetName(target: BodyTarget): string {
+    if (isMuscle(target)) return MUSCLE_NAMES[target];
+    if (isMuscleGroup(target)) return GROUP_NAMES[target];
+
+    return REGION_NAMES[target];
+}
 
 export const JOINT_NAMES: Readonly<Record<JointId, string>> = {
     wrists: 'Poignets',

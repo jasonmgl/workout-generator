@@ -6,13 +6,13 @@ Décisions / Pièges quand elles bougent. Le lire en premier.
 
 ## Le projet en trois lignes
 
-Une **bibliothèque d'exercices** et un **générateur de séances** (au poids du
-corps ou avec le matériel disponible ; forme du jour, séances passées, muscles
-déjà travaillés ou à travailler), dans un paquet TypeScript sans dépendance.
-Écrit pour remplacer un jour la génération de DidIt (`DailyPlan.php`,
-`SessionGenerator.php`), mais il n'en sait rien : réutilisable tel quel par
-d'autres projets. Dépôt : `github.com/jasonmgl/workout-generator` (dossier
-local `workout-engine`).
+Une **bibliothèque d'exercices** (472 fiches) et un **générateur de séances**
+(au poids du corps ou avec le matériel disponible ; forme du jour, séances
+passées, muscles déjà travaillés ou à travailler), dans un paquet TypeScript
+sans dépendance. Écrit pour remplacer un jour la génération de DidIt
+(`DailyPlan.php`, `SessionGenerator.php`), mais il n'en sait rien :
+réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
+(dossier local `workout-engine`).
 
 ## Comment on travaille
 
@@ -21,17 +21,25 @@ local `workout-engine`).
 - **Push en HTTPS** (`origin` = `https://github.com/jasonmgl/workout-generator.git`) :
   le poste n'a pas de clé SSH GitHub, git passe par le gestionnaire
   d'identifiants de Windows. `gh` n'est pas connecté.
-- `npm test` (vitest) et `npm run types` (`tsc --noEmit`) **au vert avant
-  chaque commit**. **Chaque règle a son test.**
+- `npm test` (vitest) et `npm run types` (`tsc --noEmit`, avec
+  `noUnusedLocals`) **au vert avant chaque commit**. **Chaque règle a son
+  test.** Après tout changement dans `src/`, `npm run build:cli` (un test
+  vérifie que `bin/workout-generator.mjs` est à jour).
 - `npm run catalog -- <fichier>` vérifie un fichier du catalogue seul
   (structure + texte français, repères attendus, chiffres d'équilibre).
+- **Regarder les séances, pas seulement les tests** : un script dans le
+  dossier de travail qui importe `src/session/generate` et `src/output/text`
+  par chemin absolu, lancé par `npx vite-node script.ts`, affiche des
+  séances en texte. C'est en les relisant comme un coach qu'on a trouvé les
+  vrais défauts (trop d'exercices à deux séries, trois pompes dans une
+  séance, des étirements à côté).
 - Tout est en français : commentaires, tests, README, textes. Identifiants du
-  code en anglais. Commits en français, sans accents dans le corps, auteur
-  `Camille <c.dumont@xefi.fr>` (config locale du dépôt), trailer
-  `Co-Authored-By: Claude …`.
+  code en anglais. Textes des fiches à l'infinitif. Commits en français, sans
+  accents dans le corps, auteur `Camille <c.dumont@xefi.fr>` (config locale
+  du dépôt), trailer `Co-Authored-By: Claude …`.
 - **Pousser sur GitHub à la fin de chaque étape au vert**, et prévenir la
-  session DidIt (« Développement continu », par `SendMessage`) quand une
-  version utilisable est poussée, avec le numéro de commit.
+  session DidIt (« Développement continu », par `SendMessage` ; son adresse
+  se retrouve avec `ListAgents`) avec le numéro de commit.
 - **S'arrêter à 80 % de la conso hebdo** (`get_usage`), proprement : tests,
   ce fichier, commit, push, annonce.
 - Le moteur **ne doit jamais importer DidIt**, et ne lit jamais l'horloge ni
@@ -39,49 +47,61 @@ local `workout-engine`).
 - **Ne pas toucher au dépôt DidIt** (`C:\Users\jason\OneDrive\Documents\Claude\Didit`) :
   une autre session y travaille. On le lit, c'est tout.
 
-## État au 2 octobre 2026
+## État au 2 octobre 2026 (soir)
 
-- Fondations posées : `src/random.ts` (mulberry32, tirage pondéré, graine
-  tirée d'un texte), `src/dates.ts` (dates ISO, sans horloge ni fuseau),
-  `src/i18n/format.ts` (phrases à trous avec pluriel, durées, recherche sans
-  accents), `src/i18n/fr/labels.ts` (noms français de tout ce qui n'est pas
-  un exercice).
-- `src/library/anatomy.ts` : 30 muscles → 9 groupes → 3 régions, noms uniques
-  d'un étage à l'autre, articulations à ménager, groupes opposés.
-- `src/library/equipment.ts` : 38 pièces, `inventory` (ce qu'on a, ce qui en
-  découle, les charges en kg), besoins « tous les groupes, une pièce dans
-  chacun ».
-- `src/library/types.ts` : le format d'une fiche (structure à part, texte à
-  part par langue). `validate.ts` : les règles d'une fiche. `library.ts` :
-  filtrer, chercher sans accents, relier un nom d'appli (`findByName`),
-  familles de progression, plus facile / plus dur, remplaçants, fusion avec
-  les fiches d'un projet.
-- Le catalogue : 11 fichiers (`src/library/exercises/*.ts` + texte dans
-  `src/i18n/fr/exercises/*.ts`), en cours de rédaction. `anchors.ts` liste
-  les identifiants promis (dont tous les exercices de DidIt).
-- 83 tests au vert.
+- **Première version utilisable poussée.** 203 tests au vert, types propres.
+- `src/library/` : anatomie (30 muscles → 9 groupes → 3 régions,
+  articulations), matériel (38 pièces, `inventory`, charges en kg), format des
+  fiches (`types.ts`), règles (`validate.ts`), bibliothèque (`library.ts` :
+  filtrer, chercher sans accents, `findByName`, familles, plus facile / plus
+  dur, remplaçants, fusion avec les fiches d'un projet).
+- **Le catalogue : 472 fiches** en 11 fichiers (`src/library/exercises/*.ts`,
+  texte dans `src/i18n/fr/exercises/*.ts`). Neuf fichiers ont été rédigés
+  puis relus par un relecteur exigeant ; **`conditioning` et `skills` n'ont
+  été relus qu'en partie** (arrêtés le 02/10 au soir, mais valides).
+  `anchors.ts` liste les identifiants promis ; tous les noms de DidIt sont
+  retrouvés par `findByName` (test dans `tests/catalog.test.ts`).
+- `src/readiness/assess.ts` : la forme du jour (repos déclaré, maladie, pouls
+  à +10 % avec la règle des deux matins, sept jours sans repos, note de forme,
+  sommeil court, ressenti, cycle, charge aiguë / chronique, reprise,
+  articulations, courbatures).
+- `src/history/` : charge (`load.ts`), fatigue par muscle avec décroissance
+  selon la taille (`fatigue.ts`), activités hors séance (`activities.ts`),
+  performances et capacité par famille (`progress.ts`).
+- `src/session/` : contexte, objectifs (`goals.ts`), gabarits
+  (`templates.ts`), choix du type (`choose.ts`), choix des exercices
+  (`select.ts`), dosage et progression (`prescribe.ts`), temps et tempo
+  (`timing.ts`), formats (`formats.ts`), échauffement, retour au calme,
+  assemblage (`generate.ts`), remplacement d'un exercice (`swap.ts`).
+- `src/week/plan.ts` : le plan de la semaine.
+- `src/output/` : texte, étapes pour un lecteur (`toTimeline`), arbre de
+  blocs (`toTree`).
+- `src/cli.ts` + `bin/workout-generator.mjs` : la commande JSON pour Laravel.
 
 ## Reste à faire
 
-1. **La bibliothèque** : ~420 fiches, relues (anatomie, difficulté, matériel,
-   français), test d'intégrité de tout le catalogue, correspondance avec les
-   noms de DidIt (`findByName`).
-2. **La forme du jour** (`readiness`) : énergie, sommeil, stress, courbatures,
-   douleurs articulaires, pouls du matin contre sa base (règle des +10 % et
-   des deux matins), maladie, cycle, ressenti de la dernière séance.
-3. **L'historique** : fatigue résiduelle par muscle (décroissance selon la
-   taille du muscle), volume de la semaine par groupe, progression par
-   exercice (plafond → plus dur, échec → plus facile), charge aiguë /
-   chronique, jours sans repos, activités extérieures (course, vélo…).
-4. **La séance du jour** (`generateSession`) : type et cible choisis selon les
-   besoins et la fraîcheur, formats (séries, supersets, circuit, EMOM, AMRAP,
-   Tabata, intervalles, échelles), échauffement et retour au calme, temps
-   tenu, explications de chaque choix, remplacer un exercice.
-5. **Le plan de la semaine** (`planWeek`) : répartition des groupes, vagues
-   lourd / moyen / léger, repos, activités prévues.
-6. **La commande JSON** pour Laravel (`bin/`), la conversion vers un arbre de
-   blocs (boucles avec rôle échauffement / retour), le README, le contrat
-   pour DidIt.
+1. **Finir la relecture de `conditioning` et `skills`** (le workflow a été
+   arrêté avant la fin) : anatomie, difficultés, matériel, français.
+2. **Relire des séances comme un coach**, en grand nombre : un workflow qui
+   génère des séances pour des profils variés et les fait critiquer
+   (équilibre pousser / tirer, volume, ordre, charge, cohérence de
+   l'échauffement), puis corriger le moteur. Points déjà vus et pas encore
+   traités :
+   - un exercice seul reste parfois en séries classiques après des
+     supersets ;
+   - le bloc de travail d'un débutant d'endurance de 60 min est un peu court ;
+   - la charge de départ est une estimation grossière (part du poids du
+     corps).
+3. **Le contrat avec DidIt** : c'est la session DidIt qui branche, sur une
+   branche à part. Lui donner ce qu'elle demande (API stable, exemples
+   d'entrée tirés de ses tables : `session_entries`, `body_logs`,
+   `user_days`, `cycle_periods`, ressenti). Le VPS fait `npm ci` : si le
+   dépôt est privé, il faudra une clé de déploiement (à régler avec Jason).
+4. **Les séries faites une à une** : DidIt ne garde qu'un `reps` par
+   exercice (le maximum) ; le moteur sait lire des séries détaillées, avec
+   réserve et charge. À proposer à DidIt quand elle branchera.
+5. Plus tard : les cycles de plusieurs semaines (progression, semaine
+   allégée, tests de niveau), une deuxième langue, des séances à deux.
 
 ## Décisions à ne pas rediscuter
 
@@ -89,29 +109,57 @@ local `workout-engine`).
   appeler la commande depuis PHP (choix de l'utilisateur, 02/10).
 - **Séance du jour + plan de semaine** pour la première version ; les cycles
   de plusieurs semaines viendront après (02/10).
-- **Français, prêt à traduire** : textes à part, rangés par langue ;
+- **Français, prêt à traduire** : textes à part, rangés par langue (fiches
+  dans `src/i18n/fr/exercises`, phrases du moteur dans
+  `src/i18n/fr/messages.ts`, `registerMessages` pour une autre langue) ;
   identifiants en anglais (02/10).
 - **La bibliothèque est un produit à part entière** : point d'entrée
   `workout-generator/library`, utilisable sans le générateur (02/10).
+- **Le tempo comme dans DidIt** (demande de l'utilisateur, 02/10) : 3, 2 et
+  1 s par phase en lent, normal et rapide ; une répétition fait deux phases.
+  Chaque exercice de renforcement en répétitions porte un tempo, et la durée
+  prévue de ses séries se calcule dessus. Chaque exercice dit le temps d'une
+  série (`setSeconds`) et de tout son bloc. Les durées proposées sont celles
+  de DidIt (10, 20, 30, 45, 60).
 - **Jamais recopier Lafay** (ni programmes, ni codes d'exercices, ni chiffres,
   ni « 100 pompes », ni « 50 tractions ») ; Pavel et Pirie : principes
-  seulement. US Navy et Sandow sont publics. Chiffres à nous.
+  seulement. US Navy et Sandow sont publics. Chiffres à nous (un test
+  vérifie que le catalogue ne cite pas Lafay).
 - Textes des fiches **à l'infinitif** (« Poser les mains… ») : ni tu ni vous,
-  pour convenir à toutes les applis.
-- Une seule échelle de difficulté de 1 à 10 pour tout le catalogue (repères
-  dans le cahier des charges des rédacteurs : pompe classique 3, traction 5,
-  pompe sur un bras 8, traction sur un bras 10).
+  pour convenir à toutes les applis. Les phrases du moteur sont neutres
+  aussi.
+- Une seule échelle de difficulté de 1 à 10 pour tout le catalogue (pompe
+  classique 3, traction 5, pompe sur un bras 8, traction sur un bras 10).
+- Remplir une séance **d'abord par les places de base, puis des séries en
+  plus, ensuite seulement des exercices en plus** : mieux vaut cinq
+  exercices bien dosés que neuf à deux séries.
+- La fraîcheur d'une région est celle de **son gros muscle le plus
+  fatigué** (pas une moyenne qui noie des quadriceps vidés dans des mollets
+  frais).
+- Les étirements du retour au calme se choisissent **muscle par muscle**,
+  pour couvrir le travail réellement fait.
+- AMRAP et EMOM limités à 20 minutes ; au-delà, un circuit.
 
 ## Pièges connus
 
 - `npm install` avertit que le script d'installation d'esbuild n'est pas
   autorisé (`allow-scripts`) : sans effet, le binaire vient du paquet
-  `@esbuild/win32-x64`. vitest et vite-node marchent.
+  `@esbuild/win32-x64`. vitest, vite-node et esbuild marchent.
 - `exactOptionalPropertyTypes` est actif : on ne passe pas `undefined` à un
-  champ facultatif, on l'omet.
+  champ facultatif, on l'omet (`...(x ? { x } : {})`).
 - Un paramètre par défaut JavaScript remplace `undefined` : pour tester
-  « sans texte », passer `null`, pas `undefined` (c'est arrivé dans
-  `validate.test.ts`).
+  « sans texte », passer `null`, pas `undefined`.
+- Dans un `node -e "…"` lancé par Bash, des accents graves dans le code sont
+  pris pour une substitution de commande : un commentaire est sorti vide.
+  Préférer l'outil Edit pour toucher du texte.
+- `vite-node script.ts` ne met pas le script dans `process.argv[1]` : un
+  « si on est lancé directement » ne marche pas. La commande JSON se
+  construit donc avec la ligne de commande d'esbuild (`npm run build:cli`).
+- En JavaScript, `\b` ne connaît pas les lettres accentuées : « tête »
+  contient un « te » entre deux bornes. Utiliser
+  `(?<![\p{L}])…(?![\p{L}])` avec le drapeau `u`.
+- Dans un circuit ou un superset, `item.sets` vaut 1 et `block.rounds` dit
+  combien de fois : le total d'un exercice est `sets × rounds`.
 
 ## Journal
 
@@ -120,5 +168,12 @@ local `workout-engine`).
   lecteurs. Questions posées : dépôt créé par l'utilisateur
   (`jasonmgl/workout-generator`), séance + semaine, français prêt à
   traduire, TypeScript + commande JSON, arrêt à 80 %. Fondations, format des
-  fiches, bibliothèque et validation. 83 tests. Rédaction du catalogue lancée
-  (onze rédacteurs, chacun relu).
+  fiches, bibliothèque et validation. 83 tests. Poussé (`6cc9c0c`).
+- **02/10, soir** — Le catalogue (472 fiches, onze rédacteurs, neuf relus
+  en entier). La forme du jour, l'historique, la séance du jour, le plan de
+  la semaine, les sorties, la commande JSON. Séances relues en texte : sept
+  défauts corrigés (remplissage, doublons de pompes, tirage sans matériel,
+  vélo de la veille, échauffement, étirements, durée des circuits). Le tempo
+  et le temps de chaque série comme dans DidIt (demande de l'utilisateur).
+  203 tests. Première version utilisable poussée ; session DidIt prévenue.
+  Arrêt pour ce soir à la demande de l'utilisateur.

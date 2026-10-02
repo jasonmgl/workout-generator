@@ -12,17 +12,22 @@
         "./library": "./src/library/index.ts"
     },
     "files": [
-        "src"
+        "src",
+        "bin"
     ],
     "scripts": {
         "test": "vitest run",
         "test:watch": "vitest",
         "catalog": "vite-node scripts/check-catalog.ts",
-        "types": "tsc --noEmit"
+        "types": "tsc --noEmit",
+        "build:cli": "esbuild src/bin.ts --bundle --platform=node --format=esm --target=node18 --legal-comments=none --banner:js=\"#!/usr/bin/env node\" --outfile=bin/workout-generator.mjs"
     },
     "devDependencies": {
         "@types/node": "24.19.1",
         "typescript": "5.9.3",
         "vitest": "3.2.7"
+    },
+    "bin": {
+        "workout-generator": "./bin/workout-generator.mjs"
     }
 }
