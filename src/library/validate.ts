@@ -4,7 +4,7 @@
  * siens par `validateCatalog` avant de les donner au moteur.
  */
 import { isJoint, isMuscle, type MuscleId } from './anatomy';
-import { isEquipment, LOADABLE_EQUIPMENT } from './equipment';
+import { isEquipment, LOADABLE_EQUIPMENT, type EquipmentId } from './equipment';
 import { normalize } from '../i18n/format';
 import { EXERCISE_KINDS, MOVEMENT_PATTERNS, type ExerciseDefinition, type ExerciseText } from './types';
 
@@ -109,7 +109,7 @@ function checkDefinition(definition: ExerciseDefinition, known: ReadonlySet<stri
     return problems;
 }
 
-function checkText(text: ExerciseText | undefined): string[] {
+function checkText(text: ExerciseText | undefined, definition?: ExerciseDefinition): string[] {
     if (!text) {
         return ['texte absent'];
     }
@@ -123,6 +123,11 @@ function checkText(text: ExerciseText | undefined): string[] {
     if (!filled(text.steps)) problems.push('déroulé absent');
     if (!filled(text.cues)) problems.push('repères absents');
     if (!filled(text.mistakes)) problems.push('erreurs fréquentes absentes');
+
+    for (const [piece, name] of Object.entries(text.nameWith ?? {})) {
+        if (!(definition?.equipment ?? []).some((group) => group.includes(piece as EquipmentId))) problems.push(`nom pour « ${piece} », qui n’est pas dans son matériel`);
+        if (!name?.trim()) problems.push(`nom vide pour « ${piece} »`);
+    }
 
     return problems;
 }
@@ -151,7 +156,7 @@ export function validateCatalog(
 
         ids.add(definition.id);
 
-        for (const message of [...checkDefinition(definition, known), ...checkText(texts[definition.id])]) {
+        for (const message of [...checkDefinition(definition, known), ...checkText(texts[definition.id], definition)]) {
             problems.push({ id: definition.id, message });
         }
 

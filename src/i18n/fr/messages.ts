@@ -89,6 +89,7 @@ export const MESSAGES_FR = {
     'block-main': 'Séries',
     'block-skill': 'Figures',
     'block-superset': 'Par deux',
+    'block-triset': 'Par trois',
     'block-circuit': 'Circuit',
     'block-amrap': 'Le plus de tours en {minutes} min',
     'block-emom': 'Chaque minute, {minutes} min',

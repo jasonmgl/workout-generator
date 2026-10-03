@@ -512,6 +512,7 @@ export const PULL_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'ring-row': {
         name: 'Rowing aux anneaux',
+        nameWith: { 'suspension-trainer': 'Rowing aux sangles' },
         aliases: ['Rowing aux sangles', 'Tirage aux anneaux', 'Ring row'],
         summary: 'Un tirage horizontal, penché en arrière sous des anneaux ou des sangles : réglable du très facile au difficile selon l’inclinaison.',
         setup: [
@@ -569,6 +570,7 @@ export const PULL_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'archer-ring-row': {
         name: 'Rowing archer aux anneaux',
+        nameWith: { 'suspension-trainer': 'Rowing archer aux sangles' },
         aliases: ['Rowing archer aux sangles', 'Archer ring row'],
         summary: 'Un rowing aux anneaux où un bras tire pendant que l’autre s’ouvre tendu sur le côté : la marche vers le rowing à un bras.',
         setup: ['Régler les anneaux ou les sangles à hauteur de taille.', 'Saisir les poignées et se pencher en arrière, bras tendus, corps droit.'],
@@ -584,6 +586,7 @@ export const PULL_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'one-arm-ring-row': {
         name: 'Rowing à un bras aux anneaux',
+        nameWith: { 'suspension-trainer': 'Rowing à un bras aux sangles' },
         aliases: ['Rowing unilatéral aux anneaux', 'Rowing à un bras aux sangles', 'One-arm ring row'],
         summary: 'Le rowing aux anneaux tiré d’un seul bras, le corps gainé pour ne pas tourner : un tirage horizontal très exigeant pour le dos et le gainage.',
         setup: [

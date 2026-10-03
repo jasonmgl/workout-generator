@@ -506,6 +506,7 @@ export const SQUAT_LUNGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-step-up': {
         name: 'Montées sur une marche avec haltères',
+        nameWith: { kettlebell: 'Montées sur une marche avec kettlebell' },
         aliases: ['Step-up avec haltères', 'Dumbbell step-up', 'Montées sur un banc avec haltères'],
         summary: 'La montée sur une marche ou un banc avec une charge dans chaque main : plus de force demandée aux cuisses et aux fessiers.',
         setup: [
@@ -841,6 +842,7 @@ export const SQUAT_LUNGE_FR: Readonly<Record<string, ExerciseText>> = {
     // Avec charge : fentes
     'dumbbell-split-squat': {
         name: 'Fentes statiques avec haltères',
+        nameWith: { kettlebell: 'Fentes statiques avec kettlebell' },
         aliases: ['Split squat aux haltères', 'Dumbbell split squat'],
         summary: 'La fente statique avec une charge dans chaque main : le moyen le plus simple de charger le travail d’une jambe.',
         setup: [
@@ -858,6 +860,7 @@ export const SQUAT_LUNGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-walking-lunge': {
         name: 'Fentes marchées avec haltères',
+        nameWith: { kettlebell: 'Fentes marchées avec kettlebell' },
         aliases: ['Fentes en marchant avec haltères', 'Dumbbell walking lunge'],
         summary: 'Les fentes enchaînées en avançant avec une charge dans chaque main : cuisses, fessiers et prise, sur quelques mètres.',
         setup: ['Prévoir quelques mètres dégagés.', 'Prendre un haltère ou une kettlebell dans chaque main, bras le long du corps.'],
@@ -873,6 +876,7 @@ export const SQUAT_LUNGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-bulgarian-split-squat': {
         name: 'Squats bulgares avec haltères',
+        nameWith: { kettlebell: 'Squats bulgares avec kettlebell' },
         aliases: ['Squat bulgare aux haltères', 'Dumbbell bulgarian split squat'],
         summary: 'Le squat bulgare avec une charge dans chaque main : un des meilleurs exercices pour charger une jambe à la fois.',
         setup: [

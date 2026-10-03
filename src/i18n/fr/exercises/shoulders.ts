@@ -654,6 +654,7 @@ export const SHOULDERS_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'ring-face-pull': {
         name: 'Face pull aux anneaux',
+        nameWith: { 'suspension-trainer': 'Face pull aux sangles' },
         aliases: ['Face pull au TRX', 'Face pull aux sangles', 'Ring face pull'],
         summary: 'Le face pull au poids du corps, penché en arrière sous des anneaux ou des sangles : arrière des épaules, milieu du dos et coiffe des rotateurs.',
         setup: [

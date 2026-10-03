@@ -133,6 +133,7 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-hip-thrust': {
         name: 'Hip thrust à l’haltère',
+        nameWith: { kettlebell: 'Hip thrust à la kettlebell' },
         aliases: ['Hip thrust à la kettlebell', 'Hip thrust lesté', 'Dumbbell hip thrust'],
         summary: 'Le hip thrust avec un haltère posé sur les hanches : la charge permet de renforcer les fessiers au-delà du poids du corps.',
         setup: [
@@ -222,6 +223,7 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-romanian-deadlift': {
         name: 'Soulevé de terre roumain aux haltères',
+        nameWith: { kettlebell: 'Soulevé de terre roumain à la kettlebell' },
         aliases: ['RDL aux haltères', 'Romanian deadlift', 'Soulevé de terre jambes semi-tendues aux haltères', 'Soulevé de terre roumain à la kettlebell'],
         summary: 'Descendre les haltères le long des jambes en reculant les hanches, dos droit : un travail ciblé des ischio-jambiers et des fessiers.',
         setup: [
@@ -285,6 +287,7 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-single-leg-romanian-deadlift': {
         name: 'Soulevé de terre sur une jambe à l’haltère',
+        nameWith: { kettlebell: 'Soulevé de terre sur une jambe à la kettlebell' },
         aliases: ['RDL unilatéral à l’haltère', 'Soulevé de terre sur une jambe à la kettlebell', 'Single-leg RDL haltère'],
         summary: 'La charnière sur une jambe avec un haltère : plus de travail pour l’ischio-jambier et le fessier, avec un bassin à tenir face au sol.',
         setup: ['Se tenir debout sur une jambe, genou légèrement fléchi.', 'Tenir un haltère ou une kettlebell dans la main opposée à la jambe d’appui.'],
@@ -319,6 +322,7 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'sumo-kettlebell-deadlift': {
         name: 'Soulevé de terre sumo à la kettlebell',
+        nameWith: { dumbbells: 'Soulevé de terre sumo à l’haltère' },
         aliases: ['Sumo deadlift à la kettlebell', 'Soulevé de terre sumo à l’haltère'],
         summary: 'Le soulevé de terre pieds écartés et pointes vers l’extérieur : plus de travail pour les cuisses et les adducteurs, avec un buste plus droit.',
         setup: [
@@ -774,6 +778,7 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-calf-raise': {
         name: 'Extensions des mollets aux haltères',
+        nameWith: { kettlebell: 'Extensions des mollets avec kettlebell' },
         aliases: ['Mollets debout aux haltères', 'Extensions mollets lestées', 'Dumbbell calf raise'],
         summary: 'Les extensions des mollets avec un haltère dans chaque main : la charge pour continuer à progresser quand le poids du corps ne suffit plus.',
         setup: [

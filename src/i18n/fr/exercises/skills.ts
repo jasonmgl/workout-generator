@@ -2,10 +2,29 @@ import type { ExerciseText } from '../../../library/types';
 
 export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
     // Équilibre sur les mains
+    'elevated-pike-hold': {
+        name: 'Équilibre piqué pieds surélevés',
+        aliases: ['Pike hold pieds surélevés', 'Box pike hold', 'Équilibre piqué pieds sur une chaise'],
+        summary: 'Les pieds sur une chaise, les hanches au-dessus des épaules et les bras tendus : la première tenue à l’envers, qui habitue les épaules et les poignets à porter le corps avant l’équilibre sur les mains.',
+        setup: [
+            'Caler une chaise stable, un banc ou une caisse, si possible contre un mur, puis se mettre à quatre pattes devant, les pieds tournés vers elle.',
+            'Poser les mains au sol à largeur d’épaules, doigts écartés, puis monter les pieds sur l’assise, l’un après l’autre.',
+        ],
+        steps: [
+            'Rapprocher les mains de la chaise, par petits pas, jusqu’à amener les hanches au-dessus des épaules.',
+            'Tendre les bras et pousser le sol, le dos droit et la tête entre les bras.',
+            'Tenir la position, jambes tendues ou légèrement pliées.',
+            'Redescendre en avançant les mains, puis reposer les genoux au sol.',
+        ],
+        cues: ['Pousser le sol pour monter les épaules vers les oreilles.', 'Porter le poids sur les mains, pas sur les pieds.', 'Rentrer les côtes pour ne pas creuser le dos.'],
+        mistakes: ['Rester trop loin de la chaise : les hanches ne passent pas au-dessus des épaules.', 'Plier les coudes.', 'Creuser le bas du dos.'],
+        breathing: 'Respirer calmement, sans bloquer.',
+        safety: 'Vérifier que le support ne peut pas glisser ; échauffer les poignets avant et redescendre au moindre étourdissement.',
+    },
     'wall-handstand': {
         name: 'Équilibre sur les mains ventre au mur',
         aliases: ['Amorce équilibre', 'Équilibre contre le mur', 'ATR ventre au mur', 'Chest-to-wall handstand'],
-        summary: 'L’équilibre sur les mains face au mur, qui empêche de basculer : les épaules et les triceps apprennent à porter le corps à la verticale, bien aligné.',
+        summary: 'L’équilibre sur les mains, ventre contre le mur pour ne pas basculer : les épaules et les triceps apprennent à porter le corps à la verticale, bien aligné.',
         setup: ['S’allonger à plat ventre, la plante des pieds contre le mur.', 'Poser les mains au sol à hauteur de la poitrine, doigts écartés.'],
         steps: [
             'Pousser jusqu’aux bras tendus et monter les pieds le long du mur en rapprochant les mains, par petits pas.',
@@ -26,11 +45,11 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         name: 'Équilibre sur les mains dos au mur',
         aliases: ['ATR dos au mur', 'Back-to-wall handstand'],
         summary: 'L’équilibre sur les mains dos au mur, après un lancer de jambe : pour apprendre à monter et à tenir à l’envers sans craindre de basculer.',
-        setup: ['Se tenir face au mur, à un grand pas de lui, une jambe devant l’autre.', 'Se pencher pour poser les mains au sol à une ou deux largeurs de main du mur, largeur d’épaules.'],
+        setup: ['Se tenir face au mur, à un grand pas de lui, une jambe devant l’autre.', 'Se pencher pour poser les mains au sol, à largeur d’épaules et à une vingtaine de centimètres du mur.'],
         steps: [
             'Lancer la jambe arrière vers le haut en poussant sur la jambe avant.',
             'Laisser les talons venir toucher le mur, puis réunir les jambes.',
-            'Tenir bras tendus, en décollant peu à peu les talons du mur.',
+            'Tenir bras tendus ; avec l’habitude, décoller peu à peu les talons du mur.',
             'Redescendre une jambe après l’autre, en douceur.',
         ],
         cues: ['Garder les bras verrouillés pendant tout le lancer.', 'Regarder le sol entre les mains.', 'Rentrer les côtes et serrer les fessiers pour limiter la cambrure.'],
@@ -39,7 +58,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         safety: 'Apprendre d’abord à sortir de l’équilibre en pivotant sur une main ; garder le sol dégagé autour de soi.',
     },
     'handstand-kick-up': {
-        name: 'Montées en équilibre par élan',
+        name: 'Montées en équilibre sur les mains par élan',
         aliases: ['Kick-up', 'Handstand kick-up', 'Entrées en ATR'],
         summary: 'Monter en équilibre sur les mains d’un lancer de jambe, sans mur, pour trouver le point d’équilibre et apprendre à le rattraper.',
         setup: ['Choisir un espace dégagé, sur un sol ferme, sans meuble autour.', 'Se tenir debout, bras tendus au-dessus de la tête, une jambe en avant.'],
@@ -59,8 +78,8 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         safety: 'Savoir sortir de l’équilibre en pivotant sur une main avant de s’exercer sans mur.',
     },
     'wall-handstand-shoulder-tap': {
-        name: 'Touchers d’épaule en équilibre au mur',
-        aliases: ['Shoulder taps en équilibre', 'Wall handstand shoulder taps', 'Touchers d’épaule en ATR'],
+        name: 'Touches d’épaules en équilibre au mur',
+        aliases: ['Shoulder taps en équilibre', 'Wall handstand shoulder taps', 'Touches d’épaules en ATR'],
         summary: 'En équilibre ventre au mur, lever une main après l’autre pour toucher l’épaule : la force des épaules sur un seul bras et le contrôle du gainage.',
         setup: ['Monter en équilibre ventre au mur, les mains à une largeur de main du mur.', 'Écarter un peu plus les mains et les pieds que pour la tenue simple.'],
         steps: [
@@ -113,7 +132,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         steps: [
             'Monter les hanches et avancer les pieds à petits pas vers la tête.',
             'Poser les genoux sur l’arrière des bras, près des coudes.',
-            'Décoller les pieds, puis tendre lentement les jambes vers le plafond.',
+            'Décoller les pieds, puis les genoux des bras, et tendre lentement les jambes vers le plafond.',
             'Redescendre de la même façon : genoux sur les bras, puis pieds au sol.',
         ],
         cues: ['Pousser le sol avec les mains pour soulager le cou.', 'Garder les coudes au-dessus des poignets, sans les écarter.', 'Monter lentement, sans élan.'],
@@ -122,7 +141,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         safety: 'À éviter en cas de douleur ou de fragilité des cervicales, d’hypertension non soignée ou de glaucome ; ne jamais tourner la tête en appui.',
     },
     headstand: {
-        name: 'Poirier sur les avant-bras',
+        name: 'Poirier, avant-bras au sol',
         aliases: ['Poirier', 'Headstand', 'Sirsasana', 'Équilibre sur la tête'],
         summary: 'L’équilibre sur la tête, avant-bras au sol et doigts croisés derrière la tête, jambes réunies à la verticale : épaules, gainage et contrôle.',
         setup: [
@@ -143,19 +162,23 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
 
     // Appuis aux barres et aux anneaux
     'support-hold': {
-        name: 'Appui tendu',
-        aliases: ['Support hold', 'Tenue en haut des dips', 'Maintien en appui'],
-        summary: 'Tenir en haut des dips, bras tendus et épaules basses : la position de base aux barres, qui renforce les triceps et la stabilité des épaules.',
+        name: 'Appui tendu entre deux chaises',
+        aliases: ['Appui tendu', 'Maintien en appui entre deux chaises', 'Support hold entre deux chaises'],
+        summary: 'Tenir bras tendus au-dessus de deux chaises, épaules basses : la position de base des dips et des figures en appui, sans barres parallèles, pour les triceps et la stabilité des épaules.',
         setup: [
-            'Se placer entre deux barres parallèles, ou entre deux chaises lourdes posées en parallèle.',
-            'Saisir les barres ou le haut des dossiers, puis monter en appui, bras tendus.',
-            'Plier les genoux et croiser les chevilles si les pieds touchent le sol.',
+            'Placer deux chaises lourdes, dossiers tournés l’un vers l’autre, avec un écart à peine plus large que les hanches.',
+            'Se placer entre les deux et saisir le haut de chaque dossier.',
         ],
-        steps: ['Pousser dans les mains pour éloigner les épaules des oreilles.', 'Tenir bras verrouillés, le corps immobile.', 'Reposer les pieds au sol en fin de série.'],
+        steps: [
+            'Pousser dans les mains jusqu’aux bras tendus, genoux pliés et chevilles croisées pour décoller les pieds.',
+            'Pousser les dossiers vers le bas pour éloigner les épaules des oreilles.',
+            'Tenir bras verrouillés, le corps immobile.',
+            'Reposer les pieds au sol en fin de série.',
+        ],
         cues: ['Allonger le cou : les épaules restent basses.', 'Serrer les bras contre le corps.', 'Gainer le ventre pour ne pas se balancer.'],
-        mistakes: ['Laisser les épaules remonter vers les oreilles.', 'Garder les coudes légèrement pliés.', 'Se pencher très en avant.'],
+        mistakes: ['Laisser les épaules remonter vers les oreilles.', 'Garder les coudes légèrement pliés.', 'Se balancer, au risque de faire basculer une chaise.'],
         breathing: 'Respirer calmement pendant toute la tenue.',
-        safety: 'Vérifier que les chaises ne peuvent ni glisser ni basculer.',
+        safety: 'Vérifier avant chaque série que les chaises ne peuvent ni glisser ni basculer ; éviter les chaises pliantes ou à roulettes.',
     },
     'ring-support-hold': {
         name: 'Appui tendu aux anneaux',
@@ -177,8 +200,8 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
     // Équilibres sur les bras
     'frog-stand': {
         name: 'Équilibre en grenouille',
-        aliases: ['Frog stand', 'Grenouille'],
-        summary: 'Accroupi, genoux posés sur les coudes, basculer vers l’avant jusqu’à décoller les pieds : le premier équilibre sur les mains, pour les poignets, les épaules et le gainage.',
+        aliases: ['Frog stand', 'Grenouille en équilibre'],
+        summary: 'Accroupi, genoux calés contre les coudes, basculer vers l’avant jusqu’à décoller les pieds : le premier équilibre sur les mains, pour les poignets, les épaules et le gainage.',
         setup: [
             'S’accroupir, pieds écartés, et poser les mains au sol à largeur d’épaules, doigts écartés.',
             'Plier les coudes et poser l’intérieur des genoux contre l’extérieur des coudes.',
@@ -218,8 +241,8 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         summary: 'L’équilibre sur les mains, les jambes groupées sur le côté et posées sur un bras : épaules, triceps et obliques, en rotation.',
         setup: [
             'S’accroupir sur la pointe des pieds, genoux serrés.',
-            'Tourner le buste d’un côté et poser les mains au sol à largeur d’épaules, à côté de la cuisse, doigts écartés.',
-            'Plier les coudes et caler l’extérieur de la cuisse du dessus sur l’arrière du bras le plus proche.',
+            'Tourner le buste d’un côté et poser les mains au sol à largeur d’épaules, à l’extérieur de la cuisse, doigts écartés.',
+            'Plier les coudes à angle droit et caler l’extérieur de la cuisse sur l’arrière du bras le plus proche, genoux toujours serrés.',
         ],
         steps: ['Pencher le buste vers l’avant pour charger les mains.', 'Décoller les pieds, jambes serrées et genoux pliés.', 'Tenir, puis reposer les pieds et changer de côté.'],
         cues: ['Garder les coudes au-dessus des poignets.', 'Serrer les jambes l’une contre l’autre.', 'Regarder devant soi, pas en bas.'],
@@ -233,7 +256,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         summary: 'Le corps tendu à l’horizontale en équilibre sur les mains, le bassin posé sur les coudes : triceps, avant des épaules et toute la chaîne arrière.',
         setup: [
             'Se mettre à genoux et poser les mains au sol, doigts tournés vers les pieds ou sur les côtés.',
-            'Serrer les coudes et les caler contre le haut des hanches, de part et d’autre du nombril.',
+            'Serrer les coudes et les caler dans le ventre, juste au-dessus des os des hanches.',
         ],
         steps: [
             'Tendre les jambes derrière soi, pointes de pieds au sol.',
@@ -298,7 +321,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         summary: 'L’équerre poussée à l’extrême, jambes tendues montées bien au-dessus de l’horizontale : compression, souplesse des ischio-jambiers et épaules très fortes.',
         setup: ['S’installer en équerre, sur des parallettes ou au sol.', 'Pousser fort dans les mains, épaules basses.'],
         steps: [
-            'Reculer les hanches derrière les mains en avançant les épaules.',
+            'Pencher le buste en arrière et avancer les hanches entre les mains, bras toujours tendus.',
             'Monter les jambes tendues au-dessus de l’horizontale, aussi haut que possible.',
             'Tenir quelques secondes, puis redescendre en équerre.',
         ],
@@ -374,6 +397,21 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         mistakes: ['Laisser les hanches plus bas que les épaules.', 'Plier les genoux.', 'Plier les coudes pour retrouver l’équilibre.'],
         breathing: 'Respirer court, ventre serré.',
         safety: 'Réservée aux pratiquants très entraînés ; arrêter au moindre signe de douleur aux coudes, aux épaules ou aux poignets.',
+    },
+    'full-planche': {
+        name: 'Planche gymnique complète',
+        aliases: ['Full planche', 'Planche jambes serrées', 'Planche gymnique'],
+        summary: 'Le corps entier tendu à l’horizontale au-dessus des mains, jambes serrées, sans autre appui : l’une des figures de force les plus dures au poids du corps.',
+        setup: ['Partir de la planche écartée, mains au sol ou sur des parallettes, doigts légèrement tournés vers l’extérieur.'],
+        steps: [
+            'Resserrer peu à peu les jambes tendues sans laisser descendre les hanches.',
+            'Aligner épaules, hanches et talons à l’horizontale, jambes serrées.',
+            'Tenir, puis écarter ou grouper les jambes pour redescendre.',
+        ],
+        cues: ['Pencher les épaules loin devant les mains.', 'Serrer les fessiers et les jambes, pieds pointés.', 'Pousser le sol et écarter les omoplates.'],
+        mistakes: ['Laisser les hanches plus bas que les épaules.', 'Plier les coudes.', 'Creuser le bas du dos pour monter les jambes.'],
+        breathing: 'Respirer court, ventre serré.',
+        safety: 'Réservée à qui tient déjà la planche écartée ; arrêter au moindre signe de douleur aux coudes, aux épaules ou aux poignets.',
     },
 
     // Front lever
@@ -457,16 +495,16 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         aliases: ['German hang', 'Suspension dorsale'],
         summary: 'Suspendu, le corps passé entre les bras et tourné vers le sol, épaules en extension : un étirement actif de l’avant des épaules qui prépare le back lever.',
         setup: [
-            'Régler les anneaux assez bas pour que les pieds puissent toucher le sol en fin de mouvement, ou utiliser une barre.',
+            'Régler les anneaux assez bas pour pouvoir poser les pointes de pieds au sol en fin de mouvement ; à la barre fixe, les pieds restent en l’air.',
             'Se suspendre bras tendus, prise ferme.',
         ],
         steps: [
             'Ramener les genoux vers la poitrine et basculer en arrière pour passer les jambes entre les bras.',
             'Descendre lentement les jambes derrière soi jusqu’à sentir l’étirement des épaules, corps tourné vers le sol.',
-            'Tenir en relâchant peu à peu, pointes de pieds au sol si besoin.',
+            'Tenir en se relâchant peu à peu dans l’étirement ; aux anneaux, garder les pointes de pieds au sol.',
             'Revenir en ramenant les genoux vers la poitrine et en repassant entre les bras.',
         ],
-        cues: ['Descendre très lentement dans l’étirement.', 'Garder les bras tendus.', 'Doser l’étirement avec les pieds au sol.'],
+        cues: ['Descendre très lentement dans l’étirement.', 'Garder les bras tendus.', 'Aux anneaux, doser l’étirement en appuyant plus ou moins sur les pieds.'],
         mistakes: ['Se laisser tomber dans la position.', 'Pendre sans aucun contrôle des épaules.', 'Tenir trop longtemps dès les premières séances.'],
         breathing: 'Souffler en descendant dans l’étirement, puis respirer lentement.',
         safety: 'Étirement intense de l’avant des épaules : progresser sur plusieurs semaines et arrêter à la moindre douleur vive.',
@@ -519,6 +557,24 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
     },
 
     // Drapeau
+    'vertical-flag': {
+        name: 'Drapeau vertical',
+        aliases: ['Vertical flag', 'Drapeau à la verticale'],
+        summary: 'Agrippé à un poteau comme pour le drapeau, le corps tenu à la verticale, tête en bas : la main du haut tire, celle du bas pousse, et les épaules apprennent la position avant de descendre vers l’horizontale.',
+        setup: [
+            'Se placer de profil contre un poteau solide ou le montant d’un rack fixé.',
+            'Saisir le poteau à deux mains, écartées d’un peu plus que la largeur des épaules : la main du haut tire, celle du bas pousse.',
+        ],
+        steps: [
+            'Tendre le bras du bas et lancer les jambes vers le haut, le long du poteau.',
+            'Monter les hanches au-dessus des épaules, jusqu’à avoir le corps vertical, jambes serrées ou écartées.',
+            'Tenir, puis redescendre les pieds au sol sous contrôle.',
+        ],
+        cues: ['Verrouiller le bras du bas et pousser fort dans le poteau.', 'Tirer avec le bras du haut pour rester près du poteau.', 'Gainer le ventre et serrer les fessiers.'],
+        mistakes: ['Plier le bras du bas.', 'Laisser le corps s’écarter du poteau.', 'Lancer les jambes trop fort et basculer de l’autre côté.'],
+        breathing: 'Souffler au lancer, puis respirer court, sans bloquer.',
+        safety: 'Vérifier que le poteau est solidement fixé et dégager le sol autour ; arrêter en cas de douleur à l’épaule ou au coude.',
+    },
     'human-flag': {
         name: 'Drapeau humain',
         aliases: ['Human flag', 'Drapeau'],
@@ -551,7 +607,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
             'Monter le bassin en poussant sur les pieds.',
             'Poser le haut du crâne au sol, puis pousser sur les mains pour décoller la tête.',
             'Tendre les bras et amener les épaules au-dessus des mains.',
-            'Redescendre en rentrant le menton : la tête d’abord, puis le dos.',
+            'Redescendre en pliant les bras et en rentrant le menton : poser le haut du dos, puis le reste de la colonne.',
         ],
         cues: ['Pousser le sol pour avancer les épaules au-dessus des mains.', 'Garder les genoux dans l’axe des pieds.', 'Serrer modérément les fessiers.'],
         mistakes: ['Ouvrir les genoux vers l’extérieur.', 'Garder les bras pliés : tout le poids passe dans le bas du dos.', 'Retomber sur la tête en redescendant.'],
@@ -562,7 +618,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
         name: 'Descentes en pont le long du mur',
         aliases: ['Wall walk-down', 'Pont descendu au mur', 'Descente en pont au mur'],
         summary: 'Debout dos au mur, descendre en pont en marchant des mains le long du mur, puis remonter : souplesse du dos et des épaules, et contrôle de toute la chaîne avant.',
-        setup: ['Se tenir debout dos au mur, à un pas et demi de lui, pieds à largeur de hanches.', 'Lever les bras au-dessus de la tête.'],
+        setup: ['Se tenir debout dos au mur, à environ un pas de lui, pieds à largeur de hanches.', 'Lever les bras au-dessus de la tête.'],
         steps: [
             'Se pencher en arrière jusqu’à poser les mains à plat sur le mur, doigts vers le bas.',
             'Descendre les mains l’une après l’autre le long du mur, jusqu’au sol si possible.',
@@ -570,7 +626,7 @@ export const SKILLS_FR: Readonly<Record<string, ExerciseText>> = {
             'Remonter en marchant des mains le long du mur jusqu’à la position debout.',
         ],
         cues: ['Pousser les hanches vers l’avant pendant la descente.', 'Descendre par petits pas de mains.', 'S’arrêter là où la descente reste maîtrisée.'],
-        mistakes: ['Plier les genoux au lieu d’ouvrir le haut du dos.', 'Se laisser glisser d’un coup.', 'Ouvrir les genoux vers l’extérieur.'],
+        mistakes: ['Casser le bas du dos sans ouvrir le haut du dos ni les épaules.', 'Se laisser glisser d’un coup.', 'Ouvrir les genoux vers l’extérieur.'],
         breathing: 'Souffler en descendant, inspirer en remontant.',
         safety: 'À éviter en cas de douleur lombaire ; maîtriser d’abord le pont depuis le sol.',
     },

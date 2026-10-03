@@ -8,7 +8,7 @@
  * identifiant.
  */
 import { musclesOfAll, type BodyTarget, type JointId, type MuscleId } from './anatomy';
-import { inventory as makeInventory, satisfies, type EquipmentInput, type Inventory } from './equipment';
+import { inventory as makeInventory, satisfies, type EquipmentId, type EquipmentInput, type Inventory } from './equipment';
 import { normalize } from '../i18n/format';
 import type { Exercise, ExerciseDefinition, ExerciseKind, ExerciseText, Impact, Measure, MovementPattern, Posture } from './types';
 
@@ -143,9 +143,12 @@ export class Library {
         return text ?? { name: id, summary: '', setup: [], steps: [], cues: [], mistakes: [] };
     }
 
-    /** Le nom d'une fiche dans une langue. */
-    name(id: string, locale: Locale = DEFAULT_LOCALE): string {
-        return this.text(id, locale).name;
+    /** Le nom d'une fiche dans une langue, adapté au matériel qui sert quand la fiche en prévoit un autre. */
+    name(id: string, locale: Locale = DEFAULT_LOCALE, equipment: readonly EquipmentId[] = []): string {
+        const text = this.text(id, locale);
+        const used = equipment.find((piece) => text.nameWith?.[piece]);
+
+        return used ? text.nameWith![used]! : text.name;
     }
 
     /** La fiche complète : structure et texte. */

@@ -183,6 +183,7 @@ export const ARMS_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'ring-biceps-curl': {
         name: 'Curls aux anneaux',
+        nameWith: { 'suspension-trainer': 'Curls aux sangles' },
         aliases: ['Curl aux anneaux', 'Curls aux sangles', 'Curl biceps aux anneaux', 'Ring curl'],
         summary: 'Un curl au poids du corps : suspendu aux anneaux, le corps incliné, on se ramène vers les mains en pliant seulement les coudes.',
         setup: [
@@ -367,6 +368,7 @@ export const ARMS_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'dumbbell-overhead-triceps-extension': {
         name: 'Extensions triceps au-dessus de la tête à l’haltère',
+        nameWith: { kettlebell: 'Extensions triceps au-dessus de la tête à la kettlebell' },
         aliases: ['Extension nuque à l’haltère', 'Extension nuque', 'Extension triceps nuque', 'Overhead triceps extension'],
         summary: 'L’extension des triceps bras levés, un haltère tenu à deux mains : la longue portion du triceps travaille en étirement.',
         setup: [
@@ -507,6 +509,7 @@ export const ARMS_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'ring-triceps-extension': {
         name: 'Extensions triceps aux anneaux',
+        nameWith: { 'suspension-trainer': 'Extensions triceps aux sangles' },
         aliases: ['Extension triceps aux anneaux', 'Extensions triceps aux sangles', 'Ring triceps extension'],
         summary: 'L’extension des triceps aux anneaux ou aux sangles : le geste de la table, avec des poignées libres qui demandent bien plus de contrôle aux épaules.',
         setup: [

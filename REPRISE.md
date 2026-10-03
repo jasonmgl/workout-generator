@@ -6,7 +6,7 @@ Décisions / Pièges quand elles bougent. Le lire en premier.
 
 ## Le projet en trois lignes
 
-Une **bibliothèque d'exercices** (472 fiches) et un **générateur de séances**
+Une **bibliothèque d'exercices** (478 fiches) et un **générateur de séances**
 (au poids du corps ou avec le matériel disponible ; forme du jour, séances
 passées, muscles déjà travaillés ou à travailler), dans un paquet TypeScript
 sans dépendance. Écrit pour remplacer un jour la génération de DidIt
@@ -55,10 +55,10 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   fiches (`types.ts`), règles (`validate.ts`), bibliothèque (`library.ts` :
   filtrer, chercher sans accents, `findByName`, familles, plus facile / plus
   dur, remplaçants, fusion avec les fiches d'un projet).
-- **Le catalogue : 472 fiches** en 11 fichiers (`src/library/exercises/*.ts`,
-  texte dans `src/i18n/fr/exercises/*.ts`). Neuf fichiers ont été rédigés
-  puis relus par un relecteur exigeant ; **`conditioning` et `skills` n'ont
-  été relus qu'en partie** (arrêtés le 02/10 au soir, mais valides).
+- **Le catalogue : 478 fiches** en 11 fichiers (`src/library/exercises/*.ts`,
+  texte dans `src/i18n/fr/exercises/*.ts`), tous rédigés puis relus en
+  entier par un relecteur exigeant. Une fiche peut avoir un nom par matériel
+  (`nameWith` : « à la kettlebell » quand c'est elle qui sert).
   `anchors.ts` liste les identifiants promis ; tous les noms de DidIt sont
   retrouvés par `findByName` (test dans `tests/catalog.test.ts`).
 - `src/readiness/assess.ts` : la forme du jour (repos déclaré, maladie, pouls
@@ -80,8 +80,6 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## Reste à faire
 
-1. **Finir la relecture de `conditioning` et `skills`** (le workflow a été
-   arrêté avant la fin) : anatomie, difficultés, matériel, français.
 2. **Relire des séances comme un coach**, en grand nombre : un workflow qui
    génère des séances pour des profils variés et les fait critiquer
    (équilibre pousser / tirer, volume, ordre, charge, cohérence de
@@ -177,3 +175,9 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   et le temps de chaque série comme dans DidIt (demande de l'utilisateur).
   203 tests. Première version utilisable poussée ; session DidIt prévenue.
   Arrêt pour ce soir à la demande de l'utilisateur.
+- **03/10** — Relecture de `conditioning` et `skills` finie (478 fiches).
+  28 séances et 3 plans générés en texte, relus par trois coachs
+  (programmation, sécurité, clarté) : 45 constats. Premiers correctifs :
+  focus prioritaire, exercices chargés non pénalisés, finisher en plusieurs
+  tours, plus d'exercice seul après des supersets (trio), tirage de secours
+  par les omoplates, nom selon le matériel, choix selon l'objectif. 213 tests.

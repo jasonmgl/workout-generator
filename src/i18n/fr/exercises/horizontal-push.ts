@@ -289,6 +289,7 @@ export const HORIZONTAL_PUSH_FR: Readonly<Record<string, ExerciseText>> = {
     // Aux sangles et aux anneaux
     'suspension-push-up': {
         name: 'Pompes inclinées aux sangles',
+        nameWith: { rings: 'Pompes inclinées aux anneaux' },
         aliases: ['Pompes à la sangle de suspension', 'Pompes TRX', 'Suspension push-up'],
         summary: 'Une pompe inclinée, mains dans des poignées suspendues : la poussée de la pompe, avec des épaules qui doivent en plus stabiliser les poignées.',
         setup: [

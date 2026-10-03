@@ -180,6 +180,11 @@ export interface ExerciseText {
     readonly name: string;
     /** Les autres noms sous lesquels on le cherche : « Pompe à l'arc », « Rowing australien »… */
     readonly aliases?: readonly string[];
+    /**
+     * Le nom à afficher quand c'est une autre pièce du matériel qui sert : une fiche « aux haltères » qui se fait
+     * aussi avec une kettlebell s'appelle « à la kettlebell » quand c'est elle qu'on a.
+     */
+    readonly nameWith?: Readonly<Partial<Record<EquipmentId, string>>>;
     /** Une phrase qui dit ce que c'est et à quoi ça sert. */
     readonly summary: string;
     /** La mise en place, avant la première répétition. */

@@ -86,7 +86,10 @@ function muscleAppeal(muscle: MuscleId, context: Context): number {
 /** La note d'un candidat pour une place : plus elle est haute, plus il a de chances de sortir. */
 export function score(definition: ExerciseDefinition, slot: Slot, context: Context, chosen: readonly ExerciseDefinition[]): number {
     const target = targetDifficulty(definition, context);
-    const gap = definition.difficulty - target;
+    // Un exercice chargé progresse par la charge : être techniquement plus simple que le niveau ne le dessert
+    // presque pas (un avancé fait encore des squats à la barre), être plus technique, si.
+    const rawGap = definition.difficulty - target;
+    const gap = definition.tags?.includes('loaded') && rawGap < 0 ? rawGap / 3 : rawGap;
     let value = Math.exp(-(gap * gap) / (2 * 1.2 * 1.2));
 
     if (gap > 1.5) {
@@ -112,6 +115,17 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
     if (seen && seen.count >= 10) value *= 0.7;
 
     if (context.favorites.has(definition.id)) value *= 1.4;
+
+    // L’objectif : une variante qui ne monte pas jusqu’aux répétitions de l’endurance, ou qui ne descend pas jusqu’à
+    // celles de la force, sert mal ; une descente freinée et lente n’a rien à faire dans un circuit d’endurance.
+    if (definition.measure === 'reps' && definition.kind === 'strength') {
+        const [low, high] = context.settings.reps;
+
+        if (definition.range[1] < low) value *= 0.5;
+        if (definition.range[0] > high) value *= 0.6;
+    }
+
+    if ((context.goal === 'endurance' || context.goal === 'fat-loss') && definition.tags?.includes('eccentric')) value *= 0.4;
 
     // Avec des charges à disposition, la force et le volume progressent mieux sur un exercice chargé.
     if ((context.goal === 'strength' || context.goal === 'hypertrophy') && definition.tags?.includes('loaded')) value *= 1.2;

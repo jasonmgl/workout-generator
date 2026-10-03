@@ -259,9 +259,14 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
         }
     };
 
-    const place = (slot: Slot): void => {
+    const place = (slot: Slot, optional = false): void => {
+        // Les schémas de secours s'essaient dans l'ordre : les omoplates avant le gainage du dos.
         const definition =
-            pick(slot, context, chosen()) ?? (slot.fallback ? pick({ ...slot, key: `${slot.key}-fallback`, patterns: slot.fallback }, context, chosen()) : undefined);
+            pick(slot, context, chosen()) ??
+            (slot.fallback ?? []).reduce<ExerciseDefinition | undefined>(
+                (found, pattern) => found ?? pick({ ...slot, key: `${slot.key}-fallback`, patterns: [pattern] }, context, chosen()),
+                undefined,
+            );
 
         if (!definition) {
             if (baseKeys.has(slot.key)) {
@@ -282,6 +287,12 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
             return;
         }
 
+        // Une place en plus ne vaut pas un doublon : si le seul candidat est de la même famille qu’un exercice déjà
+        // choisi (des troisièmes pompes), on la laisse vide.
+        if (optional && chosen().some((other) => other.family === definition.family)) {
+            return;
+        }
+
         const planned = plan(definition, slot, context);
 
         if (slot.role === 'skill') {
@@ -291,15 +302,20 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
         }
     };
 
-    // 1. Les places de base. 2. Des séries en plus. 3. Ce qu'on vise et les places en plus. 4. Encore des séries.
-    for (const slot of slots.filter((entry) => baseKeys.has(entry.key))) place(slot);
+    // Ce qu'on vise passe avant la base : avec « les bras » en focus, un curl et une extension des triceps sont
+    // garantis, même si les gros mouvements du haut du corps remplissent déjà le temps.
+    const focusKeys = new Set(context.focusGroups.flatMap((group) => FOCUS_SLOTS[group].map((slot) => slot.key)));
+    const first = [...slots.filter((entry) => focusKeys.has(entry.key)), ...slots.filter((entry) => baseKeys.has(entry.key))];
+
+    // 1. Ce qu'on vise et les places de base. 2. Des séries en plus. 3. Les places en plus. 4. Encore des séries.
+    for (const slot of first) place(slot);
 
     grow((item) => (item.slotRole === 'main' ? most : most - 1));
 
-    for (const slot of slots.filter((entry) => !baseKeys.has(entry.key))) {
+    for (const slot of slots.filter((entry) => !baseKeys.has(entry.key) && !focusKeys.has(entry.key))) {
         if (items.length >= maxItems || mainSeconds(items) >= mainBudget * 0.92) break;
 
-        place(slot);
+        place(slot, true);
     }
 
     grow(() => most + 1);

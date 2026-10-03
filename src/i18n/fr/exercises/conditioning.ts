@@ -67,7 +67,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
     },
     'punching-bag-rounds': {
         name: 'Rounds au sac de frappe',
-        aliases: ['Sac de frappe', 'Frappe au sac', 'Heavy bag'],
+        aliases: ['Sac de frappe', 'Frappe au sac', 'Reprises au sac', 'Heavy bag'],
         summary: 'Frapper un sac par rounds d’une à trois minutes : un cardio intense pour les épaules, les bras et la rotation du tronc.',
         setup: ['Protéger les mains avec des bandes et des gants.', 'Se placer en garde, à une longueur de bras du sac.'],
         steps: [
@@ -94,9 +94,9 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
             'Monter en posant tout le pied sur chaque marche.',
             'Pousser sur la jambe d’appui pour se hisser, buste légèrement penché en avant.',
             'Redescendre calmement, marche par marche.',
-            'Sur une seule marche : monter, redescendre, et changer régulièrement de jambe d’attaque.',
+            'Faute d’escalier, monter et redescendre une seule marche en changeant régulièrement de jambe d’attaque.',
         ],
-        cues: ['Garder le genou dans l’axe du pied.', 'Pousser par le talon pour faire travailler les fessiers.', 'Garder un rythme tenable du début à la fin.'],
+        cues: ['Garder le genou dans l’axe du pied.', 'Pousser sur le talon pour faire travailler les fessiers.', 'Garder un rythme tenable du début à la fin.'],
         mistakes: ['Ne poser que la pointe du pied sur la marche.', 'Tirer sur la rampe pour monter.', 'Dévaler les marches en descente.'],
         breathing: 'Respirer régulièrement, sans bloquer le souffle dans l’effort.',
     },
@@ -126,7 +126,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         summary: 'Le saut écarté-serré avec les bras qui montent et descendent : un cardio simple qui chauffe tout le corps.',
         setup: ['Se tenir debout, pieds joints, bras le long du corps.'],
         steps: [
-            'Sauter en écartant les pieds un peu plus que la largeur des épaules, bras tendus qui montent au-dessus de la tête.',
+            'Sauter en écartant les pieds un peu plus que la largeur des épaules et monter les bras tendus au-dessus de la tête.',
             'Sauter de nouveau pour revenir pieds joints, bras le long du corps.',
             'Enchaîner sans pause, sur un rythme régulier.',
         ],
@@ -178,6 +178,21 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         mistakes: ['Se pencher en arrière pour monter les genoux.', 'Atterrir sur les talons.', 'Laisser les genoux retomber sous la hauteur des hanches.'],
         breathing: 'Respirer vite mais régulièrement, sans bloquer.',
     },
+    'jog-in-place': {
+        name: 'Course sur place',
+        aliases: ['Courir sur place', 'Footing sur place', 'Jogging sur place', 'Jog in place'],
+        summary: 'Trottiner sans avancer, sur l’avant des pieds : le cardio de base pour s’échauffer ou faire monter le pouls sans matériel.',
+        setup: ['Se tenir debout, pieds sous les hanches, bras fléchis le long du corps.'],
+        steps: [
+            'Trottiner sur place en décollant légèrement les pieds du sol, l’un après l’autre.',
+            'Se réceptionner sur l’avant du pied, genou souple.',
+            'Balancer les bras en opposition, comme pour courir.',
+            'Accélérer peu à peu, ou monter un peu plus les genoux pour corser.',
+        ],
+        cues: ['Rester léger : faire le moins de bruit possible.', 'Garder le buste droit et les épaules relâchées.', 'Garder une cadence régulière.'],
+        mistakes: ['Retomber sur les talons.', 'Se pencher en arrière.', 'Crisper les épaules et les poings.'],
+        breathing: 'Respirer régulièrement, au rythme de la course.',
+    },
     'lateral-shuffle': {
         name: 'Pas chassés latéraux',
         aliases: ['Lateral shuffle', 'Pas chassés', 'Déplacements latéraux'],
@@ -213,7 +228,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
     // Burpees et dérivés
     'half-burpee': {
         name: 'Burpees sans pompe ni saut',
-        aliases: ['Burpees sans pompe ni saut', 'Burpee sans pompe ni saut', 'Demi-burpees', 'Burpees pas à pas', 'Half burpee'],
+        aliases: ['Burpee sans pompe ni saut', 'Burpee décomposé', 'Burpees décomposés', 'Demi-burpees', 'Burpees pas à pas', 'Half burpee'],
         summary: 'Le burpee en douceur, pieds reculés puis ramenés un par un, sans pompe ni saut : jambes, épaules et gainage, sans bruit ni choc.',
         setup: ['Se tenir debout, pieds à largeur de hanches.'],
         steps: [
@@ -265,10 +280,30 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         breathing: 'Souffler en jetant les jambes, inspirer en remontant.',
         safety: 'Éviter en cas de douleur au bas du dos : plaquer les hanches au sol cambre les lombaires.',
     },
+    'no-jump-burpee': {
+        name: 'Burpees avec pompe, sans saut',
+        aliases: ['Burpees sans saut', 'Burpee sans saut', 'Burpees silencieux', 'No-jump burpee'],
+        summary: 'Le burpee complet sans quitter le sol : pieds reculés puis ramenés un par un, une pompe en bas et les bras tendus vers le plafond à la place du saut, pour tout le corps sans bruit ni choc.',
+        setup: ['Se tenir debout, pieds à largeur de hanches.'],
+        steps: [
+            'S’accroupir et poser les mains au sol à largeur d’épaules.',
+            'Reculer un pied puis l’autre jusqu’à la position de planche, bras tendus.',
+            'Faire une pompe complète, corps aligné.',
+            'Ramener un pied puis l’autre près des mains.',
+            'Se relever et tendre les bras au-dessus de la tête, sur la pointe des pieds.',
+        ],
+        cues: [
+            'Garder le corps gainé de la planche jusqu’à la fin de la pompe.',
+            'Placer les épaules au-dessus des mains.',
+            'Enchaîner sans s’arrêter, à un rythme régulier.',
+        ],
+        mistakes: ['Laisser le bassin s’affaisser pendant la pompe.', 'Ne descendre qu’à moitié dans la pompe.', 'Arrondir le dos en se relevant.'],
+        breathing: 'Inspirer en descendant, souffler en poussant et en se relevant.',
+    },
     burpee: {
         name: 'Burpees',
-        aliases: ['Burpees', 'Burpee complet', 'Burpee', 'Burpees complets'],
-        summary: 'Le burpee complet, avec planche, pompe, retour des pieds et saut vertical : un exercice de corps entier qui fait monter le cardio très vite.',
+        aliases: ['Burpee', 'Burpee complet', 'Burpees complets', 'Burpee complet avec pompe'],
+        summary: 'Le burpee complet, avec planche, pompe, retour des pieds et saut vertical : un exercice de corps entier qui fait monter le pouls très vite.',
         setup: ['Se tenir debout, pieds à largeur de hanches.'],
         steps: [
             'S’accroupir et poser les mains au sol à largeur d’épaules.',
@@ -507,7 +542,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
     // Corde à sauter
     'jump-rope': {
         name: 'Corde à sauter',
-        aliases: ['Corde à sauter', 'Sauts à la corde', 'Saut à la corde', 'Jump rope'],
+        aliases: ['Sauts à la corde', 'Saut à la corde', 'Jump rope'],
         summary: 'Sauter à pieds joints par-dessus une corde qui tourne : un cardio intense pour les mollets, la coordination et le souffle.',
         setup: [
             'Régler la corde : un pied posé au milieu, les poignées arrivent sous les aisselles.',
@@ -592,7 +627,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
             'Se tenir debout, pieds à largeur d’épaules, ballon tenu à deux mains contre le ventre.',
         ],
         steps: [
-            'Monter le ballon au-dessus de la tête, bras tendus, en montant sur la pointe des pieds.',
+            'Lever le ballon au-dessus de la tête, bras tendus, en montant sur la pointe des pieds.',
             'Le projeter violemment au sol devant les pieds en enroulant le buste et en fléchissant les jambes.',
             'Ramasser le ballon en squat, dos plat, et recommencer.',
         ],
@@ -661,7 +696,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
             'Se tenir debout juste derrière, pieds à largeur de hanches.',
         ],
         steps: [
-            'S’accroupir, saisir les haltères et reculer les pieds un par un jusqu’en planche, pieds un peu écartés.',
+            'S’accroupir, saisir les haltères et reculer les pieds un par un jusqu’en planche, jambes un peu écartées.',
             'Faire une pompe, puis tirer un haltère vers la hanche, le reposer, et tirer l’autre.',
             'Ramener les pieds vers les mains, un pied après l’autre.',
             'Épauler les haltères en se relevant en squat.',
@@ -677,21 +712,21 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         safety: 'Prendre des haltères qui tiennent à plat sans rouler, et arrêter en cas de douleur aux poignets ou au dos.',
     },
     'kettlebell-clean': {
-        name: 'Épaulés au kettlebell',
-        aliases: ['Kettlebell clean', 'Clean au kettlebell', 'Épaulé kettlebell'],
-        summary: 'Monter le kettlebell d’un coup de hanches jusqu’à l’épaule, en position de rack : la puissance du swing, transmise jusqu’aux bras.',
+        name: 'Épaulés à la kettlebell',
+        aliases: ['Kettlebell clean', 'Clean à la kettlebell', 'Épaulé kettlebell'],
+        summary: 'Monter la kettlebell d’un coup de hanches jusqu’à l’épaule, en position de rack : la puissance du swing, transmise jusqu’aux bras.',
         setup: [
-            'Poser le kettlebell au sol, un peu devant les pieds.',
+            'Poser la kettlebell au sol, un peu devant les pieds.',
             'Se placer pieds à largeur d’épaules, hanches en arrière et dos plat, puis saisir la poignée d’une main.',
         ],
         steps: [
-            'Lancer le kettlebell entre les jambes, comme pour un swing.',
+            'Lancer la kettlebell entre les jambes, comme pour un swing.',
             'Tendre les hanches d’un coup en gardant le coude près du corps.',
-            'Tourner la main autour de la poignée pour accueillir le kettlebell contre l’avant-bras, en rack.',
-            'Le laisser redescendre entre les jambes pour enchaîner, ou le reposer.',
+            'Tourner la main autour de la poignée pour accueillir la kettlebell contre l’avant-bras, en rack.',
+            'La laisser redescendre entre les jambes pour enchaîner, ou la reposer.',
         ],
         cues: [
-            'Garder le kettlebell près du corps, comme pour remonter une fermeture éclair.',
+            'Garder la kettlebell près du corps, comme pour remonter une fermeture éclair.',
             'Glisser la main dans la poignée plutôt que de laisser la cloche basculer.',
             'Finir en rack : poignet droit, coude contre les côtes.',
         ],
@@ -704,56 +739,79 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         safety: 'Maîtriser d’abord le swing, et arrêter en cas de douleur au bas du dos.',
     },
     'kettlebell-high-pull': {
-        name: 'Tirages hauts au kettlebell',
-        aliases: ['Kettlebell high pull', 'High pull au kettlebell', 'Swing tirage haut'],
+        name: 'Tirages hauts à la kettlebell',
+        aliases: ['Kettlebell high pull', 'High pull à la kettlebell', 'Swing tirage haut'],
         summary: 'Un swing à une main prolongé par un tirage du coude vers le haut : hanches, trapèzes et arrière des épaules, l’étape avant l’arraché.',
         setup: [
-            'Poser le kettlebell au sol, un peu devant les pieds.',
+            'Poser la kettlebell au sol, un peu devant les pieds.',
             'Se placer pieds à largeur d’épaules, hanches en arrière et dos plat, puis saisir la poignée d’une main.',
         ],
         steps: [
-            'Lancer le kettlebell entre les jambes, comme pour un swing à une main.',
-            'Tendre les hanches d’un coup pour faire monter le kettlebell.',
+            'Lancer la kettlebell entre les jambes, comme pour un swing à une main.',
+            'Tendre les hanches d’un coup pour faire monter la kettlebell.',
             'Prolonger en tirant le coude vers le haut et l’arrière, poignée à hauteur de poitrine.',
-            'Relâcher le bras pour laisser le kettlebell redescendre entre les jambes, et enchaîner.',
+            'Relâcher le bras pour laisser la kettlebell redescendre entre les jambes, et enchaîner.',
         ],
         cues: [
             'Laisser les hanches faire le travail : le bras ne fait que guider.',
             'Tirer le coude haut et vers l’arrière, pas la main.',
             'Garder le dos plat à la descente.',
         ],
-        mistakes: ['Lever le kettlebell à la force de l’épaule.', 'Hausser l’épaule vers l’oreille.', 'Arrondir le dos quand le kettlebell redescend.'],
+        mistakes: ['Lever la kettlebell à la force de l’épaule.', 'Hausser l’épaule vers l’oreille.', 'Arrondir le dos quand la kettlebell redescend.'],
         breathing: 'Souffler sur le coup de hanches, inspirer à la descente.',
     },
     'kettlebell-snatch': {
-        name: 'Arrachés au kettlebell',
-        aliases: ['Kettlebell snatch', 'Snatch au kettlebell', 'Arraché kettlebell'],
-        summary: 'Envoyer le kettlebell d’un seul élan d’entre les jambes jusqu’au-dessus de la tête, bras tendu : hanches, épaules et cardio en un geste.',
+        name: 'Arrachés à la kettlebell',
+        aliases: ['Kettlebell snatch', 'Snatch à la kettlebell', 'Arraché kettlebell'],
+        summary: 'Envoyer la kettlebell d’un seul élan d’entre les jambes jusqu’au-dessus de la tête, bras tendu : hanches, épaules et cardio en un geste.',
         setup: [
-            'Poser le kettlebell au sol, un peu devant les pieds.',
+            'Poser la kettlebell au sol, un peu devant les pieds.',
             'Se placer pieds à largeur d’épaules, hanches en arrière et dos plat, puis saisir la poignée d’une main.',
         ],
         steps: [
-            'Lancer le kettlebell entre les jambes.',
+            'Lancer la kettlebell entre les jambes.',
             'Tendre les hanches d’un coup et tirer le coude vers le haut, kettlebell près du corps.',
-            'Passer la main sous la poignée et la pousser vers le plafond pour finir bras tendu, cloche posée contre l’avant-bras.',
-            'Laisser le kettlebell redescendre entre les jambes, puis enchaîner.',
+            'Glisser la main dans la poignée et pousser le poing vers le plafond pour finir bras tendu, la cloche posée contre l’avant-bras.',
+            'Laisser la kettlebell redescendre entre les jambes, puis enchaîner.',
         ],
         cues: [
-            'Faire passer le kettlebell près du corps, pas en grand arc.',
-            'Pousser la main vers le plafond au dernier moment pour accueillir la cloche en douceur.',
+            'Faire passer la kettlebell près du corps, pas en grand arc.',
+            'Pousser le poing vers le plafond au dernier moment pour accueillir la cloche en douceur.',
             'Finir bras verrouillé, biceps près de l’oreille.',
         ],
         mistakes: ['Laisser la cloche basculer et frapper l’avant-bras.', 'Finir bras plié ou devant la tête.', 'Arrondir le dos à la descente.'],
         breathing: 'Souffler sur le coup de hanches, inspirer en haut ou pendant la descente.',
         safety: 'Réserver aux épaules qui montent bras tendu à la verticale sans douleur, après avoir maîtrisé le swing et le tirage haut.',
     },
+    'dumbbell-snatch': {
+        name: 'Arrachés à l’haltère',
+        aliases: ['Dumbbell snatch', 'Snatch à l’haltère', 'Arraché à un bras à l’haltère'],
+        summary: 'Monter un haltère du sol jusqu’au-dessus de la tête d’un seul élan, bras tendu : la poussée des jambes et des hanches transmise jusqu’à l’épaule, avec un cardio qui grimpe vite.',
+        setup: [
+            'Poser un haltère au sol entre les pieds, pieds à largeur de hanches ou un peu plus.',
+            'Plier les jambes et pousser les hanches en arrière, dos plat, puis saisir l’haltère d’une main, bras tendu.',
+        ],
+        steps: [
+            'Pousser fort dans le sol et tendre les hanches d’un coup.',
+            'Laisser l’élan monter l’haltère en tirant le coude vers le haut, haltère près du corps.',
+            'Passer le poignet sous l’haltère et finir bras tendu au-dessus de l’épaule, jambes légèrement fléchies pour le recevoir.',
+            'Se redresser complètement, puis redescendre l’haltère à l’épaule et jusqu’au sol, dos plat.',
+        ],
+        cues: [
+            'Faire monter l’haltère avec les jambes et les hanches, pas avec le bras.',
+            'Garder l’haltère près du corps pendant toute la montée.',
+            'Finir coude verrouillé, biceps près de l’oreille, poignet droit.',
+        ],
+        mistakes: ['Lever l’haltère à la force de l’épaule, sans coup de hanches.', 'Arrondir le dos pour saisir ou reposer l’haltère.', 'Finir bras plié ou haltère devant la tête.'],
+        breathing: 'Souffler sur le coup de hanches, inspirer en redescendant.',
+        safety: 'Réserver aux épaules qui montent bras tendu à la verticale sans douleur, et arrêter en cas de douleur au bas du dos.',
+    },
     'turkish-get-up': {
         name: 'Relevés turcs',
         aliases: ['Turkish get-up', 'Relevé turc', 'Get-up turc', 'TGU'],
         summary: 'Passer de couché à debout puis revenir, une charge tenue bras tendu au-dessus de soi : stabilité de l’épaule, gainage et coordination.',
         setup: [
-            'S’allonger sur le dos, la charge tenue bras droit tendu vers le plafond.',
+            'S’allonger sur le dos, la charge dans la main droite, bras tendu vers le plafond.',
             'Plier la jambe droite, pied à plat ; garder la jambe gauche tendue et le bras gauche au sol, à 45° du corps.',
         ],
         steps: [
@@ -791,7 +849,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         name: 'Portage valise',
         aliases: ['Suitcase carry', 'Marche de la valise', 'Marche du fermier sur un bras'],
         summary: 'Marcher avec une charge dans une seule main sans se pencher : les obliques et la poigne travaillent pour garder le buste droit.',
-        setup: ['Poser un haltère ou un kettlebell à côté du pied droit.', 'Le ramasser en pliant les jambes, dos plat.'],
+        setup: ['Poser un haltère ou une kettlebell à côté du pied droit.', 'Ramasser la charge en pliant les jambes, dos plat.'],
         steps: [
             'Se redresser, bras chargé tendu le long du corps.',
             'Marcher à petits pas réguliers sans laisser le buste pencher.',
@@ -809,7 +867,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         name: 'Portage en rack',
         aliases: ['Front rack carry', 'Rack walk', 'Marche en position de rack'],
         summary: 'Marcher avec une charge tenue contre l’épaule, en position de rack : gainage du tronc et posture du haut du dos.',
-        setup: ['Monter un kettlebell ou un haltère contre l’épaule droite, avant-bras vertical, coude contre les côtes.'],
+        setup: ['Monter une kettlebell ou un haltère contre l’épaule droite, avant-bras vertical, coude contre les côtes.'],
         steps: ['Se tenir droit, poignet aligné avec l’avant-bras.', 'Marcher à petits pas réguliers.', 'Reposer la charge à la fin du temps, puis changer de côté.'],
         cues: ['Garder le coude serré contre le buste.', 'Garder les côtes basses, sans cambrer.', 'Garder les épaules à la même hauteur.'],
         mistakes: ['Cambrer le bas du dos pour porter la charge.', 'Écarter le coude du corps.', 'Se pencher du côté opposé.'],
@@ -819,7 +877,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         name: 'Portage au-dessus de la tête',
         aliases: ['Overhead carry', 'Marche du serveur', 'Waiter walk', 'Waiter’s walk'],
         summary: 'Marcher en tenant une charge bras tendu au-dessus de la tête : stabilité de l’épaule et gainage.',
-        setup: ['Monter un haltère ou un kettlebell au-dessus de l’épaule droite, bras tendu à la verticale.'],
+        setup: ['Monter un haltère ou une kettlebell au-dessus de l’épaule droite, bras tendu à la verticale.'],
         steps: [
             'Verrouiller le coude, biceps près de l’oreille.',
             'Marcher à petits pas réguliers en gardant la charge immobile.',
@@ -873,7 +931,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
     'incline-treadmill-walk': {
         name: 'Marche inclinée sur tapis de course',
         aliases: ['Marche en pente sur tapis', 'Incline walk', 'Tapis incliné'],
-        summary: 'Marcher sur un tapis de course en pente : le pouls monte presque autant qu’en courant, sans les chocs, et fessiers et mollets travaillent davantage.',
+        summary: 'Marcher sur un tapis de course en pente : presque autant de cardio qu’en courant, sans les chocs, avec plus de travail pour les fessiers et les mollets.',
         setup: ['Démarrer le tapis à allure de marche, à plat.', 'Augmenter la pente peu à peu, jusqu’à 8 à 12 % selon la forme.'],
         steps: [
             'Marcher à un rythme soutenu, en posant tout le pied.',
@@ -883,7 +941,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         cues: [
             'Lâcher les barres latérales et balancer les bras.',
             'Garder le buste droit, légèrement penché depuis les chevilles.',
-            'Pousser par le talon pour faire travailler les fessiers.',
+            'Pousser sur le talon pour faire travailler les fessiers.',
         ],
         mistakes: ['Se tenir aux barres en se penchant en arrière.', 'Marcher sur la pointe des pieds.', 'Monter la pente trop vite dès le début.'],
         breathing: 'Respirer régulièrement, sans bloquer.',
@@ -911,7 +969,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
     // Endurance : course
     'easy-run': {
         name: 'Course à pied',
-        aliases: ['Course à pied', 'Footing', 'Jogging', 'Course facile', 'Course en endurance'],
+        aliases: ['Footing', 'Jogging', 'Course facile', 'Course en endurance'],
         summary: 'Courir à allure facile, assez lentement pour pouvoir parler : la base de l’endurance, pour le cœur et les jambes.',
         setup: ['Choisir des chaussures de course et un parcours, ou un tapis de course.', 'Marcher quelques minutes pour s’échauffer.'],
         steps: [
@@ -974,7 +1032,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         cues: ['Pousser le sol derrière soi.', 'Balancer les bras fort, d’avant en arrière.', 'Rester relâché : mâchoire et épaules détendues.'],
         mistakes: ['Sprinter sans échauffement.', 'Raccourcir la récupération entre deux sprints.', 'Freiner brusquement à l’arrivée.'],
         breathing: 'Respirer librement, et reprendre complètement son souffle entre deux sprints.',
-        safety: 'Arrêter au moindre tiraillement à l’arrière de la cuisse : c’est le signe d’une déchirure qui menace.',
+        safety: 'Arrêter au moindre tiraillement à l’arrière de la cuisse : c’est le signe qu’une déchirure menace.',
     },
     'hill-sprint': {
         name: 'Sprints en côte',
@@ -999,13 +1057,13 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         summary: 'Pédaler à allure régulière et modérée : une endurance sans choc pour le cœur et les cuisses, douce pour les genoux.',
         setup: [
             'Régler la selle : jambe presque tendue quand la pédale est en bas.',
-            'Régler le guidon pour garder le dos droit et les épaules relâchées.',
+            'Régler le guidon pour garder les épaules relâchées et les coudes souples.',
         ],
         steps: [
-            'Pédaler quelques minutes sans résistance pour s’échauffer.',
-            'Ajouter de la résistance jusqu’à respirer plus fort tout en pouvant parler.',
+            'Pédaler quelques minutes en souplesse, sans forcer, pour s’échauffer.',
+            'Augmenter la résistance, ou passer un plus grand braquet, jusqu’à respirer plus fort tout en pouvant encore parler.',
             'Tenir cette allure régulière pendant toute la durée.',
-            'Finir par quelques minutes sans résistance.',
+            'Finir par quelques minutes en souplesse.',
         ],
         cues: ['Pédaler de façon ronde et régulière.', 'Garder les genoux dans l’axe des pieds.', 'Rester relâché des épaules et des mains.'],
         mistakes: ['Régler la selle trop basse, genoux très pliés.', 'Mettre trop de résistance et pédaler en force.', 'Se balancer de droite à gauche sur la selle.'],
@@ -1014,11 +1072,11 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
     'bike-intervals': {
         name: 'Fractionné à vélo',
         aliases: ['Intervalles à vélo', 'HIIT à vélo', 'Fractionné sur vélo d’appartement'],
-        summary: 'Alterner des efforts intenses et des temps de pédalage facile : le cardio le plus intense possible, sans aucun choc.',
+        summary: 'Alterner des efforts intenses et des temps de pédalage facile : un cardio très intense, sans aucun choc.',
         setup: ['Régler la selle et le guidon.', 'S’échauffer par cinq à dix minutes de pédalage facile.'],
         steps: [
-            'Augmenter la résistance et pédaler fort pendant la portion prévue.',
-            'Revenir à une résistance faible et pédaler tranquillement pour récupérer.',
+            'Augmenter la résistance, ou le braquet, et pédaler fort pendant la portion prévue.',
+            'Revenir à une résistance faible et pédaler en souplesse pour récupérer.',
             'Recommencer pour le nombre de portions prévu.',
             'Finir par quelques minutes faciles.',
         ],
@@ -1031,7 +1089,7 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         aliases: ['Rameur', 'Aviron en salle', 'Ergomètre', 'Indoor rowing'],
         summary: 'Ramer à allure régulière : une endurance complète qui fait travailler les jambes, le dos et les bras, sans choc.',
         setup: [
-            'S’asseoir et sangler les pieds, la sangle passant sur le haut du pied.',
+            'S’asseoir et sangler les pieds, la sangle passant sur la partie la plus large du pied.',
             'Saisir la poignée bras tendus, buste légèrement penché en avant, tibias verticaux.',
         ],
         steps: [

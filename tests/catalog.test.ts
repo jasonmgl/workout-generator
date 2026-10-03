@@ -187,6 +187,13 @@ describe('la correspondance avec DidIt', () => {
         }
     });
 
+    it('change le nom affiché quand c’est une autre pièce du matériel qui sert', () => {
+        expect(library.name('dumbbell-romanian-deadlift')).toBe('Soulevé de terre roumain aux haltères');
+        expect(library.name('dumbbell-romanian-deadlift', 'fr', ['kettlebell'])).toBe('Soulevé de terre roumain à la kettlebell');
+        expect(library.name('dumbbell-romanian-deadlift', 'fr', ['dumbbells'])).toBe('Soulevé de terre roumain aux haltères');
+        expect(library.name('ring-row', 'fr', ['suspension-trainer'])).toBe('Rowing aux sangles');
+    });
+
     it('retrouve aussi un nom écrit avec une apostrophe droite', () => {
         expect(library.findByName("Tirage à l'élastique")?.id).toBe('band-row');
     });

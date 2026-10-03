@@ -3,7 +3,7 @@
  * rangés en blocs, avec leur temps. On les assemble, on les ajuste à la
  * durée, puis on les rend sous la forme publique (`SessionBlock`).
  */
-import type { EquipmentId } from '../library/equipment';
+import { equipmentUsed, type EquipmentId } from '../library/equipment';
 import type { ExerciseDefinition } from '../library/types';
 import type { BlockFormat, BlockRole, ProgressionStep, Reason, SessionBlock, SessionItem, Target, Tempo } from '../types';
 import type { Context } from './context';
@@ -62,9 +62,12 @@ function itemSeconds(item: PlannedItem, block: PlannedBlock): number {
 }
 
 export function toSessionItem(item: PlannedItem, block: PlannedBlock, context: Context): SessionItem {
+    // L’échauffement et le retour au calme ne dosent pas leurs exercices : on retrouve ici le matériel qui sert.
+    const equipment = item.equipment.length ? item.equipment : equipmentUsed(item.definition.equipment, context.inventory);
+
     return {
         exercise: item.definition.id,
-        name: context.library.name(item.definition.id, context.locale),
+        name: context.library.name(item.definition.id, context.locale, item.load ? [item.load.equipment, ...equipment] : equipment),
         sets: item.sets,
         target: item.target,
         ...(item.perSet ? { perSet: item.perSet } : {}),
@@ -72,7 +75,7 @@ export function toSessionItem(item: PlannedItem, block: PlannedBlock, context: C
         ...(item.rir !== undefined ? { rir: item.rir } : {}),
         ...(item.tempo ? { tempo: item.tempo } : {}),
         ...(item.load ? { load: item.load } : {}),
-        equipment: item.equipment,
+        equipment,
         ...(item.progression ? { progression: item.progression } : {}),
         ...(item.note ? { note: item.note } : {}),
         reasons: item.reasons,

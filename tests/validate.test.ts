@@ -77,6 +77,14 @@ describe('la validation du catalogue', () => {
         expect(messagesFor({}, { ...FIXTURE_FR['push-up']!, mistakes: [''] }).join()).toMatch(/erreurs fréquentes/);
     });
 
+    it('refuse un nom pour une pièce que la fiche ne demande pas', () => {
+        const dip = FIXTURE.find((definition) => definition.id === 'chair-dip')!;
+        const text = { ...FIXTURE_FR['chair-dip']!, nameWith: { rings: 'Dips aux anneaux', 'dip-bars': 'Dips aux barres' } };
+        const problems = validateCatalog([dip], { 'chair-dip': text }, ['knee-push-up']).map((problem) => problem.message);
+
+        expect(problems).toEqual(['nom pour « rings », qui n’est pas dans son matériel']);
+    });
+
     it('repère les doublons d’identifiant, de nom, et les textes orphelins', () => {
         const problems = validateCatalog([pushUp, pushUp, { ...pushUp, id: 'other-push-up' }], {
             'push-up': FIXTURE_FR['push-up']!,

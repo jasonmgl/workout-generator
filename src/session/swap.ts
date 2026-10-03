@@ -54,7 +54,7 @@ export function replaceExercise(session: Session, input: GenerateInput, blockId:
     const keepsRounds = block.format !== 'straight' && block.format !== 'ladder';
     const replaced: SessionItem = {
         exercise: definition.id,
-        name: context.library.name(definition.id, context.locale),
+        name: context.library.name(definition.id, context.locale, prescription.load ? [prescription.load.equipment, ...prescription.equipment] : prescription.equipment),
         sets: keepsRounds ? item.sets : prescription.sets,
         target:
             block.format === 'tabata' || block.format === 'intervals'

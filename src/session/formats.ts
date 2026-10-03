@@ -70,6 +70,9 @@ export function pairUp(items: readonly PlannedItem[]): PlannedItem[][] {
             pairs.push([first, left.splice(index, 1)[0]!]);
         } else if (left.length) {
             pairs.push([first, left.shift()!]);
+        } else if (pairs.length) {
+            // Resté seul : il rejoint la dernière paire, qui devient un trio, plutôt que de traîner en séries à part.
+            pairs[pairs.length - 1]!.push(first);
         } else {
             pairs.push([first]);
         }
@@ -124,8 +127,8 @@ export function buildMainBlocks(items: readonly PlannedItem[], format: BlockForm
             return {
                 id: `main-${index + 1}`,
                 role: 'main',
-                format: 'superset',
-                title: title('block-superset', context),
+                format: pair.length === 2 ? 'superset' : 'circuit',
+                title: title(pair.length === 2 ? 'block-superset' : 'block-triset', context),
                 rounds: Math.max(...pair.map((item) => item.sets)),
                 restBetweenRounds: Math.max(...pair.map((item) => item.restSeconds)),
                 restBetweenItems: 10,
@@ -237,7 +240,8 @@ export function buildIntervals(
     const beginner = context.level === 'beginner';
     const work = tabata ? 20 : beginner ? Math.min(30, context.settings.intervals.work) : context.settings.intervals.work;
     const rest = tabata ? 10 : beginner ? Math.max(30, context.settings.intervals.rest) : context.settings.intervals.rest;
-    const restBetweenRounds = tabata ? 0 : 60;
+    // Un cardio de fin de séance enchaîne ses tours : quatre minutes coupées d'une minute de pause n'en font plus que deux.
+    const restBetweenRounds = tabata || role === 'finisher' ? 0 : 60;
     const perRound = exercises.length * (work + rest);
     const rounds = tabata ? Math.max(1, Math.round(8 / exercises.length)) : Math.max(1, Math.floor((seconds + restBetweenRounds) / (perRound + restBetweenRounds)));
 

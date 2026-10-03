@@ -313,6 +313,87 @@ describe('le type de séance', () => {
     });
 });
 
+describe('les défauts vus en relisant les séances', () => {
+    it('garantit un curl et une extension des triceps quand on vise les bras, même en 30 minutes', () => {
+        for (let seed = 1; seed <= 10; seed++) {
+            const session = generateSession({ date: DATE, seed, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: EQUIPMENT.halteres!, request: { minutes: 30, focus: ['arms'] } });
+            const patterns = items(session, ['main']).map((item) => library.get(item.exercise).pattern);
+
+            expect(patterns, `graine ${seed}`).toContain('elbow-flexion');
+            expect(patterns, `graine ${seed}`).toContain('elbow-extension');
+        }
+    });
+
+    it('fait la force à la barre quand on a une salle', () => {
+        for (let seed = 1; seed <= 10; seed++) {
+            const session = generateSession({ date: DATE, seed, profile: { goal: 'strength', level: 'advanced', bodyweightKg: 80 }, equipment: EQUIPMENT.salle!, request: { minutes: 60 } });
+            const loaded = items(session, ['main']).filter((item) => library.get(item.exercise).tags?.includes('loaded'));
+
+            expect(loaded.length, `graine ${seed} : ${ids(session, ['main']).join(', ')}`).toBeGreaterThanOrEqual(2);
+        }
+    });
+
+    it('enchaîne plusieurs tours de cardio en fin de séance', () => {
+        for (let seed = 1; seed <= 30; seed++) {
+            const session = generateSession({ date: DATE, seed, profile: { goal: 'fat-loss', level: 'intermediate' }, request: { minutes: 35 } });
+            const finisher = session.blocks.find((block) => block.role === 'finisher');
+
+            if (finisher) {
+                expect(finisher.rounds * finisher.items.length * ((finisher.workSeconds ?? 0) + (finisher.restSeconds ?? 0)), `graine ${seed}`).toBeGreaterThanOrEqual(180);
+            }
+        }
+    });
+
+    it('ne laisse pas un exercice seul en séries classiques après des supersets', () => {
+        for (let seed = 1; seed <= 20; seed++) {
+            const session = generateSession({ date: DATE, seed, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: EQUIPMENT.maison!, request: { minutes: 45, format: 'superset' } });
+            const main = session.blocks.filter((block) => block.role === 'main');
+
+            expect(main.some((block) => block.format === 'straight' && block.items.length === 1) && main.length > 1, `graine ${seed}`).toBe(false);
+        }
+    });
+
+    it('nomme l’exercice d’après le matériel qui sert vraiment', () => {
+        for (let seed = 1; seed <= 10; seed++) {
+            const session = generateSession({ date: DATE, seed, profile: { level: 'intermediate' }, equipment: [{ id: 'kettlebell', loads: [16] }], request: { minutes: 30 } });
+
+            for (const item of items(session, ['warmup', 'main', 'finisher', 'cooldown'])) {
+                expect(item.name, `graine ${seed}`).not.toMatch(/halt[eè]re/i);
+            }
+        }
+    });
+
+    it('ne met pas trois variantes de la même famille dans une séance', () => {
+        for (let seed = 1; seed <= 20; seed++) {
+            const session = generateSession({ date: DATE, seed, profile: { goal: 'endurance', level: 'beginner' }, request: { minutes: 60 } });
+            const families = items(session, ['main']).map((item) => library.get(item.exercise).family);
+            const counts = families.reduce<Record<string, number>>((tally, family) => ({ ...tally, [family]: (tally[family] ?? 0) + 1 }), {});
+
+            expect(Math.max(...Object.values(counts)), `graine ${seed} : ${families.join(', ')}`).toBeLessThanOrEqual(2);
+        }
+    });
+
+    it('ne fait pas de négatives lentes dans un circuit d’endurance', () => {
+        for (let seed = 1; seed <= 20; seed++) {
+            const session = generateSession({ date: DATE, seed, profile: { goal: 'endurance', level: 'beginner' }, request: { minutes: 45 } });
+
+            for (const item of items(session, ['main'])) {
+                expect(library.get(item.exercise).tags ?? [], `graine ${seed} : ${item.exercise}`).not.toContain('eccentric');
+            }
+        }
+    });
+
+    it('travaille le haut du dos au sol quand rien ne permet de tirer', () => {
+        for (let seed = 1; seed <= 10; seed++) {
+            const session = generateSession({ date: DATE, seed, request: { minutes: 30 } });
+            const back = items(session, ['main']).filter((item) => library.get(item.exercise).muscles.primary.some((muscle) => MUSCLE_INFO[muscle].group === 'back'));
+
+            expect(back.length, `graine ${seed}`).toBeGreaterThanOrEqual(1);
+            expect(back.some((item) => library.get(item.exercise).pattern === 'scapular'), `graine ${seed}`).toBe(true);
+        }
+    });
+});
+
 describe('le repos', () => {
     it('ne propose qu’un repos actif quand le pouls est trop haut', () => {
         const session = generateSession({

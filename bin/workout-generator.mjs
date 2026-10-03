@@ -453,6 +453,7 @@ var MESSAGES_FR = {
   "block-main": "S\xE9ries",
   "block-skill": "Figures",
   "block-superset": "Par deux",
+  "block-triset": "Par trois",
   "block-circuit": "Circuit",
   "block-amrap": "Le plus de tours en {minutes} min",
   "block-emom": "Chaque minute, {minutes} min",
@@ -6947,7 +6948,7 @@ var CONDITIONING = [
     compound: true,
     impact: "high",
     posture: "standing",
-    space: "spot",
+    space: "room",
     joints: { wrists: 2, shoulders: 1, elbows: 1 },
     met: 6,
     range: [60, 180]
@@ -6965,7 +6966,7 @@ var CONDITIONING = [
     compound: true,
     impact: "low",
     posture: "standing",
-    space: "room",
+    space: "spot",
     joints: { knees: 2 },
     met: 6,
     range: [120, 900],
@@ -7056,10 +7057,27 @@ var CONDITIONING = [
     impact: "high",
     posture: "standing",
     space: "spot",
-    joints: { ankles: 2, knees: 2 },
+    joints: { ankles: 2, knees: 2, hips: 1 },
     met: 8,
     range: [20, 60],
     warmupFor: ["cardio", "jump"]
+  },
+  {
+    id: "jog-in-place",
+    kind: "conditioning",
+    pattern: "cardio",
+    family: "high-knees",
+    difficulty: 2,
+    muscles: { primary: ["gastrocnemius", "soleus", "quads"], secondary: ["hip-flexors", "hamstrings", "glute-max"], stabilizers: ["abs", "glute-med"] },
+    measure: "time",
+    compound: true,
+    impact: "high",
+    posture: "standing",
+    space: "spot",
+    joints: { ankles: 2, knees: 1 },
+    met: 7,
+    range: [30, 300],
+    warmupFor: ["cardio", "jump", "locomotion"]
   },
   {
     id: "lateral-shuffle",
@@ -7127,8 +7145,8 @@ var CONDITIONING = [
     impact: "high",
     posture: "standing",
     space: "mat",
-    joints: { wrists: 2, shoulders: 1, knees: 1 },
-    met: 8,
+    joints: { wrists: 2, shoulders: 1, knees: 2 },
+    met: 7.5,
     secondsPerRep: 3,
     range: [8, 25]
   },
@@ -7144,10 +7162,28 @@ var CONDITIONING = [
     impact: "high",
     posture: "standing",
     space: "mat",
-    joints: { wrists: 2, shoulders: 1, "lower-back": 2, knees: 1 },
-    met: 8,
+    joints: { wrists: 2, shoulders: 1, "lower-back": 2, knees: 2 },
+    met: 7.5,
     secondsPerRep: 3,
     range: [5, 20]
+  },
+  {
+    id: "no-jump-burpee",
+    kind: "conditioning",
+    pattern: "full-body",
+    family: "burpee",
+    difficulty: 4,
+    muscles: { primary: ["quads", "glute-max", "pecs"], secondary: ["triceps", "front-delts", "hip-flexors"], stabilizers: ["abs", "transverse", "serratus"] },
+    measure: "reps",
+    compound: true,
+    impact: "low",
+    posture: "standing",
+    space: "mat",
+    joints: { wrists: 2, shoulders: 1, knees: 1 },
+    met: 6,
+    secondsPerRep: 6,
+    range: [5, 15],
+    tags: ["quiet", "low-impact"]
   },
   {
     id: "burpee",
@@ -7163,7 +7199,7 @@ var CONDITIONING = [
     posture: "standing",
     space: "mat",
     joints: { wrists: 2, knees: 2, ankles: 2, shoulders: 1 },
-    met: 9,
+    met: 8,
     secondsPerRep: 4.5,
     range: [5, 20]
   },
@@ -7180,7 +7216,7 @@ var CONDITIONING = [
     posture: "standing",
     space: "room",
     joints: { wrists: 2, knees: 2, ankles: 2, shoulders: 1 },
-    met: 10,
+    met: 9,
     secondsPerRep: 6,
     range: [5, 15],
     tags: ["explosive", "plyometric"]
@@ -7195,12 +7231,13 @@ var CONDITIONING = [
     muscles: { primary: ["hip-flexors", "abs"], secondary: ["quads", "front-delts", "obliques"], stabilizers: ["transverse", "serratus", "triceps", "pecs"] },
     measure: "time",
     compound: true,
-    impact: "high",
+    impact: "low",
     posture: "support",
     space: "mat",
     joints: { wrists: 2, shoulders: 1 },
     met: 8,
-    range: [20, 60]
+    range: [20, 60],
+    tags: ["low-impact"]
   },
   {
     id: "cross-body-mountain-climber",
@@ -7211,12 +7248,13 @@ var CONDITIONING = [
     muscles: { primary: ["obliques", "hip-flexors", "abs"], secondary: ["quads", "front-delts"], stabilizers: ["transverse", "serratus", "triceps", "pecs"] },
     measure: "time",
     compound: true,
-    impact: "high",
+    impact: "low",
     posture: "support",
     space: "mat",
     joints: { wrists: 2, shoulders: 1 },
     met: 8,
-    range: [20, 45]
+    range: [20, 45],
+    tags: ["low-impact"]
   },
   {
     id: "plank-jack",
@@ -7547,7 +7585,7 @@ var CONDITIONING = [
     impact: "none",
     posture: "standing",
     space: "spot",
-    joints: { "lower-back": 2, wrists: 1 },
+    joints: { "lower-back": 2, wrists: 1, shoulders: 1 },
     met: 8,
     secondsPerRep: 2.5,
     range: [5, 12],
@@ -7580,7 +7618,7 @@ var CONDITIONING = [
   {
     id: "kettlebell-snatch",
     kind: "power",
-    pattern: "hinge",
+    pattern: "full-body",
     family: "kettlebell-swing",
     difficulty: 7,
     muscles: {
@@ -7599,7 +7637,32 @@ var CONDITIONING = [
     met: 10,
     secondsPerRep: 2.5,
     range: [5, 15],
-    easier: ["kettlebell-high-pull"],
+    easier: ["kettlebell-high-pull", "dumbbell-snatch"],
+    tags: ["explosive", "loaded"]
+  },
+  {
+    id: "dumbbell-snatch",
+    kind: "power",
+    pattern: "full-body",
+    family: "dumbbell-snatch",
+    difficulty: 5,
+    muscles: {
+      primary: ["glute-max", "hamstrings", "upper-traps"],
+      secondary: ["quads", "erectors", "front-delts", "side-delts", "triceps"],
+      stabilizers: ["rotator-cuff", "serratus", "abs", "transverse", "forearm-flexors"]
+    },
+    equipment: [["dumbbells"]],
+    measure: "reps",
+    unilateral: true,
+    compound: true,
+    impact: "none",
+    posture: "standing",
+    space: "spot",
+    joints: { "lower-back": 2, shoulders: 2, wrists: 1 },
+    met: 9,
+    secondsPerRep: 2.5,
+    range: [5, 15],
+    harder: ["kettlebell-snatch"],
     tags: ["explosive", "loaded"]
   },
   {
@@ -7644,7 +7707,7 @@ var CONDITIONING = [
     impact: "low",
     posture: "standing",
     space: "room",
-    joints: { "lower-back": 1, shoulders: 1 },
+    joints: { "lower-back": 1, shoulders: 1, elbows: 1 },
     met: 5,
     range: [20, 60],
     tags: ["grip", "loaded", "posture"]
@@ -7663,7 +7726,7 @@ var CONDITIONING = [
     impact: "low",
     posture: "standing",
     space: "room",
-    joints: { "lower-back": 1 },
+    joints: { "lower-back": 1, elbows: 1 },
     met: 4.5,
     range: [20, 45],
     tags: ["grip", "loaded", "posture"]
@@ -7709,7 +7772,7 @@ var CONDITIONING = [
     impact: "low",
     posture: "standing",
     space: "room",
-    joints: { shoulders: 2, wrists: 1 },
+    joints: { shoulders: 2, wrists: 1, "lower-back": 1 },
     met: 4.5,
     range: [20, 45],
     tags: ["loaded", "posture"]
@@ -7731,7 +7794,7 @@ var CONDITIONING = [
     impact: "low",
     posture: "standing",
     space: "room",
-    joints: { "lower-back": 2 },
+    joints: { "lower-back": 2, elbows: 1 },
     met: 6,
     range: [20, 60],
     tags: ["loaded", "posture"]
@@ -9503,6 +9566,24 @@ var STRETCH = [
 var SKILLS = [
   // Équilibre sur les mains
   {
+    id: "elevated-pike-hold",
+    kind: "skill",
+    pattern: "vertical-push",
+    family: "handstand",
+    difficulty: 4,
+    muscles: { primary: ["front-delts", "triceps"], secondary: ["upper-traps", "serratus", "side-delts"], stabilizers: ["abs", "transverse", "rotator-cuff"] },
+    equipment: [["chair", "bench", "box"]],
+    measure: "time",
+    compound: true,
+    impact: "none",
+    posture: "support",
+    space: "mat",
+    joints: { wrists: 2, shoulders: 2, elbows: 1 },
+    met: 3.5,
+    range: [15, 45],
+    tags: ["isometric"]
+  },
+  {
     id: "wall-handstand",
     kind: "skill",
     pattern: "vertical-push",
@@ -9531,7 +9612,7 @@ var SKILLS = [
     equipment: [["wall"]],
     measure: "time",
     compound: true,
-    impact: "none",
+    impact: "low",
     posture: "standing",
     space: "mat",
     joints: { wrists: 3, shoulders: 2, elbows: 1 },
@@ -9581,7 +9662,7 @@ var SKILLS = [
     kind: "skill",
     pattern: "vertical-push",
     family: "handstand",
-    difficulty: 8,
+    difficulty: 7,
     muscles: { primary: ["front-delts", "triceps"], secondary: ["upper-traps", "serratus", "forearm-flexors"], stabilizers: ["abs", "transverse", "glute-max", "rotator-cuff"] },
     measure: "time",
     compound: true,
@@ -9606,7 +9687,7 @@ var SKILLS = [
     impact: "none",
     posture: "kneeling",
     space: "mat",
-    joints: { neck: 3, wrists: 1, shoulders: 1 },
+    joints: { neck: 3, wrists: 2, shoulders: 1 },
     met: 3,
     range: [10, 45],
     tags: ["balance", "isometric"]
@@ -9635,18 +9716,18 @@ var SKILLS = [
     pattern: "horizontal-push",
     family: "support",
     difficulty: 3,
-    muscles: { primary: ["triceps", "lats", "lower-traps"], secondary: ["pecs", "front-delts"], stabilizers: ["abs", "transverse", "serratus", "rotator-cuff"] },
-    equipment: [["dip-bars", "two-chairs"]],
+    muscles: { primary: ["triceps", "lower-traps"], secondary: ["lats", "pecs", "front-delts"], stabilizers: ["abs", "transverse", "serratus", "forearm-flexors"] },
+    equipment: [["two-chairs"]],
     measure: "time",
     compound: true,
     impact: "none",
     posture: "support",
     space: "spot",
-    joints: { shoulders: 2, elbows: 1, wrists: 1 },
-    met: 3.5,
+    joints: { shoulders: 1, elbows: 1, wrists: 1 },
+    met: 3,
     range: [15, 45],
     warmupFor: ["horizontal-push"],
-    harder: ["parallel-bar-dip", "tuck-l-sit"],
+    harder: ["chair-dip", "tuck-l-sit"],
     tags: ["isometric"]
   },
   {
@@ -9680,7 +9761,7 @@ var SKILLS = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { wrists: 2, elbows: 1, shoulders: 1 },
+    joints: { wrists: 3, elbows: 1, shoulders: 1 },
     met: 3.5,
     range: [10, 30],
     harder: ["planche-lean"],
@@ -9716,7 +9797,7 @@ var SKILLS = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { wrists: 3, elbows: 1, shoulders: 1 },
+    joints: { wrists: 3, elbows: 2, shoulders: 1 },
     met: 4,
     range: [5, 20],
     tags: ["balance", "isometric"]
@@ -9769,7 +9850,7 @@ var SKILLS = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 2, shoulders: 1, elbows: 1 },
+    joints: { wrists: 3, shoulders: 1, elbows: 1 },
     met: 4,
     range: [10, 30],
     easier: ["support-hold"],
@@ -9787,7 +9868,7 @@ var SKILLS = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 2, shoulders: 1, elbows: 1, hips: 1 },
+    joints: { wrists: 3, shoulders: 1, elbows: 1, hips: 1 },
     met: 4.5,
     range: [5, 20],
     tags: ["isometric"]
@@ -9798,13 +9879,13 @@ var SKILLS = [
     pattern: "trunk-flexion",
     family: "l-sit",
     difficulty: 8,
-    muscles: { primary: ["hip-flexors", "abs"], secondary: ["triceps", "front-delts", "quads", "lats"], stabilizers: ["serratus", "lower-traps", "obliques", "transverse"] },
+    muscles: { primary: ["hip-flexors", "abs"], secondary: ["triceps", "lats", "lower-traps", "quads"], stabilizers: ["front-delts", "serratus", "obliques", "transverse"] },
     measure: "time",
     compound: true,
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 2, shoulders: 2, elbows: 1, hips: 2 },
+    joints: { wrists: 3, shoulders: 3, elbows: 1, hips: 2 },
     met: 5,
     range: [3, 10],
     tags: ["isometric"]
@@ -9815,7 +9896,7 @@ var SKILLS = [
     kind: "skill",
     pattern: "horizontal-push",
     family: "planche",
-    difficulty: 5,
+    difficulty: 4,
     muscles: { primary: ["front-delts", "serratus"], secondary: ["upper-pecs", "pecs", "triceps"], stabilizers: ["abs", "transverse", "biceps", "forearm-flexors"] },
     measure: "time",
     compound: true,
@@ -9833,7 +9914,7 @@ var SKILLS = [
     kind: "skill",
     pattern: "horizontal-push",
     family: "planche",
-    difficulty: 8,
+    difficulty: 7,
     muscles: { primary: ["front-delts", "serratus", "upper-pecs"], secondary: ["pecs", "triceps", "abs", "lower-traps"], stabilizers: ["biceps", "forearm-flexors", "transverse", "hip-flexors"] },
     measure: "time",
     compound: true,
@@ -9850,7 +9931,7 @@ var SKILLS = [
     kind: "skill",
     pattern: "horizontal-push",
     family: "planche",
-    difficulty: 9,
+    difficulty: 8,
     muscles: { primary: ["front-delts", "serratus", "upper-pecs"], secondary: ["pecs", "triceps", "abs", "lower-traps"], stabilizers: ["biceps", "forearm-flexors", "transverse", "erectors", "glute-max"] },
     measure: "time",
     compound: true,
@@ -9867,16 +9948,33 @@ var SKILLS = [
     kind: "skill",
     pattern: "horizontal-push",
     family: "planche",
-    difficulty: 10,
+    difficulty: 9,
     muscles: { primary: ["front-delts", "serratus", "upper-pecs"], secondary: ["pecs", "triceps", "lower-traps", "glute-max"], stabilizers: ["biceps", "forearm-flexors", "erectors", "abs", "glute-med"] },
     measure: "time",
     compound: true,
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { wrists: 3, shoulders: 3, elbows: 2, hips: 1 },
+    joints: { wrists: 3, shoulders: 3, elbows: 3, hips: 1 },
     met: 6,
     range: [3, 10],
+    tags: ["isometric", "balance"]
+  },
+  {
+    id: "full-planche",
+    kind: "skill",
+    pattern: "horizontal-push",
+    family: "planche",
+    difficulty: 10,
+    muscles: { primary: ["front-delts", "serratus", "upper-pecs"], secondary: ["pecs", "triceps", "lower-traps", "glute-max", "abs"], stabilizers: ["biceps", "forearm-flexors", "erectors", "hamstrings", "transverse"] },
+    measure: "time",
+    compound: true,
+    impact: "none",
+    posture: "support",
+    space: "mat",
+    joints: { wrists: 3, shoulders: 3, elbows: 3 },
+    met: 6.5,
+    range: [2, 8],
     tags: ["isometric", "balance"]
   },
   // Front lever
@@ -9986,7 +10084,7 @@ var SKILLS = [
     impact: "none",
     posture: "hanging",
     space: "spot",
-    joints: { shoulders: 3, elbows: 1 },
+    joints: { shoulders: 3, elbows: 2 },
     met: 2.5,
     range: [10, 30],
     easier: ["dead-hang"]
@@ -10004,7 +10102,7 @@ var SKILLS = [
     impact: "none",
     posture: "hanging",
     space: "spot",
-    joints: { shoulders: 3, elbows: 1 },
+    joints: { shoulders: 3, elbows: 2 },
     met: 4,
     secondsPerRep: 6,
     range: [3, 8],
@@ -10041,12 +10139,31 @@ var SKILLS = [
     impact: "none",
     posture: "hanging",
     space: "spot",
-    joints: { shoulders: 3, elbows: 2 },
+    joints: { shoulders: 3, elbows: 3 },
     met: 5.5,
     range: [3, 12],
     tags: ["isometric"]
   },
   // Drapeau
+  {
+    id: "vertical-flag",
+    kind: "skill",
+    pattern: "vertical-push",
+    family: "human-flag",
+    difficulty: 7,
+    muscles: { primary: ["side-delts", "lats", "triceps"], secondary: ["front-delts", "upper-traps", "obliques"], stabilizers: ["forearm-flexors", "rotator-cuff", "abs", "transverse"] },
+    equipment: [["rack", "outdoor"]],
+    measure: "time",
+    unilateral: true,
+    compound: true,
+    impact: "low",
+    posture: "hanging",
+    space: "room",
+    joints: { shoulders: 3, elbows: 2, wrists: 2 },
+    met: 5,
+    range: [5, 20],
+    tags: ["isometric", "grip"]
+  },
   {
     id: "human-flag",
     kind: "skill",
@@ -10079,7 +10196,7 @@ var SKILLS = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { "lower-back": 3, shoulders: 2, wrists: 2, neck: 1 },
+    joints: { "lower-back": 3, shoulders: 2, wrists: 3, neck: 1 },
     met: 3,
     range: [10, 30],
     easier: ["glute-bridge"],
@@ -10091,14 +10208,14 @@ var SKILLS = [
     pattern: "trunk-extension",
     family: "back-bridge",
     difficulty: 5,
-    muscles: { primary: ["quads", "abs", "erectors"], secondary: ["glute-max", "triceps", "front-delts"], stabilizers: ["hip-flexors", "serratus", "adductors"] },
+    muscles: { primary: ["abs", "quads", "glute-max"], secondary: ["hip-flexors", "erectors", "triceps", "front-delts"], stabilizers: ["serratus", "adductors", "transverse"] },
     equipment: [["wall"]],
     measure: "reps",
     compound: true,
     impact: "none",
     posture: "standing",
     space: "mat",
-    joints: { "lower-back": 3, shoulders: 2, wrists: 1, knees: 1 },
+    joints: { "lower-back": 3, shoulders: 2, wrists: 2, knees: 1 },
     met: 3.5,
     secondsPerRep: 14,
     range: [2, 6]
@@ -10407,6 +10524,7 @@ var HORIZONTAL_PUSH_FR = {
   // Aux sangles et aux anneaux
   "suspension-push-up": {
     name: "Pompes inclin\xE9es aux sangles",
+    nameWith: { rings: "Pompes inclin\xE9es aux anneaux" },
     aliases: ["Pompes \xE0 la sangle de suspension", "Pompes TRX", "Suspension push-up"],
     summary: "Une pompe inclin\xE9e, mains dans des poign\xE9es suspendues : la pouss\xE9e de la pompe, avec des \xE9paules qui doivent en plus stabiliser les poign\xE9es.",
     setup: [
@@ -11573,6 +11691,7 @@ var SHOULDERS_FR = {
   },
   "ring-face-pull": {
     name: "Face pull aux anneaux",
+    nameWith: { "suspension-trainer": "Face pull aux sangles" },
     aliases: ["Face pull au TRX", "Face pull aux sangles", "Ring face pull"],
     summary: "Le face pull au poids du corps, pench\xE9 en arri\xE8re sous des anneaux ou des sangles : arri\xE8re des \xE9paules, milieu du dos et coiffe des rotateurs.",
     setup: [
@@ -12316,6 +12435,7 @@ var PULL_FR = {
   },
   "ring-row": {
     name: "Rowing aux anneaux",
+    nameWith: { "suspension-trainer": "Rowing aux sangles" },
     aliases: ["Rowing aux sangles", "Tirage aux anneaux", "Ring row"],
     summary: "Un tirage horizontal, pench\xE9 en arri\xE8re sous des anneaux ou des sangles : r\xE9glable du tr\xE8s facile au difficile selon l\u2019inclinaison.",
     setup: [
@@ -12373,6 +12493,7 @@ var PULL_FR = {
   },
   "archer-ring-row": {
     name: "Rowing archer aux anneaux",
+    nameWith: { "suspension-trainer": "Rowing archer aux sangles" },
     aliases: ["Rowing archer aux sangles", "Archer ring row"],
     summary: "Un rowing aux anneaux o\xF9 un bras tire pendant que l\u2019autre s\u2019ouvre tendu sur le c\xF4t\xE9 : la marche vers le rowing \xE0 un bras.",
     setup: ["R\xE9gler les anneaux ou les sangles \xE0 hauteur de taille.", "Saisir les poign\xE9es et se pencher en arri\xE8re, bras tendus, corps droit."],
@@ -12388,6 +12509,7 @@ var PULL_FR = {
   },
   "one-arm-ring-row": {
     name: "Rowing \xE0 un bras aux anneaux",
+    nameWith: { "suspension-trainer": "Rowing \xE0 un bras aux sangles" },
     aliases: ["Rowing unilat\xE9ral aux anneaux", "Rowing \xE0 un bras aux sangles", "One-arm ring row"],
     summary: "Le rowing aux anneaux tir\xE9 d\u2019un seul bras, le corps gain\xE9 pour ne pas tourner : un tirage horizontal tr\xE8s exigeant pour le dos et le gainage.",
     setup: [
@@ -12765,6 +12887,7 @@ var ARMS_FR = {
   },
   "ring-biceps-curl": {
     name: "Curls aux anneaux",
+    nameWith: { "suspension-trainer": "Curls aux sangles" },
     aliases: ["Curl aux anneaux", "Curls aux sangles", "Curl biceps aux anneaux", "Ring curl"],
     summary: "Un curl au poids du corps : suspendu aux anneaux, le corps inclin\xE9, on se ram\xE8ne vers les mains en pliant seulement les coudes.",
     setup: [
@@ -12947,6 +13070,7 @@ var ARMS_FR = {
   },
   "dumbbell-overhead-triceps-extension": {
     name: "Extensions triceps au-dessus de la t\xEAte \xE0 l\u2019halt\xE8re",
+    nameWith: { kettlebell: "Extensions triceps au-dessus de la t\xEAte \xE0 la kettlebell" },
     aliases: ["Extension nuque \xE0 l\u2019halt\xE8re", "Extension nuque", "Extension triceps nuque", "Overhead triceps extension"],
     summary: "L\u2019extension des triceps bras lev\xE9s, un halt\xE8re tenu \xE0 deux mains : la longue portion du triceps travaille en \xE9tirement.",
     setup: [
@@ -13087,6 +13211,7 @@ var ARMS_FR = {
   },
   "ring-triceps-extension": {
     name: "Extensions triceps aux anneaux",
+    nameWith: { "suspension-trainer": "Extensions triceps aux sangles" },
     aliases: ["Extension triceps aux anneaux", "Extensions triceps aux sangles", "Ring triceps extension"],
     summary: "L\u2019extension des triceps aux anneaux ou aux sangles : le geste de la table, avec des poign\xE9es libres qui demandent bien plus de contr\xF4le aux \xE9paules.",
     setup: [
@@ -13790,6 +13915,7 @@ var SQUAT_LUNGE_FR = {
   },
   "dumbbell-step-up": {
     name: "Mont\xE9es sur une marche avec halt\xE8res",
+    nameWith: { kettlebell: "Mont\xE9es sur une marche avec kettlebell" },
     aliases: ["Step-up avec halt\xE8res", "Dumbbell step-up", "Mont\xE9es sur un banc avec halt\xE8res"],
     summary: "La mont\xE9e sur une marche ou un banc avec une charge dans chaque main : plus de force demand\xE9e aux cuisses et aux fessiers.",
     setup: [
@@ -14121,6 +14247,7 @@ var SQUAT_LUNGE_FR = {
   // Avec charge : fentes
   "dumbbell-split-squat": {
     name: "Fentes statiques avec halt\xE8res",
+    nameWith: { kettlebell: "Fentes statiques avec kettlebell" },
     aliases: ["Split squat aux halt\xE8res", "Dumbbell split squat"],
     summary: "La fente statique avec une charge dans chaque main : le moyen le plus simple de charger le travail d\u2019une jambe.",
     setup: [
@@ -14138,6 +14265,7 @@ var SQUAT_LUNGE_FR = {
   },
   "dumbbell-walking-lunge": {
     name: "Fentes march\xE9es avec halt\xE8res",
+    nameWith: { kettlebell: "Fentes march\xE9es avec kettlebell" },
     aliases: ["Fentes en marchant avec halt\xE8res", "Dumbbell walking lunge"],
     summary: "Les fentes encha\xEEn\xE9es en avan\xE7ant avec une charge dans chaque main : cuisses, fessiers et prise, sur quelques m\xE8tres.",
     setup: ["Pr\xE9voir quelques m\xE8tres d\xE9gag\xE9s.", "Prendre un halt\xE8re ou une kettlebell dans chaque main, bras le long du corps."],
@@ -14153,6 +14281,7 @@ var SQUAT_LUNGE_FR = {
   },
   "dumbbell-bulgarian-split-squat": {
     name: "Squats bulgares avec halt\xE8res",
+    nameWith: { kettlebell: "Squats bulgares avec kettlebell" },
     aliases: ["Squat bulgare aux halt\xE8res", "Dumbbell bulgarian split squat"],
     summary: "Le squat bulgare avec une charge dans chaque main : un des meilleurs exercices pour charger une jambe \xE0 la fois.",
     setup: [
@@ -14310,6 +14439,7 @@ var HINGE_FR = {
   },
   "dumbbell-hip-thrust": {
     name: "Hip thrust \xE0 l\u2019halt\xE8re",
+    nameWith: { kettlebell: "Hip thrust \xE0 la kettlebell" },
     aliases: ["Hip thrust \xE0 la kettlebell", "Hip thrust lest\xE9", "Dumbbell hip thrust"],
     summary: "Le hip thrust avec un halt\xE8re pos\xE9 sur les hanches : la charge permet de renforcer les fessiers au-del\xE0 du poids du corps.",
     setup: [
@@ -14398,6 +14528,7 @@ var HINGE_FR = {
   },
   "dumbbell-romanian-deadlift": {
     name: "Soulev\xE9 de terre roumain aux halt\xE8res",
+    nameWith: { kettlebell: "Soulev\xE9 de terre roumain \xE0 la kettlebell" },
     aliases: ["RDL aux halt\xE8res", "Romanian deadlift", "Soulev\xE9 de terre jambes semi-tendues aux halt\xE8res", "Soulev\xE9 de terre roumain \xE0 la kettlebell"],
     summary: "Descendre les halt\xE8res le long des jambes en reculant les hanches, dos droit : un travail cibl\xE9 des ischio-jambiers et des fessiers.",
     setup: [
@@ -14461,6 +14592,7 @@ var HINGE_FR = {
   },
   "dumbbell-single-leg-romanian-deadlift": {
     name: "Soulev\xE9 de terre sur une jambe \xE0 l\u2019halt\xE8re",
+    nameWith: { kettlebell: "Soulev\xE9 de terre sur une jambe \xE0 la kettlebell" },
     aliases: ["RDL unilat\xE9ral \xE0 l\u2019halt\xE8re", "Soulev\xE9 de terre sur une jambe \xE0 la kettlebell", "Single-leg RDL halt\xE8re"],
     summary: "La charni\xE8re sur une jambe avec un halt\xE8re : plus de travail pour l\u2019ischio-jambier et le fessier, avec un bassin \xE0 tenir face au sol.",
     setup: ["Se tenir debout sur une jambe, genou l\xE9g\xE8rement fl\xE9chi.", "Tenir un halt\xE8re ou une kettlebell dans la main oppos\xE9e \xE0 la jambe d\u2019appui."],
@@ -14495,6 +14627,7 @@ var HINGE_FR = {
   },
   "sumo-kettlebell-deadlift": {
     name: "Soulev\xE9 de terre sumo \xE0 la kettlebell",
+    nameWith: { dumbbells: "Soulev\xE9 de terre sumo \xE0 l\u2019halt\xE8re" },
     aliases: ["Sumo deadlift \xE0 la kettlebell", "Soulev\xE9 de terre sumo \xE0 l\u2019halt\xE8re"],
     summary: "Le soulev\xE9 de terre pieds \xE9cart\xE9s et pointes vers l\u2019ext\xE9rieur : plus de travail pour les cuisses et les adducteurs, avec un buste plus droit.",
     setup: [
@@ -14943,6 +15076,7 @@ var HINGE_FR = {
   },
   "dumbbell-calf-raise": {
     name: "Extensions des mollets aux halt\xE8res",
+    nameWith: { kettlebell: "Extensions des mollets avec kettlebell" },
     aliases: ["Mollets debout aux halt\xE8res", "Extensions mollets lest\xE9es", "Dumbbell calf raise"],
     summary: "Les extensions des mollets avec un halt\xE8re dans chaque main : la charge pour continuer \xE0 progresser quand le poids du corps ne suffit plus.",
     setup: [
@@ -15952,7 +16086,7 @@ var CONDITIONING_FR = {
   },
   "punching-bag-rounds": {
     name: "Rounds au sac de frappe",
-    aliases: ["Sac de frappe", "Frappe au sac", "Heavy bag"],
+    aliases: ["Sac de frappe", "Frappe au sac", "Reprises au sac", "Heavy bag"],
     summary: "Frapper un sac par rounds d\u2019une \xE0 trois minutes : un cardio intense pour les \xE9paules, les bras et la rotation du tronc.",
     setup: ["Prot\xE9ger les mains avec des bandes et des gants.", "Se placer en garde, \xE0 une longueur de bras du sac."],
     steps: [
@@ -15979,9 +16113,9 @@ var CONDITIONING_FR = {
       "Monter en posant tout le pied sur chaque marche.",
       "Pousser sur la jambe d\u2019appui pour se hisser, buste l\xE9g\xE8rement pench\xE9 en avant.",
       "Redescendre calmement, marche par marche.",
-      "Sur une seule marche : monter, redescendre, et changer r\xE9guli\xE8rement de jambe d\u2019attaque."
+      "Faute d\u2019escalier, monter et redescendre une seule marche en changeant r\xE9guli\xE8rement de jambe d\u2019attaque."
     ],
-    cues: ["Garder le genou dans l\u2019axe du pied.", "Pousser par le talon pour faire travailler les fessiers.", "Garder un rythme tenable du d\xE9but \xE0 la fin."],
+    cues: ["Garder le genou dans l\u2019axe du pied.", "Pousser sur le talon pour faire travailler les fessiers.", "Garder un rythme tenable du d\xE9but \xE0 la fin."],
     mistakes: ["Ne poser que la pointe du pied sur la marche.", "Tirer sur la rampe pour monter.", "D\xE9valer les marches en descente."],
     breathing: "Respirer r\xE9guli\xE8rement, sans bloquer le souffle dans l\u2019effort."
   },
@@ -16010,7 +16144,7 @@ var CONDITIONING_FR = {
     summary: "Le saut \xE9cart\xE9-serr\xE9 avec les bras qui montent et descendent : un cardio simple qui chauffe tout le corps.",
     setup: ["Se tenir debout, pieds joints, bras le long du corps."],
     steps: [
-      "Sauter en \xE9cartant les pieds un peu plus que la largeur des \xE9paules, bras tendus qui montent au-dessus de la t\xEAte.",
+      "Sauter en \xE9cartant les pieds un peu plus que la largeur des \xE9paules et monter les bras tendus au-dessus de la t\xEAte.",
       "Sauter de nouveau pour revenir pieds joints, bras le long du corps.",
       "Encha\xEEner sans pause, sur un rythme r\xE9gulier."
     ],
@@ -16062,6 +16196,21 @@ var CONDITIONING_FR = {
     mistakes: ["Se pencher en arri\xE8re pour monter les genoux.", "Atterrir sur les talons.", "Laisser les genoux retomber sous la hauteur des hanches."],
     breathing: "Respirer vite mais r\xE9guli\xE8rement, sans bloquer."
   },
+  "jog-in-place": {
+    name: "Course sur place",
+    aliases: ["Courir sur place", "Footing sur place", "Jogging sur place", "Jog in place"],
+    summary: "Trottiner sans avancer, sur l\u2019avant des pieds : le cardio de base pour s\u2019\xE9chauffer ou faire monter le pouls sans mat\xE9riel.",
+    setup: ["Se tenir debout, pieds sous les hanches, bras fl\xE9chis le long du corps."],
+    steps: [
+      "Trottiner sur place en d\xE9collant l\xE9g\xE8rement les pieds du sol, l\u2019un apr\xE8s l\u2019autre.",
+      "Se r\xE9ceptionner sur l\u2019avant du pied, genou souple.",
+      "Balancer les bras en opposition, comme pour courir.",
+      "Acc\xE9l\xE9rer peu \xE0 peu, ou monter un peu plus les genoux pour corser."
+    ],
+    cues: ["Rester l\xE9ger : faire le moins de bruit possible.", "Garder le buste droit et les \xE9paules rel\xE2ch\xE9es.", "Garder une cadence r\xE9guli\xE8re."],
+    mistakes: ["Retomber sur les talons.", "Se pencher en arri\xE8re.", "Crisper les \xE9paules et les poings."],
+    breathing: "Respirer r\xE9guli\xE8rement, au rythme de la course."
+  },
   "lateral-shuffle": {
     name: "Pas chass\xE9s lat\xE9raux",
     aliases: ["Lateral shuffle", "Pas chass\xE9s", "D\xE9placements lat\xE9raux"],
@@ -16096,7 +16245,7 @@ var CONDITIONING_FR = {
   // Burpees et dérivés
   "half-burpee": {
     name: "Burpees sans pompe ni saut",
-    aliases: ["Burpees sans pompe ni saut", "Burpee sans pompe ni saut", "Demi-burpees", "Burpees pas \xE0 pas", "Half burpee"],
+    aliases: ["Burpee sans pompe ni saut", "Burpee d\xE9compos\xE9", "Burpees d\xE9compos\xE9s", "Demi-burpees", "Burpees pas \xE0 pas", "Half burpee"],
     summary: "Le burpee en douceur, pieds recul\xE9s puis ramen\xE9s un par un, sans pompe ni saut : jambes, \xE9paules et gainage, sans bruit ni choc.",
     setup: ["Se tenir debout, pieds \xE0 largeur de hanches."],
     steps: [
@@ -16148,10 +16297,30 @@ var CONDITIONING_FR = {
     breathing: "Souffler en jetant les jambes, inspirer en remontant.",
     safety: "\xC9viter en cas de douleur au bas du dos : plaquer les hanches au sol cambre les lombaires."
   },
+  "no-jump-burpee": {
+    name: "Burpees avec pompe, sans saut",
+    aliases: ["Burpees sans saut", "Burpee sans saut", "Burpees silencieux", "No-jump burpee"],
+    summary: "Le burpee complet sans quitter le sol : pieds recul\xE9s puis ramen\xE9s un par un, une pompe en bas et les bras tendus vers le plafond \xE0 la place du saut, pour tout le corps sans bruit ni choc.",
+    setup: ["Se tenir debout, pieds \xE0 largeur de hanches."],
+    steps: [
+      "S\u2019accroupir et poser les mains au sol \xE0 largeur d\u2019\xE9paules.",
+      "Reculer un pied puis l\u2019autre jusqu\u2019\xE0 la position de planche, bras tendus.",
+      "Faire une pompe compl\xE8te, corps align\xE9.",
+      "Ramener un pied puis l\u2019autre pr\xE8s des mains.",
+      "Se relever et tendre les bras au-dessus de la t\xEAte, sur la pointe des pieds."
+    ],
+    cues: [
+      "Garder le corps gain\xE9 de la planche jusqu\u2019\xE0 la fin de la pompe.",
+      "Placer les \xE9paules au-dessus des mains.",
+      "Encha\xEEner sans s\u2019arr\xEAter, \xE0 un rythme r\xE9gulier."
+    ],
+    mistakes: ["Laisser le bassin s\u2019affaisser pendant la pompe.", "Ne descendre qu\u2019\xE0 moiti\xE9 dans la pompe.", "Arrondir le dos en se relevant."],
+    breathing: "Inspirer en descendant, souffler en poussant et en se relevant."
+  },
   burpee: {
     name: "Burpees",
-    aliases: ["Burpees", "Burpee complet", "Burpee", "Burpees complets"],
-    summary: "Le burpee complet, avec planche, pompe, retour des pieds et saut vertical : un exercice de corps entier qui fait monter le cardio tr\xE8s vite.",
+    aliases: ["Burpee", "Burpee complet", "Burpees complets", "Burpee complet avec pompe"],
+    summary: "Le burpee complet, avec planche, pompe, retour des pieds et saut vertical : un exercice de corps entier qui fait monter le pouls tr\xE8s vite.",
     setup: ["Se tenir debout, pieds \xE0 largeur de hanches."],
     steps: [
       "S\u2019accroupir et poser les mains au sol \xE0 largeur d\u2019\xE9paules.",
@@ -16386,7 +16555,7 @@ var CONDITIONING_FR = {
   // Corde à sauter
   "jump-rope": {
     name: "Corde \xE0 sauter",
-    aliases: ["Corde \xE0 sauter", "Sauts \xE0 la corde", "Saut \xE0 la corde", "Jump rope"],
+    aliases: ["Sauts \xE0 la corde", "Saut \xE0 la corde", "Jump rope"],
     summary: "Sauter \xE0 pieds joints par-dessus une corde qui tourne : un cardio intense pour les mollets, la coordination et le souffle.",
     setup: [
       "R\xE9gler la corde : un pied pos\xE9 au milieu, les poign\xE9es arrivent sous les aisselles.",
@@ -16470,7 +16639,7 @@ var CONDITIONING_FR = {
       "Se tenir debout, pieds \xE0 largeur d\u2019\xE9paules, ballon tenu \xE0 deux mains contre le ventre."
     ],
     steps: [
-      "Monter le ballon au-dessus de la t\xEAte, bras tendus, en montant sur la pointe des pieds.",
+      "Lever le ballon au-dessus de la t\xEAte, bras tendus, en montant sur la pointe des pieds.",
       "Le projeter violemment au sol devant les pieds en enroulant le buste et en fl\xE9chissant les jambes.",
       "Ramasser le ballon en squat, dos plat, et recommencer."
     ],
@@ -16538,7 +16707,7 @@ var CONDITIONING_FR = {
       "Se tenir debout juste derri\xE8re, pieds \xE0 largeur de hanches."
     ],
     steps: [
-      "S\u2019accroupir, saisir les halt\xE8res et reculer les pieds un par un jusqu\u2019en planche, pieds un peu \xE9cart\xE9s.",
+      "S\u2019accroupir, saisir les halt\xE8res et reculer les pieds un par un jusqu\u2019en planche, jambes un peu \xE9cart\xE9es.",
       "Faire une pompe, puis tirer un halt\xE8re vers la hanche, le reposer, et tirer l\u2019autre.",
       "Ramener les pieds vers les mains, un pied apr\xE8s l\u2019autre.",
       "\xC9pauler les halt\xE8res en se relevant en squat.",
@@ -16554,21 +16723,21 @@ var CONDITIONING_FR = {
     safety: "Prendre des halt\xE8res qui tiennent \xE0 plat sans rouler, et arr\xEAter en cas de douleur aux poignets ou au dos."
   },
   "kettlebell-clean": {
-    name: "\xC9paul\xE9s au kettlebell",
-    aliases: ["Kettlebell clean", "Clean au kettlebell", "\xC9paul\xE9 kettlebell"],
-    summary: "Monter le kettlebell d\u2019un coup de hanches jusqu\u2019\xE0 l\u2019\xE9paule, en position de rack : la puissance du swing, transmise jusqu\u2019aux bras.",
+    name: "\xC9paul\xE9s \xE0 la kettlebell",
+    aliases: ["Kettlebell clean", "Clean \xE0 la kettlebell", "\xC9paul\xE9 kettlebell"],
+    summary: "Monter la kettlebell d\u2019un coup de hanches jusqu\u2019\xE0 l\u2019\xE9paule, en position de rack : la puissance du swing, transmise jusqu\u2019aux bras.",
     setup: [
-      "Poser le kettlebell au sol, un peu devant les pieds.",
+      "Poser la kettlebell au sol, un peu devant les pieds.",
       "Se placer pieds \xE0 largeur d\u2019\xE9paules, hanches en arri\xE8re et dos plat, puis saisir la poign\xE9e d\u2019une main."
     ],
     steps: [
-      "Lancer le kettlebell entre les jambes, comme pour un swing.",
+      "Lancer la kettlebell entre les jambes, comme pour un swing.",
       "Tendre les hanches d\u2019un coup en gardant le coude pr\xE8s du corps.",
-      "Tourner la main autour de la poign\xE9e pour accueillir le kettlebell contre l\u2019avant-bras, en rack.",
-      "Le laisser redescendre entre les jambes pour encha\xEEner, ou le reposer."
+      "Tourner la main autour de la poign\xE9e pour accueillir la kettlebell contre l\u2019avant-bras, en rack.",
+      "La laisser redescendre entre les jambes pour encha\xEEner, ou la reposer."
     ],
     cues: [
-      "Garder le kettlebell pr\xE8s du corps, comme pour remonter une fermeture \xE9clair.",
+      "Garder la kettlebell pr\xE8s du corps, comme pour remonter une fermeture \xE9clair.",
       "Glisser la main dans la poign\xE9e plut\xF4t que de laisser la cloche basculer.",
       "Finir en rack : poignet droit, coude contre les c\xF4tes."
     ],
@@ -16581,56 +16750,79 @@ var CONDITIONING_FR = {
     safety: "Ma\xEEtriser d\u2019abord le swing, et arr\xEAter en cas de douleur au bas du dos."
   },
   "kettlebell-high-pull": {
-    name: "Tirages hauts au kettlebell",
-    aliases: ["Kettlebell high pull", "High pull au kettlebell", "Swing tirage haut"],
+    name: "Tirages hauts \xE0 la kettlebell",
+    aliases: ["Kettlebell high pull", "High pull \xE0 la kettlebell", "Swing tirage haut"],
     summary: "Un swing \xE0 une main prolong\xE9 par un tirage du coude vers le haut : hanches, trap\xE8zes et arri\xE8re des \xE9paules, l\u2019\xE9tape avant l\u2019arrach\xE9.",
     setup: [
-      "Poser le kettlebell au sol, un peu devant les pieds.",
+      "Poser la kettlebell au sol, un peu devant les pieds.",
       "Se placer pieds \xE0 largeur d\u2019\xE9paules, hanches en arri\xE8re et dos plat, puis saisir la poign\xE9e d\u2019une main."
     ],
     steps: [
-      "Lancer le kettlebell entre les jambes, comme pour un swing \xE0 une main.",
-      "Tendre les hanches d\u2019un coup pour faire monter le kettlebell.",
+      "Lancer la kettlebell entre les jambes, comme pour un swing \xE0 une main.",
+      "Tendre les hanches d\u2019un coup pour faire monter la kettlebell.",
       "Prolonger en tirant le coude vers le haut et l\u2019arri\xE8re, poign\xE9e \xE0 hauteur de poitrine.",
-      "Rel\xE2cher le bras pour laisser le kettlebell redescendre entre les jambes, et encha\xEEner."
+      "Rel\xE2cher le bras pour laisser la kettlebell redescendre entre les jambes, et encha\xEEner."
     ],
     cues: [
       "Laisser les hanches faire le travail : le bras ne fait que guider.",
       "Tirer le coude haut et vers l\u2019arri\xE8re, pas la main.",
       "Garder le dos plat \xE0 la descente."
     ],
-    mistakes: ["Lever le kettlebell \xE0 la force de l\u2019\xE9paule.", "Hausser l\u2019\xE9paule vers l\u2019oreille.", "Arrondir le dos quand le kettlebell redescend."],
+    mistakes: ["Lever la kettlebell \xE0 la force de l\u2019\xE9paule.", "Hausser l\u2019\xE9paule vers l\u2019oreille.", "Arrondir le dos quand la kettlebell redescend."],
     breathing: "Souffler sur le coup de hanches, inspirer \xE0 la descente."
   },
   "kettlebell-snatch": {
-    name: "Arrach\xE9s au kettlebell",
-    aliases: ["Kettlebell snatch", "Snatch au kettlebell", "Arrach\xE9 kettlebell"],
-    summary: "Envoyer le kettlebell d\u2019un seul \xE9lan d\u2019entre les jambes jusqu\u2019au-dessus de la t\xEAte, bras tendu : hanches, \xE9paules et cardio en un geste.",
+    name: "Arrach\xE9s \xE0 la kettlebell",
+    aliases: ["Kettlebell snatch", "Snatch \xE0 la kettlebell", "Arrach\xE9 kettlebell"],
+    summary: "Envoyer la kettlebell d\u2019un seul \xE9lan d\u2019entre les jambes jusqu\u2019au-dessus de la t\xEAte, bras tendu : hanches, \xE9paules et cardio en un geste.",
     setup: [
-      "Poser le kettlebell au sol, un peu devant les pieds.",
+      "Poser la kettlebell au sol, un peu devant les pieds.",
       "Se placer pieds \xE0 largeur d\u2019\xE9paules, hanches en arri\xE8re et dos plat, puis saisir la poign\xE9e d\u2019une main."
     ],
     steps: [
-      "Lancer le kettlebell entre les jambes.",
+      "Lancer la kettlebell entre les jambes.",
       "Tendre les hanches d\u2019un coup et tirer le coude vers le haut, kettlebell pr\xE8s du corps.",
-      "Passer la main sous la poign\xE9e et la pousser vers le plafond pour finir bras tendu, cloche pos\xE9e contre l\u2019avant-bras.",
-      "Laisser le kettlebell redescendre entre les jambes, puis encha\xEEner."
+      "Glisser la main dans la poign\xE9e et pousser le poing vers le plafond pour finir bras tendu, la cloche pos\xE9e contre l\u2019avant-bras.",
+      "Laisser la kettlebell redescendre entre les jambes, puis encha\xEEner."
     ],
     cues: [
-      "Faire passer le kettlebell pr\xE8s du corps, pas en grand arc.",
-      "Pousser la main vers le plafond au dernier moment pour accueillir la cloche en douceur.",
+      "Faire passer la kettlebell pr\xE8s du corps, pas en grand arc.",
+      "Pousser le poing vers le plafond au dernier moment pour accueillir la cloche en douceur.",
       "Finir bras verrouill\xE9, biceps pr\xE8s de l\u2019oreille."
     ],
     mistakes: ["Laisser la cloche basculer et frapper l\u2019avant-bras.", "Finir bras pli\xE9 ou devant la t\xEAte.", "Arrondir le dos \xE0 la descente."],
     breathing: "Souffler sur le coup de hanches, inspirer en haut ou pendant la descente.",
     safety: "R\xE9server aux \xE9paules qui montent bras tendu \xE0 la verticale sans douleur, apr\xE8s avoir ma\xEEtris\xE9 le swing et le tirage haut."
   },
+  "dumbbell-snatch": {
+    name: "Arrach\xE9s \xE0 l\u2019halt\xE8re",
+    aliases: ["Dumbbell snatch", "Snatch \xE0 l\u2019halt\xE8re", "Arrach\xE9 \xE0 un bras \xE0 l\u2019halt\xE8re"],
+    summary: "Monter un halt\xE8re du sol jusqu\u2019au-dessus de la t\xEAte d\u2019un seul \xE9lan, bras tendu : la pouss\xE9e des jambes et des hanches transmise jusqu\u2019\xE0 l\u2019\xE9paule, avec un cardio qui grimpe vite.",
+    setup: [
+      "Poser un halt\xE8re au sol entre les pieds, pieds \xE0 largeur de hanches ou un peu plus.",
+      "Plier les jambes et pousser les hanches en arri\xE8re, dos plat, puis saisir l\u2019halt\xE8re d\u2019une main, bras tendu."
+    ],
+    steps: [
+      "Pousser fort dans le sol et tendre les hanches d\u2019un coup.",
+      "Laisser l\u2019\xE9lan monter l\u2019halt\xE8re en tirant le coude vers le haut, halt\xE8re pr\xE8s du corps.",
+      "Passer le poignet sous l\u2019halt\xE8re et finir bras tendu au-dessus de l\u2019\xE9paule, jambes l\xE9g\xE8rement fl\xE9chies pour le recevoir.",
+      "Se redresser compl\xE8tement, puis redescendre l\u2019halt\xE8re \xE0 l\u2019\xE9paule et jusqu\u2019au sol, dos plat."
+    ],
+    cues: [
+      "Faire monter l\u2019halt\xE8re avec les jambes et les hanches, pas avec le bras.",
+      "Garder l\u2019halt\xE8re pr\xE8s du corps pendant toute la mont\xE9e.",
+      "Finir coude verrouill\xE9, biceps pr\xE8s de l\u2019oreille, poignet droit."
+    ],
+    mistakes: ["Lever l\u2019halt\xE8re \xE0 la force de l\u2019\xE9paule, sans coup de hanches.", "Arrondir le dos pour saisir ou reposer l\u2019halt\xE8re.", "Finir bras pli\xE9 ou halt\xE8re devant la t\xEAte."],
+    breathing: "Souffler sur le coup de hanches, inspirer en redescendant.",
+    safety: "R\xE9server aux \xE9paules qui montent bras tendu \xE0 la verticale sans douleur, et arr\xEAter en cas de douleur au bas du dos."
+  },
   "turkish-get-up": {
     name: "Relev\xE9s turcs",
     aliases: ["Turkish get-up", "Relev\xE9 turc", "Get-up turc", "TGU"],
     summary: "Passer de couch\xE9 \xE0 debout puis revenir, une charge tenue bras tendu au-dessus de soi : stabilit\xE9 de l\u2019\xE9paule, gainage et coordination.",
     setup: [
-      "S\u2019allonger sur le dos, la charge tenue bras droit tendu vers le plafond.",
+      "S\u2019allonger sur le dos, la charge dans la main droite, bras tendu vers le plafond.",
       "Plier la jambe droite, pied \xE0 plat ; garder la jambe gauche tendue et le bras gauche au sol, \xE0 45\xB0 du corps."
     ],
     steps: [
@@ -16667,7 +16859,7 @@ var CONDITIONING_FR = {
     name: "Portage valise",
     aliases: ["Suitcase carry", "Marche de la valise", "Marche du fermier sur un bras"],
     summary: "Marcher avec une charge dans une seule main sans se pencher : les obliques et la poigne travaillent pour garder le buste droit.",
-    setup: ["Poser un halt\xE8re ou un kettlebell \xE0 c\xF4t\xE9 du pied droit.", "Le ramasser en pliant les jambes, dos plat."],
+    setup: ["Poser un halt\xE8re ou une kettlebell \xE0 c\xF4t\xE9 du pied droit.", "Ramasser la charge en pliant les jambes, dos plat."],
     steps: [
       "Se redresser, bras charg\xE9 tendu le long du corps.",
       "Marcher \xE0 petits pas r\xE9guliers sans laisser le buste pencher.",
@@ -16685,7 +16877,7 @@ var CONDITIONING_FR = {
     name: "Portage en rack",
     aliases: ["Front rack carry", "Rack walk", "Marche en position de rack"],
     summary: "Marcher avec une charge tenue contre l\u2019\xE9paule, en position de rack : gainage du tronc et posture du haut du dos.",
-    setup: ["Monter un kettlebell ou un halt\xE8re contre l\u2019\xE9paule droite, avant-bras vertical, coude contre les c\xF4tes."],
+    setup: ["Monter une kettlebell ou un halt\xE8re contre l\u2019\xE9paule droite, avant-bras vertical, coude contre les c\xF4tes."],
     steps: ["Se tenir droit, poignet align\xE9 avec l\u2019avant-bras.", "Marcher \xE0 petits pas r\xE9guliers.", "Reposer la charge \xE0 la fin du temps, puis changer de c\xF4t\xE9."],
     cues: ["Garder le coude serr\xE9 contre le buste.", "Garder les c\xF4tes basses, sans cambrer.", "Garder les \xE9paules \xE0 la m\xEAme hauteur."],
     mistakes: ["Cambrer le bas du dos pour porter la charge.", "\xC9carter le coude du corps.", "Se pencher du c\xF4t\xE9 oppos\xE9."],
@@ -16695,7 +16887,7 @@ var CONDITIONING_FR = {
     name: "Portage au-dessus de la t\xEAte",
     aliases: ["Overhead carry", "Marche du serveur", "Waiter walk", "Waiter\u2019s walk"],
     summary: "Marcher en tenant une charge bras tendu au-dessus de la t\xEAte : stabilit\xE9 de l\u2019\xE9paule et gainage.",
-    setup: ["Monter un halt\xE8re ou un kettlebell au-dessus de l\u2019\xE9paule droite, bras tendu \xE0 la verticale."],
+    setup: ["Monter un halt\xE8re ou une kettlebell au-dessus de l\u2019\xE9paule droite, bras tendu \xE0 la verticale."],
     steps: [
       "Verrouiller le coude, biceps pr\xE8s de l\u2019oreille.",
       "Marcher \xE0 petits pas r\xE9guliers en gardant la charge immobile.",
@@ -16748,7 +16940,7 @@ var CONDITIONING_FR = {
   "incline-treadmill-walk": {
     name: "Marche inclin\xE9e sur tapis de course",
     aliases: ["Marche en pente sur tapis", "Incline walk", "Tapis inclin\xE9"],
-    summary: "Marcher sur un tapis de course en pente : le pouls monte presque autant qu\u2019en courant, sans les chocs, et fessiers et mollets travaillent davantage.",
+    summary: "Marcher sur un tapis de course en pente : presque autant de cardio qu\u2019en courant, sans les chocs, avec plus de travail pour les fessiers et les mollets.",
     setup: ["D\xE9marrer le tapis \xE0 allure de marche, \xE0 plat.", "Augmenter la pente peu \xE0 peu, jusqu\u2019\xE0 8 \xE0 12 % selon la forme."],
     steps: [
       "Marcher \xE0 un rythme soutenu, en posant tout le pied.",
@@ -16758,7 +16950,7 @@ var CONDITIONING_FR = {
     cues: [
       "L\xE2cher les barres lat\xE9rales et balancer les bras.",
       "Garder le buste droit, l\xE9g\xE8rement pench\xE9 depuis les chevilles.",
-      "Pousser par le talon pour faire travailler les fessiers."
+      "Pousser sur le talon pour faire travailler les fessiers."
     ],
     mistakes: ["Se tenir aux barres en se penchant en arri\xE8re.", "Marcher sur la pointe des pieds.", "Monter la pente trop vite d\xE8s le d\xE9but."],
     breathing: "Respirer r\xE9guli\xE8rement, sans bloquer.",
@@ -16785,7 +16977,7 @@ var CONDITIONING_FR = {
   // Endurance : course
   "easy-run": {
     name: "Course \xE0 pied",
-    aliases: ["Course \xE0 pied", "Footing", "Jogging", "Course facile", "Course en endurance"],
+    aliases: ["Footing", "Jogging", "Course facile", "Course en endurance"],
     summary: "Courir \xE0 allure facile, assez lentement pour pouvoir parler : la base de l\u2019endurance, pour le c\u0153ur et les jambes.",
     setup: ["Choisir des chaussures de course et un parcours, ou un tapis de course.", "Marcher quelques minutes pour s\u2019\xE9chauffer."],
     steps: [
@@ -16848,7 +17040,7 @@ var CONDITIONING_FR = {
     cues: ["Pousser le sol derri\xE8re soi.", "Balancer les bras fort, d\u2019avant en arri\xE8re.", "Rester rel\xE2ch\xE9 : m\xE2choire et \xE9paules d\xE9tendues."],
     mistakes: ["Sprinter sans \xE9chauffement.", "Raccourcir la r\xE9cup\xE9ration entre deux sprints.", "Freiner brusquement \xE0 l\u2019arriv\xE9e."],
     breathing: "Respirer librement, et reprendre compl\xE8tement son souffle entre deux sprints.",
-    safety: "Arr\xEAter au moindre tiraillement \xE0 l\u2019arri\xE8re de la cuisse : c\u2019est le signe d\u2019une d\xE9chirure qui menace."
+    safety: "Arr\xEAter au moindre tiraillement \xE0 l\u2019arri\xE8re de la cuisse : c\u2019est le signe qu\u2019une d\xE9chirure menace."
   },
   "hill-sprint": {
     name: "Sprints en c\xF4te",
@@ -16872,13 +17064,13 @@ var CONDITIONING_FR = {
     summary: "P\xE9daler \xE0 allure r\xE9guli\xE8re et mod\xE9r\xE9e : une endurance sans choc pour le c\u0153ur et les cuisses, douce pour les genoux.",
     setup: [
       "R\xE9gler la selle : jambe presque tendue quand la p\xE9dale est en bas.",
-      "R\xE9gler le guidon pour garder le dos droit et les \xE9paules rel\xE2ch\xE9es."
+      "R\xE9gler le guidon pour garder les \xE9paules rel\xE2ch\xE9es et les coudes souples."
     ],
     steps: [
-      "P\xE9daler quelques minutes sans r\xE9sistance pour s\u2019\xE9chauffer.",
-      "Ajouter de la r\xE9sistance jusqu\u2019\xE0 respirer plus fort tout en pouvant parler.",
+      "P\xE9daler quelques minutes en souplesse, sans forcer, pour s\u2019\xE9chauffer.",
+      "Augmenter la r\xE9sistance, ou passer un plus grand braquet, jusqu\u2019\xE0 respirer plus fort tout en pouvant encore parler.",
       "Tenir cette allure r\xE9guli\xE8re pendant toute la dur\xE9e.",
-      "Finir par quelques minutes sans r\xE9sistance."
+      "Finir par quelques minutes en souplesse."
     ],
     cues: ["P\xE9daler de fa\xE7on ronde et r\xE9guli\xE8re.", "Garder les genoux dans l\u2019axe des pieds.", "Rester rel\xE2ch\xE9 des \xE9paules et des mains."],
     mistakes: ["R\xE9gler la selle trop basse, genoux tr\xE8s pli\xE9s.", "Mettre trop de r\xE9sistance et p\xE9daler en force.", "Se balancer de droite \xE0 gauche sur la selle."],
@@ -16887,11 +17079,11 @@ var CONDITIONING_FR = {
   "bike-intervals": {
     name: "Fractionn\xE9 \xE0 v\xE9lo",
     aliases: ["Intervalles \xE0 v\xE9lo", "HIIT \xE0 v\xE9lo", "Fractionn\xE9 sur v\xE9lo d\u2019appartement"],
-    summary: "Alterner des efforts intenses et des temps de p\xE9dalage facile : le cardio le plus intense possible, sans aucun choc.",
+    summary: "Alterner des efforts intenses et des temps de p\xE9dalage facile : un cardio tr\xE8s intense, sans aucun choc.",
     setup: ["R\xE9gler la selle et le guidon.", "S\u2019\xE9chauffer par cinq \xE0 dix minutes de p\xE9dalage facile."],
     steps: [
-      "Augmenter la r\xE9sistance et p\xE9daler fort pendant la portion pr\xE9vue.",
-      "Revenir \xE0 une r\xE9sistance faible et p\xE9daler tranquillement pour r\xE9cup\xE9rer.",
+      "Augmenter la r\xE9sistance, ou le braquet, et p\xE9daler fort pendant la portion pr\xE9vue.",
+      "Revenir \xE0 une r\xE9sistance faible et p\xE9daler en souplesse pour r\xE9cup\xE9rer.",
       "Recommencer pour le nombre de portions pr\xE9vu.",
       "Finir par quelques minutes faciles."
     ],
@@ -16904,7 +17096,7 @@ var CONDITIONING_FR = {
     aliases: ["Rameur", "Aviron en salle", "Ergom\xE8tre", "Indoor rowing"],
     summary: "Ramer \xE0 allure r\xE9guli\xE8re : une endurance compl\xE8te qui fait travailler les jambes, le dos et les bras, sans choc.",
     setup: [
-      "S\u2019asseoir et sangler les pieds, la sangle passant sur le haut du pied.",
+      "S\u2019asseoir et sangler les pieds, la sangle passant sur la partie la plus large du pied.",
       "Saisir la poign\xE9e bras tendus, buste l\xE9g\xE8rement pench\xE9 en avant, tibias verticaux."
     ],
     steps: [
@@ -18550,10 +18742,29 @@ var STRETCH_FR = {
 // src/i18n/fr/exercises/skills.ts
 var SKILLS_FR = {
   // Équilibre sur les mains
+  "elevated-pike-hold": {
+    name: "\xC9quilibre piqu\xE9 pieds sur\xE9lev\xE9s",
+    aliases: ["Pike hold pieds sur\xE9lev\xE9s", "Box pike hold", "\xC9quilibre piqu\xE9 pieds sur une chaise"],
+    summary: "Les pieds sur une chaise, les hanches au-dessus des \xE9paules et les bras tendus : la premi\xE8re tenue \xE0 l\u2019envers, qui habitue les \xE9paules et les poignets \xE0 porter le corps avant l\u2019\xE9quilibre sur les mains.",
+    setup: [
+      "Caler une chaise stable, un banc ou une caisse, si possible contre un mur, puis se mettre \xE0 quatre pattes devant, les pieds tourn\xE9s vers elle.",
+      "Poser les mains au sol \xE0 largeur d\u2019\xE9paules, doigts \xE9cart\xE9s, puis monter les pieds sur l\u2019assise, l\u2019un apr\xE8s l\u2019autre."
+    ],
+    steps: [
+      "Rapprocher les mains de la chaise, par petits pas, jusqu\u2019\xE0 amener les hanches au-dessus des \xE9paules.",
+      "Tendre les bras et pousser le sol, le dos droit et la t\xEAte entre les bras.",
+      "Tenir la position, jambes tendues ou l\xE9g\xE8rement pli\xE9es.",
+      "Redescendre en avan\xE7ant les mains, puis reposer les genoux au sol."
+    ],
+    cues: ["Pousser le sol pour monter les \xE9paules vers les oreilles.", "Porter le poids sur les mains, pas sur les pieds.", "Rentrer les c\xF4tes pour ne pas creuser le dos."],
+    mistakes: ["Rester trop loin de la chaise : les hanches ne passent pas au-dessus des \xE9paules.", "Plier les coudes.", "Creuser le bas du dos."],
+    breathing: "Respirer calmement, sans bloquer.",
+    safety: "V\xE9rifier que le support ne peut pas glisser ; \xE9chauffer les poignets avant et redescendre au moindre \xE9tourdissement."
+  },
   "wall-handstand": {
     name: "\xC9quilibre sur les mains ventre au mur",
     aliases: ["Amorce \xE9quilibre", "\xC9quilibre contre le mur", "ATR ventre au mur", "Chest-to-wall handstand"],
-    summary: "L\u2019\xE9quilibre sur les mains face au mur, qui emp\xEAche de basculer : les \xE9paules et les triceps apprennent \xE0 porter le corps \xE0 la verticale, bien align\xE9.",
+    summary: "L\u2019\xE9quilibre sur les mains, ventre contre le mur pour ne pas basculer : les \xE9paules et les triceps apprennent \xE0 porter le corps \xE0 la verticale, bien align\xE9.",
     setup: ["S\u2019allonger \xE0 plat ventre, la plante des pieds contre le mur.", "Poser les mains au sol \xE0 hauteur de la poitrine, doigts \xE9cart\xE9s."],
     steps: [
       "Pousser jusqu\u2019aux bras tendus et monter les pieds le long du mur en rapprochant les mains, par petits pas.",
@@ -18574,11 +18785,11 @@ var SKILLS_FR = {
     name: "\xC9quilibre sur les mains dos au mur",
     aliases: ["ATR dos au mur", "Back-to-wall handstand"],
     summary: "L\u2019\xE9quilibre sur les mains dos au mur, apr\xE8s un lancer de jambe : pour apprendre \xE0 monter et \xE0 tenir \xE0 l\u2019envers sans craindre de basculer.",
-    setup: ["Se tenir face au mur, \xE0 un grand pas de lui, une jambe devant l\u2019autre.", "Se pencher pour poser les mains au sol \xE0 une ou deux largeurs de main du mur, largeur d\u2019\xE9paules."],
+    setup: ["Se tenir face au mur, \xE0 un grand pas de lui, une jambe devant l\u2019autre.", "Se pencher pour poser les mains au sol, \xE0 largeur d\u2019\xE9paules et \xE0 une vingtaine de centim\xE8tres du mur."],
     steps: [
       "Lancer la jambe arri\xE8re vers le haut en poussant sur la jambe avant.",
       "Laisser les talons venir toucher le mur, puis r\xE9unir les jambes.",
-      "Tenir bras tendus, en d\xE9collant peu \xE0 peu les talons du mur.",
+      "Tenir bras tendus ; avec l\u2019habitude, d\xE9coller peu \xE0 peu les talons du mur.",
       "Redescendre une jambe apr\xE8s l\u2019autre, en douceur."
     ],
     cues: ["Garder les bras verrouill\xE9s pendant tout le lancer.", "Regarder le sol entre les mains.", "Rentrer les c\xF4tes et serrer les fessiers pour limiter la cambrure."],
@@ -18587,7 +18798,7 @@ var SKILLS_FR = {
     safety: "Apprendre d\u2019abord \xE0 sortir de l\u2019\xE9quilibre en pivotant sur une main ; garder le sol d\xE9gag\xE9 autour de soi."
   },
   "handstand-kick-up": {
-    name: "Mont\xE9es en \xE9quilibre par \xE9lan",
+    name: "Mont\xE9es en \xE9quilibre sur les mains par \xE9lan",
     aliases: ["Kick-up", "Handstand kick-up", "Entr\xE9es en ATR"],
     summary: "Monter en \xE9quilibre sur les mains d\u2019un lancer de jambe, sans mur, pour trouver le point d\u2019\xE9quilibre et apprendre \xE0 le rattraper.",
     setup: ["Choisir un espace d\xE9gag\xE9, sur un sol ferme, sans meuble autour.", "Se tenir debout, bras tendus au-dessus de la t\xEAte, une jambe en avant."],
@@ -18607,8 +18818,8 @@ var SKILLS_FR = {
     safety: "Savoir sortir de l\u2019\xE9quilibre en pivotant sur une main avant de s\u2019exercer sans mur."
   },
   "wall-handstand-shoulder-tap": {
-    name: "Touchers d\u2019\xE9paule en \xE9quilibre au mur",
-    aliases: ["Shoulder taps en \xE9quilibre", "Wall handstand shoulder taps", "Touchers d\u2019\xE9paule en ATR"],
+    name: "Touches d\u2019\xE9paules en \xE9quilibre au mur",
+    aliases: ["Shoulder taps en \xE9quilibre", "Wall handstand shoulder taps", "Touches d\u2019\xE9paules en ATR"],
     summary: "En \xE9quilibre ventre au mur, lever une main apr\xE8s l\u2019autre pour toucher l\u2019\xE9paule : la force des \xE9paules sur un seul bras et le contr\xF4le du gainage.",
     setup: ["Monter en \xE9quilibre ventre au mur, les mains \xE0 une largeur de main du mur.", "\xC9carter un peu plus les mains et les pieds que pour la tenue simple."],
     steps: [
@@ -18660,7 +18871,7 @@ var SKILLS_FR = {
     steps: [
       "Monter les hanches et avancer les pieds \xE0 petits pas vers la t\xEAte.",
       "Poser les genoux sur l\u2019arri\xE8re des bras, pr\xE8s des coudes.",
-      "D\xE9coller les pieds, puis tendre lentement les jambes vers le plafond.",
+      "D\xE9coller les pieds, puis les genoux des bras, et tendre lentement les jambes vers le plafond.",
       "Redescendre de la m\xEAme fa\xE7on : genoux sur les bras, puis pieds au sol."
     ],
     cues: ["Pousser le sol avec les mains pour soulager le cou.", "Garder les coudes au-dessus des poignets, sans les \xE9carter.", "Monter lentement, sans \xE9lan."],
@@ -18669,7 +18880,7 @@ var SKILLS_FR = {
     safety: "\xC0 \xE9viter en cas de douleur ou de fragilit\xE9 des cervicales, d\u2019hypertension non soign\xE9e ou de glaucome ; ne jamais tourner la t\xEAte en appui."
   },
   headstand: {
-    name: "Poirier sur les avant-bras",
+    name: "Poirier, avant-bras au sol",
     aliases: ["Poirier", "Headstand", "Sirsasana", "\xC9quilibre sur la t\xEAte"],
     summary: "L\u2019\xE9quilibre sur la t\xEAte, avant-bras au sol et doigts crois\xE9s derri\xE8re la t\xEAte, jambes r\xE9unies \xE0 la verticale : \xE9paules, gainage et contr\xF4le.",
     setup: [
@@ -18689,19 +18900,23 @@ var SKILLS_FR = {
   },
   // Appuis aux barres et aux anneaux
   "support-hold": {
-    name: "Appui tendu",
-    aliases: ["Support hold", "Tenue en haut des dips", "Maintien en appui"],
-    summary: "Tenir en haut des dips, bras tendus et \xE9paules basses : la position de base aux barres, qui renforce les triceps et la stabilit\xE9 des \xE9paules.",
+    name: "Appui tendu entre deux chaises",
+    aliases: ["Appui tendu", "Maintien en appui entre deux chaises", "Support hold entre deux chaises"],
+    summary: "Tenir bras tendus au-dessus de deux chaises, \xE9paules basses : la position de base des dips et des figures en appui, sans barres parall\xE8les, pour les triceps et la stabilit\xE9 des \xE9paules.",
     setup: [
-      "Se placer entre deux barres parall\xE8les, ou entre deux chaises lourdes pos\xE9es en parall\xE8le.",
-      "Saisir les barres ou le haut des dossiers, puis monter en appui, bras tendus.",
-      "Plier les genoux et croiser les chevilles si les pieds touchent le sol."
+      "Placer deux chaises lourdes, dossiers tourn\xE9s l\u2019un vers l\u2019autre, avec un \xE9cart \xE0 peine plus large que les hanches.",
+      "Se placer entre les deux et saisir le haut de chaque dossier."
     ],
-    steps: ["Pousser dans les mains pour \xE9loigner les \xE9paules des oreilles.", "Tenir bras verrouill\xE9s, le corps immobile.", "Reposer les pieds au sol en fin de s\xE9rie."],
+    steps: [
+      "Pousser dans les mains jusqu\u2019aux bras tendus, genoux pli\xE9s et chevilles crois\xE9es pour d\xE9coller les pieds.",
+      "Pousser les dossiers vers le bas pour \xE9loigner les \xE9paules des oreilles.",
+      "Tenir bras verrouill\xE9s, le corps immobile.",
+      "Reposer les pieds au sol en fin de s\xE9rie."
+    ],
     cues: ["Allonger le cou : les \xE9paules restent basses.", "Serrer les bras contre le corps.", "Gainer le ventre pour ne pas se balancer."],
-    mistakes: ["Laisser les \xE9paules remonter vers les oreilles.", "Garder les coudes l\xE9g\xE8rement pli\xE9s.", "Se pencher tr\xE8s en avant."],
+    mistakes: ["Laisser les \xE9paules remonter vers les oreilles.", "Garder les coudes l\xE9g\xE8rement pli\xE9s.", "Se balancer, au risque de faire basculer une chaise."],
     breathing: "Respirer calmement pendant toute la tenue.",
-    safety: "V\xE9rifier que les chaises ne peuvent ni glisser ni basculer."
+    safety: "V\xE9rifier avant chaque s\xE9rie que les chaises ne peuvent ni glisser ni basculer ; \xE9viter les chaises pliantes ou \xE0 roulettes."
   },
   "ring-support-hold": {
     name: "Appui tendu aux anneaux",
@@ -18722,8 +18937,8 @@ var SKILLS_FR = {
   // Équilibres sur les bras
   "frog-stand": {
     name: "\xC9quilibre en grenouille",
-    aliases: ["Frog stand", "Grenouille"],
-    summary: "Accroupi, genoux pos\xE9s sur les coudes, basculer vers l\u2019avant jusqu\u2019\xE0 d\xE9coller les pieds : le premier \xE9quilibre sur les mains, pour les poignets, les \xE9paules et le gainage.",
+    aliases: ["Frog stand", "Grenouille en \xE9quilibre"],
+    summary: "Accroupi, genoux cal\xE9s contre les coudes, basculer vers l\u2019avant jusqu\u2019\xE0 d\xE9coller les pieds : le premier \xE9quilibre sur les mains, pour les poignets, les \xE9paules et le gainage.",
     setup: [
       "S\u2019accroupir, pieds \xE9cart\xE9s, et poser les mains au sol \xE0 largeur d\u2019\xE9paules, doigts \xE9cart\xE9s.",
       "Plier les coudes et poser l\u2019int\xE9rieur des genoux contre l\u2019ext\xE9rieur des coudes."
@@ -18763,8 +18978,8 @@ var SKILLS_FR = {
     summary: "L\u2019\xE9quilibre sur les mains, les jambes group\xE9es sur le c\xF4t\xE9 et pos\xE9es sur un bras : \xE9paules, triceps et obliques, en rotation.",
     setup: [
       "S\u2019accroupir sur la pointe des pieds, genoux serr\xE9s.",
-      "Tourner le buste d\u2019un c\xF4t\xE9 et poser les mains au sol \xE0 largeur d\u2019\xE9paules, \xE0 c\xF4t\xE9 de la cuisse, doigts \xE9cart\xE9s.",
-      "Plier les coudes et caler l\u2019ext\xE9rieur de la cuisse du dessus sur l\u2019arri\xE8re du bras le plus proche."
+      "Tourner le buste d\u2019un c\xF4t\xE9 et poser les mains au sol \xE0 largeur d\u2019\xE9paules, \xE0 l\u2019ext\xE9rieur de la cuisse, doigts \xE9cart\xE9s.",
+      "Plier les coudes \xE0 angle droit et caler l\u2019ext\xE9rieur de la cuisse sur l\u2019arri\xE8re du bras le plus proche, genoux toujours serr\xE9s."
     ],
     steps: ["Pencher le buste vers l\u2019avant pour charger les mains.", "D\xE9coller les pieds, jambes serr\xE9es et genoux pli\xE9s.", "Tenir, puis reposer les pieds et changer de c\xF4t\xE9."],
     cues: ["Garder les coudes au-dessus des poignets.", "Serrer les jambes l\u2019une contre l\u2019autre.", "Regarder devant soi, pas en bas."],
@@ -18778,7 +18993,7 @@ var SKILLS_FR = {
     summary: "Le corps tendu \xE0 l\u2019horizontale en \xE9quilibre sur les mains, le bassin pos\xE9 sur les coudes : triceps, avant des \xE9paules et toute la cha\xEEne arri\xE8re.",
     setup: [
       "Se mettre \xE0 genoux et poser les mains au sol, doigts tourn\xE9s vers les pieds ou sur les c\xF4t\xE9s.",
-      "Serrer les coudes et les caler contre le haut des hanches, de part et d\u2019autre du nombril."
+      "Serrer les coudes et les caler dans le ventre, juste au-dessus des os des hanches."
     ],
     steps: [
       "Tendre les jambes derri\xE8re soi, pointes de pieds au sol.",
@@ -18842,7 +19057,7 @@ var SKILLS_FR = {
     summary: "L\u2019\xE9querre pouss\xE9e \xE0 l\u2019extr\xEAme, jambes tendues mont\xE9es bien au-dessus de l\u2019horizontale : compression, souplesse des ischio-jambiers et \xE9paules tr\xE8s fortes.",
     setup: ["S\u2019installer en \xE9querre, sur des parallettes ou au sol.", "Pousser fort dans les mains, \xE9paules basses."],
     steps: [
-      "Reculer les hanches derri\xE8re les mains en avan\xE7ant les \xE9paules.",
+      "Pencher le buste en arri\xE8re et avancer les hanches entre les mains, bras toujours tendus.",
       "Monter les jambes tendues au-dessus de l\u2019horizontale, aussi haut que possible.",
       "Tenir quelques secondes, puis redescendre en \xE9querre."
     ],
@@ -18917,6 +19132,21 @@ var SKILLS_FR = {
     mistakes: ["Laisser les hanches plus bas que les \xE9paules.", "Plier les genoux.", "Plier les coudes pour retrouver l\u2019\xE9quilibre."],
     breathing: "Respirer court, ventre serr\xE9.",
     safety: "R\xE9serv\xE9e aux pratiquants tr\xE8s entra\xEEn\xE9s ; arr\xEAter au moindre signe de douleur aux coudes, aux \xE9paules ou aux poignets."
+  },
+  "full-planche": {
+    name: "Planche gymnique compl\xE8te",
+    aliases: ["Full planche", "Planche jambes serr\xE9es", "Planche gymnique"],
+    summary: "Le corps entier tendu \xE0 l\u2019horizontale au-dessus des mains, jambes serr\xE9es, sans autre appui : l\u2019une des figures de force les plus dures au poids du corps.",
+    setup: ["Partir de la planche \xE9cart\xE9e, mains au sol ou sur des parallettes, doigts l\xE9g\xE8rement tourn\xE9s vers l\u2019ext\xE9rieur."],
+    steps: [
+      "Resserrer peu \xE0 peu les jambes tendues sans laisser descendre les hanches.",
+      "Aligner \xE9paules, hanches et talons \xE0 l\u2019horizontale, jambes serr\xE9es.",
+      "Tenir, puis \xE9carter ou grouper les jambes pour redescendre."
+    ],
+    cues: ["Pencher les \xE9paules loin devant les mains.", "Serrer les fessiers et les jambes, pieds point\xE9s.", "Pousser le sol et \xE9carter les omoplates."],
+    mistakes: ["Laisser les hanches plus bas que les \xE9paules.", "Plier les coudes.", "Creuser le bas du dos pour monter les jambes."],
+    breathing: "Respirer court, ventre serr\xE9.",
+    safety: "R\xE9serv\xE9e \xE0 qui tient d\xE9j\xE0 la planche \xE9cart\xE9e ; arr\xEAter au moindre signe de douleur aux coudes, aux \xE9paules ou aux poignets."
   },
   // Front lever
   "tuck-front-lever": {
@@ -18998,16 +19228,16 @@ var SKILLS_FR = {
     aliases: ["German hang", "Suspension dorsale"],
     summary: "Suspendu, le corps pass\xE9 entre les bras et tourn\xE9 vers le sol, \xE9paules en extension : un \xE9tirement actif de l\u2019avant des \xE9paules qui pr\xE9pare le back lever.",
     setup: [
-      "R\xE9gler les anneaux assez bas pour que les pieds puissent toucher le sol en fin de mouvement, ou utiliser une barre.",
+      "R\xE9gler les anneaux assez bas pour pouvoir poser les pointes de pieds au sol en fin de mouvement ; \xE0 la barre fixe, les pieds restent en l\u2019air.",
       "Se suspendre bras tendus, prise ferme."
     ],
     steps: [
       "Ramener les genoux vers la poitrine et basculer en arri\xE8re pour passer les jambes entre les bras.",
       "Descendre lentement les jambes derri\xE8re soi jusqu\u2019\xE0 sentir l\u2019\xE9tirement des \xE9paules, corps tourn\xE9 vers le sol.",
-      "Tenir en rel\xE2chant peu \xE0 peu, pointes de pieds au sol si besoin.",
+      "Tenir en se rel\xE2chant peu \xE0 peu dans l\u2019\xE9tirement ; aux anneaux, garder les pointes de pieds au sol.",
       "Revenir en ramenant les genoux vers la poitrine et en repassant entre les bras."
     ],
-    cues: ["Descendre tr\xE8s lentement dans l\u2019\xE9tirement.", "Garder les bras tendus.", "Doser l\u2019\xE9tirement avec les pieds au sol."],
+    cues: ["Descendre tr\xE8s lentement dans l\u2019\xE9tirement.", "Garder les bras tendus.", "Aux anneaux, doser l\u2019\xE9tirement en appuyant plus ou moins sur les pieds."],
     mistakes: ["Se laisser tomber dans la position.", "Pendre sans aucun contr\xF4le des \xE9paules.", "Tenir trop longtemps d\xE8s les premi\xE8res s\xE9ances."],
     breathing: "Souffler en descendant dans l\u2019\xE9tirement, puis respirer lentement.",
     safety: "\xC9tirement intense de l\u2019avant des \xE9paules : progresser sur plusieurs semaines et arr\xEAter \xE0 la moindre douleur vive."
@@ -19059,6 +19289,24 @@ var SKILLS_FR = {
     safety: "Fort \xE9tirement du biceps et de l\u2019avant de l\u2019\xE9paule : y arriver par \xE9tapes, apr\xE8s des semaines de suspension allemande et de back lever group\xE9."
   },
   // Drapeau
+  "vertical-flag": {
+    name: "Drapeau vertical",
+    aliases: ["Vertical flag", "Drapeau \xE0 la verticale"],
+    summary: "Agripp\xE9 \xE0 un poteau comme pour le drapeau, le corps tenu \xE0 la verticale, t\xEAte en bas : la main du haut tire, celle du bas pousse, et les \xE9paules apprennent la position avant de descendre vers l\u2019horizontale.",
+    setup: [
+      "Se placer de profil contre un poteau solide ou le montant d\u2019un rack fix\xE9.",
+      "Saisir le poteau \xE0 deux mains, \xE9cart\xE9es d\u2019un peu plus que la largeur des \xE9paules : la main du haut tire, celle du bas pousse."
+    ],
+    steps: [
+      "Tendre le bras du bas et lancer les jambes vers le haut, le long du poteau.",
+      "Monter les hanches au-dessus des \xE9paules, jusqu\u2019\xE0 avoir le corps vertical, jambes serr\xE9es ou \xE9cart\xE9es.",
+      "Tenir, puis redescendre les pieds au sol sous contr\xF4le."
+    ],
+    cues: ["Verrouiller le bras du bas et pousser fort dans le poteau.", "Tirer avec le bras du haut pour rester pr\xE8s du poteau.", "Gainer le ventre et serrer les fessiers."],
+    mistakes: ["Plier le bras du bas.", "Laisser le corps s\u2019\xE9carter du poteau.", "Lancer les jambes trop fort et basculer de l\u2019autre c\xF4t\xE9."],
+    breathing: "Souffler au lancer, puis respirer court, sans bloquer.",
+    safety: "V\xE9rifier que le poteau est solidement fix\xE9 et d\xE9gager le sol autour ; arr\xEAter en cas de douleur \xE0 l\u2019\xE9paule ou au coude."
+  },
   "human-flag": {
     name: "Drapeau humain",
     aliases: ["Human flag", "Drapeau"],
@@ -19090,7 +19338,7 @@ var SKILLS_FR = {
       "Monter le bassin en poussant sur les pieds.",
       "Poser le haut du cr\xE2ne au sol, puis pousser sur les mains pour d\xE9coller la t\xEAte.",
       "Tendre les bras et amener les \xE9paules au-dessus des mains.",
-      "Redescendre en rentrant le menton : la t\xEAte d\u2019abord, puis le dos."
+      "Redescendre en pliant les bras et en rentrant le menton : poser le haut du dos, puis le reste de la colonne."
     ],
     cues: ["Pousser le sol pour avancer les \xE9paules au-dessus des mains.", "Garder les genoux dans l\u2019axe des pieds.", "Serrer mod\xE9r\xE9ment les fessiers."],
     mistakes: ["Ouvrir les genoux vers l\u2019ext\xE9rieur.", "Garder les bras pli\xE9s : tout le poids passe dans le bas du dos.", "Retomber sur la t\xEAte en redescendant."],
@@ -19101,7 +19349,7 @@ var SKILLS_FR = {
     name: "Descentes en pont le long du mur",
     aliases: ["Wall walk-down", "Pont descendu au mur", "Descente en pont au mur"],
     summary: "Debout dos au mur, descendre en pont en marchant des mains le long du mur, puis remonter : souplesse du dos et des \xE9paules, et contr\xF4le de toute la cha\xEEne avant.",
-    setup: ["Se tenir debout dos au mur, \xE0 un pas et demi de lui, pieds \xE0 largeur de hanches.", "Lever les bras au-dessus de la t\xEAte."],
+    setup: ["Se tenir debout dos au mur, \xE0 environ un pas de lui, pieds \xE0 largeur de hanches.", "Lever les bras au-dessus de la t\xEAte."],
     steps: [
       "Se pencher en arri\xE8re jusqu\u2019\xE0 poser les mains \xE0 plat sur le mur, doigts vers le bas.",
       "Descendre les mains l\u2019une apr\xE8s l\u2019autre le long du mur, jusqu\u2019au sol si possible.",
@@ -19109,7 +19357,7 @@ var SKILLS_FR = {
       "Remonter en marchant des mains le long du mur jusqu\u2019\xE0 la position debout."
     ],
     cues: ["Pousser les hanches vers l\u2019avant pendant la descente.", "Descendre par petits pas de mains.", "S\u2019arr\xEAter l\xE0 o\xF9 la descente reste ma\xEEtris\xE9e."],
-    mistakes: ["Plier les genoux au lieu d\u2019ouvrir le haut du dos.", "Se laisser glisser d\u2019un coup.", "Ouvrir les genoux vers l\u2019ext\xE9rieur."],
+    mistakes: ["Casser le bas du dos sans ouvrir le haut du dos ni les \xE9paules.", "Se laisser glisser d\u2019un coup.", "Ouvrir les genoux vers l\u2019ext\xE9rieur."],
     breathing: "Souffler en descendant, inspirer en remontant.",
     safety: "\xC0 \xE9viter en cas de douleur lombaire ; ma\xEEtriser d\u2019abord le pont depuis le sol."
   }
@@ -19296,9 +19544,11 @@ var Library = class {
     const text = this.texts[locale]?.[id] ?? this.texts[DEFAULT_LOCALE]?.[id];
     return text ?? { name: id, summary: "", setup: [], steps: [], cues: [], mistakes: [] };
   }
-  /** Le nom d'une fiche dans une langue. */
-  name(id, locale = DEFAULT_LOCALE) {
-    return this.text(id, locale).name;
+  /** Le nom d'une fiche dans une langue, adapté au matériel qui sert quand la fiche en prévoit un autre. */
+  name(id, locale = DEFAULT_LOCALE, equipment = []) {
+    const text = this.text(id, locale);
+    const used = equipment.find((piece) => text.nameWith?.[piece]);
+    return used ? text.nameWith[used] : text.name;
   }
   /** La fiche complète : structure et texte. */
   exercise(id, locale = DEFAULT_LOCALE) {
@@ -19693,9 +19943,10 @@ function itemSeconds(item2, block) {
   return Math.max(1, block.rounds) * item2.sets * workSeconds(item2.definition, item2.target, item2.tempo);
 }
 function toSessionItem(item2, block, context) {
+  const equipment = item2.equipment.length ? item2.equipment : equipmentUsed(item2.definition.equipment, context.inventory);
   return {
     exercise: item2.definition.id,
-    name: context.library.name(item2.definition.id, context.locale),
+    name: context.library.name(item2.definition.id, context.locale, item2.load ? [item2.load.equipment, ...equipment] : equipment),
     sets: item2.sets,
     target: item2.target,
     ...item2.perSet ? { perSet: item2.perSet } : {},
@@ -19703,7 +19954,7 @@ function toSessionItem(item2, block, context) {
     ...item2.rir !== void 0 ? { rir: item2.rir } : {},
     ...item2.tempo ? { tempo: item2.tempo } : {},
     ...item2.load ? { load: item2.load } : {},
-    equipment: item2.equipment,
+    equipment,
     ...item2.progression ? { progression: item2.progression } : {},
     ...item2.note ? { note: item2.note } : {},
     reasons: item2.reasons,
@@ -20370,7 +20621,8 @@ function muscleAppeal(muscle, context) {
 }
 function score(definition, slot2, context, chosen) {
   const target = targetDifficulty(definition, context);
-  const gap = definition.difficulty - target;
+  const rawGap = definition.difficulty - target;
+  const gap = definition.tags?.includes("loaded") && rawGap < 0 ? rawGap / 3 : rawGap;
   let value = Math.exp(-(gap * gap) / (2 * 1.2 * 1.2));
   if (gap > 1.5) {
     value *= 0.2;
@@ -20388,6 +20640,12 @@ function score(definition, slot2, context, chosen) {
   if (slot2.role === "main" && family && family.days <= 14) value *= 1.25;
   if (seen && seen.count >= 10) value *= 0.7;
   if (context.favorites.has(definition.id)) value *= 1.4;
+  if (definition.measure === "reps" && definition.kind === "strength") {
+    const [low, high] = context.settings.reps;
+    if (definition.range[1] < low) value *= 0.5;
+    if (definition.range[0] > high) value *= 0.6;
+  }
+  if ((context.goal === "endurance" || context.goal === "fat-loss") && definition.tags?.includes("eccentric")) value *= 0.4;
   if ((context.goal === "strength" || context.goal === "hypertrophy") && definition.tags?.includes("loaded")) value *= 1.2;
   if (chosen.some((other) => other.family === definition.family)) value *= 0.15;
   if (chosen.some((other) => other.pattern === definition.pattern)) value *= 0.4;
@@ -20529,6 +20787,8 @@ function pairUp(items) {
       pairs.push([first, left.splice(index, 1)[0]]);
     } else if (left.length) {
       pairs.push([first, left.shift()]);
+    } else if (pairs.length) {
+      pairs[pairs.length - 1].push(first);
     } else {
       pairs.push([first]);
     }
@@ -20569,8 +20829,8 @@ function buildMainBlocks(items, format2, context, mainSeconds) {
       return {
         id: `main-${index + 1}`,
         role: "main",
-        format: "superset",
-        title: title("block-superset", context),
+        format: pair.length === 2 ? "superset" : "circuit",
+        title: title(pair.length === 2 ? "block-superset" : "block-triset", context),
         rounds: Math.max(...pair.map((item2) => item2.sets)),
         restBetweenRounds: Math.max(...pair.map((item2) => item2.restSeconds)),
         restBetweenItems: 10,
@@ -20652,7 +20912,7 @@ function buildIntervals(id, role, exercises, seconds, context, tabata = false) {
   const beginner = context.level === "beginner";
   const work = tabata ? 20 : beginner ? Math.min(30, context.settings.intervals.work) : context.settings.intervals.work;
   const rest2 = tabata ? 10 : beginner ? Math.max(30, context.settings.intervals.rest) : context.settings.intervals.rest;
-  const restBetweenRounds = tabata ? 0 : 60;
+  const restBetweenRounds = tabata || role === "finisher" ? 0 : 60;
   const perRound2 = exercises.length * (work + rest2);
   const rounds = tabata ? Math.max(1, Math.round(8 / exercises.length)) : Math.max(1, Math.floor((seconds + restBetweenRounds) / (perRound2 + restBetweenRounds)));
   return {
@@ -21122,8 +21382,11 @@ function strengthSession(context, choice, type) {
       }
     }
   };
-  const place = (slot2) => {
-    const definition = pick(slot2, context, chosen()) ?? (slot2.fallback ? pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: slot2.fallback }, context, chosen()) : void 0);
+  const place = (slot2, optional = false) => {
+    const definition = pick(slot2, context, chosen()) ?? (slot2.fallback ?? []).reduce(
+      (found, pattern) => found ?? pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, context, chosen()),
+      void 0
+    );
     if (!definition) {
       if (baseKeys.has(slot2.key)) {
         const missing = missingEquipment(slot2, context);
@@ -21140,6 +21403,9 @@ function strengthSession(context, choice, type) {
       }
       return;
     }
+    if (optional && chosen().some((other) => other.family === definition.family)) {
+      return;
+    }
     const planned = plan(definition, slot2, context);
     if (slot2.role === "skill") {
       skillItems.push(planned);
@@ -21147,11 +21413,13 @@ function strengthSession(context, choice, type) {
       items.push(planned);
     }
   };
-  for (const slot2 of slots.filter((entry) => baseKeys.has(entry.key))) place(slot2);
+  const focusKeys = new Set(context.focusGroups.flatMap((group) => FOCUS_SLOTS[group].map((slot2) => slot2.key)));
+  const first = [...slots.filter((entry) => focusKeys.has(entry.key)), ...slots.filter((entry) => baseKeys.has(entry.key))];
+  for (const slot2 of first) place(slot2);
   grow((item2) => item2.slotRole === "main" ? most : most - 1);
-  for (const slot2 of slots.filter((entry) => !baseKeys.has(entry.key))) {
+  for (const slot2 of slots.filter((entry) => !baseKeys.has(entry.key) && !focusKeys.has(entry.key))) {
     if (items.length >= maxItems || mainSeconds(items) >= mainBudget * 0.92) break;
-    place(slot2);
+    place(slot2, true);
   }
   grow(() => most + 1);
   for (let guard = 0; guard < 40 && mainSeconds(items) > mainBudget * 1.1; guard++) {
@@ -21302,7 +21570,7 @@ function replaceExercise(session, input, blockId, index, exerciseId) {
   const keepsRounds = block.format !== "straight" && block.format !== "ladder";
   const replaced = {
     exercise: definition.id,
-    name: context.library.name(definition.id, context.locale),
+    name: context.library.name(definition.id, context.locale, prescription.load ? [prescription.load.equipment, ...prescription.equipment] : prescription.equipment),
     sets: keepsRounds ? item2.sets : prescription.sets,
     target: block.format === "tabata" || block.format === "intervals" ? { ...item2.target, perSide: Boolean(definition.unilateral) } : prescription.target,
     restSeconds: keepsRounds ? item2.restSeconds : prescription.restSeconds,
