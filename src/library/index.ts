@@ -6,6 +6,7 @@
 import { CATALOG } from './exercises';
 import { EXERCISES_FR } from '../i18n/fr/exercises';
 import { Library, mergeCatalogs, type CatalogTexts } from './library';
+import { MEDIA, type MediaEntry } from './media';
 import type { ExerciseDefinition } from './types';
 
 /** Les textes du catalogue intégré, par langue. */
@@ -15,7 +16,7 @@ let builtIn: Library | undefined;
 
 /** La bibliothèque intégrée, construite à la première lecture. */
 export function defaultLibrary(): Library {
-    builtIn ??= new Library(CATALOG, CATALOG_TEXTS);
+    builtIn ??= new Library(CATALOG, CATALOG_TEXTS, MEDIA);
 
     return builtIn;
 }
@@ -26,12 +27,22 @@ export function defaultLibrary(): Library {
  * fiches seules avec `{ builtIn: false }`.
  */
 export function createLibrary(
-    options: { readonly exercises?: readonly ExerciseDefinition[]; readonly texts?: CatalogTexts; readonly builtIn?: boolean } = {},
+    options: {
+        readonly exercises?: readonly ExerciseDefinition[];
+        readonly texts?: CatalogTexts;
+        readonly builtIn?: boolean;
+        /** Des photos à soi, ou qui remplacent celles du catalogue. */
+        readonly media?: Readonly<Record<string, MediaEntry>>;
+        /** Une autre adresse de base pour les photos, quand l'application les copie chez elle. */
+        readonly mediaBase?: string;
+    } = {},
 ): Library {
     const base = options.builtIn === false ? { definitions: [], texts: {} } : { definitions: CATALOG, texts: CATALOG_TEXTS };
     const merged = mergeCatalogs(base, { definitions: options.exercises ?? [], texts: options.texts ?? {} });
 
-    return new Library(merged.definitions, merged.texts);
+    const media = options.builtIn === false ? (options.media ?? {}) : { ...MEDIA, ...(options.media ?? {}) };
+
+    return new Library(merged.definitions, merged.texts, media, options.mediaBase);
 }
 
 export { CATALOG, CATALOG_BY_FILE } from './exercises';
@@ -40,6 +51,8 @@ export type { CatalogFile } from './exercises/anchors';
 export { DEFAULT_LOCALE, Library, mergeCatalogs } from './library';
 export type { Alternative, CatalogTexts, ExerciseQuery, Locale } from './library';
 export { validateCatalog } from './validate';
+export { MEDIA, MEDIA_BASE } from './media';
+export type { ExerciseMedia, MediaEntry } from './media';
 export type { CatalogProblem } from './validate';
 export {
     GROUP_REGION,

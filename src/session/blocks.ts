@@ -84,6 +84,7 @@ export function toSessionItem(item: PlannedItem, block: PlannedBlock, context: C
         ...(item.note ? { note: item.note } : {}),
         ...(item.warmupSets ? { warmupSets: item.warmupSets } : {}),
         ...(item.definition.alternating && item.target.measure === 'reps' ? { alternating: true } : {}),
+        ...(context.library.media(item.definition.id) ? { images: context.library.media(item.definition.id)!.images } : {}),
         reasons: item.reasons,
         setSeconds: Math.round(block.format === 'tabata' || block.format === 'intervals' ? (block.workSeconds ?? item.target.value) : workSeconds(item.definition, item.target, item.tempo)),
         estimatedSeconds: Math.round(itemSeconds(item, block)),

@@ -346,6 +346,8 @@ export interface SessionItem {
     readonly note?: string;
     /** Se fait en alternant les côtés : la cible compte les deux côtés, en nombre pair. */
     readonly alternating?: boolean;
+    /** Les photos de l'exercice (départ, arrivée), quand une source libre montre le même geste. */
+    readonly images?: readonly string[];
     /** Les séries d'approche, avant les séries de travail d'un exercice chargé et lourd : la moitié, puis les trois quarts. */
     readonly warmupSets?: readonly { readonly reps: number; readonly kg: number }[];
     readonly reasons: readonly Reason[];

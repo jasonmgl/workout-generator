@@ -49,7 +49,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## État au 2 octobre 2026 (soir)
 
-- **Version utilisable sur `master`.** 245 tests au vert, types propres.
+- **Version utilisable sur `master`.** 257 tests au vert, types propres.
 - `src/library/` : anatomie (30 muscles → 9 groupes → 3 régions,
   articulations), matériel (38 pièces, `inventory`, charges en kg), format des
   fiches (`types.ts`), règles (`validate.ts`), bibliothèque (`library.ts` :
@@ -77,6 +77,14 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 - `src/output/` : texte, étapes pour un lecteur (`toTimeline`), arbre de
   blocs (`toTree`).
 - `src/cli.ts` + `bin/workout-generator.mjs` : la commande JSON pour Laravel.
+- **Les photos** (`src/library/media.ts`, généré) : 266 fiches ont celles de
+  free-exercise-db (github.com/yuhonas/free-exercise-db, domaine public,
+  environ 870 exercices, le dépôt le plus étoilé du genre). Correspondances
+  vérifiées une à une par six relecteurs (144 exactes, 122 proches) ; le
+  reste n'a pas de photo plutôt qu'une fausse. Les photos restent sur GitHub
+  (`MEDIA_BASE`), `library.media(id)` compose l'adresse, `mediaBase` la
+  change. Les dépôts annonçant 10 000 exercices (wrkout.xyz, ExerciseDB) ne
+  livrent ce volume que par une offre payante ou une API : écartés.
 
 ## Reste à faire
 
@@ -121,6 +129,11 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   prévue de ses séries se calcule dessus. Chaque exercice dit le temps d'une
   série (`setSeconds`) et de tout son bloc. Les durées proposées sont celles
   de DidIt (10, 20, 30, 45, 60).
+- **Photos par lien, sur nos fiches seulement** (choix de l'utilisateur,
+  03/10) : pas de bibliothèque étendue importée pour l'instant, pas de photo
+  copiée dans le paquet. La source ne dit pas d'où viennent ses photos à
+  l'origine : sans risque pour DidIt (privée), à vérifier pour un produit
+  public.
 - **Jamais recopier Lafay** (ni programmes, ni codes d'exercices, ni chiffres,
   ni « 100 pompes », ni « 50 tractions ») ; Pavel et Pirie : principes
   seulement. US Navy et Sandow sont publics. Chiffres à nous (un test
@@ -230,4 +243,5 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   séances placées, sorties nommées avec leur date) et les exercices en
   alternance (21 fiches, nombre pair, « en alternant (6 de chaque côté) »),
   chiffres d'échauffement et de retour au calme arrondis comme un coach.
-  250 tests.
+  250 tests. Puis les photos de free-exercise-db sur 266 fiches (voir État),
+  par lien vers GitHub. 257 tests.

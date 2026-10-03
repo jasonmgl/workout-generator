@@ -125,6 +125,15 @@ Chaque fiche a deux parties :
 - **un texte rangé à part, par langue** : nom, autres noms, résumé, mise en
   place, déroulé, repères, erreurs fréquentes, respiration, sécurité.
 
+**Les photos** : 266 fiches ont la photo de départ et d'arrivée de l'exercice,
+tirées de [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+(domaine public). Chaque correspondance a été vérifiée : `exact` quand la
+photo montre le même exercice, `close` pour la même forme avec une
+différence mineure ; sans correspondance sûre, pas de photo. Les photos
+restent hébergées sur GitHub : `library.media(id)` donne leurs adresses, et
+chaque exercice d'une séance porte ses `images`. Une application qui les
+copie chez elle passe `createLibrary({ mediaBase: 'https://…/photos/' })`.
+
 Un projet ajoute ses propres fiches avec
 `createLibrary({ exercises, texts })` et peut les vérifier avec
 `validateCatalog`.

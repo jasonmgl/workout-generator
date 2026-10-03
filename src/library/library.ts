@@ -10,6 +10,7 @@
 import { musclesOfAll, type BodyTarget, type JointId, type MuscleId } from './anatomy';
 import { inventory as makeInventory, satisfies, type EquipmentId, type EquipmentInput, type Inventory } from './equipment';
 import { normalize } from '../i18n/format';
+import { MEDIA_BASE, type ExerciseMedia, type MediaEntry } from './media';
 import type { Exercise, ExerciseDefinition, ExerciseKind, ExerciseText, Impact, Measure, MovementPattern, Posture } from './types';
 
 export type Locale = string;
@@ -73,8 +74,13 @@ export class Library {
     private readonly byFamily = new Map<string, ExerciseDefinition[]>();
     private readonly texts: CatalogTexts;
     private readonly nameIndex = new Map<Locale, Map<string, string>>();
+    private readonly photos: Readonly<Record<string, MediaEntry>>;
+    private readonly mediaBase: string;
 
-    constructor(definitions: readonly ExerciseDefinition[], texts: CatalogTexts) {
+    constructor(definitions: readonly ExerciseDefinition[], texts: CatalogTexts, media: Readonly<Record<string, MediaEntry>> = {}, mediaBase = MEDIA_BASE) {
+        this.photos = media;
+        this.mediaBase = mediaBase;
+
         for (const definition of definitions) {
             this.byId.set(definition.id, definition);
         }
@@ -153,7 +159,16 @@ export class Library {
 
     /** La fiche complète : structure et texte. */
     exercise(id: string, locale: Locale = DEFAULT_LOCALE): Exercise {
-        return { ...this.get(id), text: this.text(id, locale) };
+        const media = this.media(id);
+
+        return { ...this.get(id), text: this.text(id, locale), ...(media ? { media } : {}) };
+    }
+
+    /** Les photos d'une fiche, avec leurs adresses complètes ; aucune quand rien ne montre le geste. */
+    media(id: string): ExerciseMedia | undefined {
+        const entry = this.photos[id];
+
+        return entry ? { images: entry.images.map((path) => `${this.mediaBase}${path}`), source: entry.source, match: entry.match } : undefined;
     }
 
     /** Les fiches qui remplissent tous les critères, dans l'ordre du catalogue. */

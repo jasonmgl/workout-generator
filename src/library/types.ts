@@ -206,4 +206,6 @@ export interface ExerciseText {
 /** Une fiche complète : la structure et son texte dans la langue demandée. */
 export interface Exercise extends ExerciseDefinition {
     readonly text: ExerciseText;
+    /** Les photos, quand une source libre montre le même geste. */
+    readonly media?: { readonly images: readonly string[]; readonly source: string; readonly match: 'exact' | 'close' };
 }
