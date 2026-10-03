@@ -62,6 +62,12 @@ export function slotsFor(type: SessionType, context: Context): Slot[] {
 const PUSHES: readonly MovementPattern[] = ['horizontal-push', 'vertical-push'];
 const PULLS: readonly MovementPattern[] = ['horizontal-pull', 'vertical-pull'];
 
+/** Une poussée : un schéma de poussée, ou une extension des triceps en appui sur les mains (pompes sphinx). */
+export const isPush = (definition: ExerciseDefinition): boolean => PUSHES.includes(definition.pattern) || (definition.pattern === 'elbow-extension' && definition.posture === 'support');
+
+/** Les séances où poussées et tirages doivent s’équilibrer (une séance de poussée est faite pour pousser). */
+const BALANCED: readonly SessionType[] = ['full-body', 'upper'];
+
 /**
  * Pour une place vide ou tenue par un secours : le matériel qui débloquerait un exercice de la place que la
  * personne pourrait vraiment faire aujourd'hui (articulations, sauts, ce qu'elle évite compris), le plus souvent
@@ -401,21 +407,30 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
         }
     };
 
-    const place = (slot: Slot, optional = false): void => {
-        const pushes = items.filter((entry) => PUSHES.includes(entry.definition.pattern)).length;
-        const pulls = items.filter((entry) => PULLS.includes(entry.definition.pattern)).length;
+    // Les poussées qu’on écarte d’une place quand elles dépasseraient les tirages.
+    const pushIds = new Set(context.library.filter({}).filter(isPush).map((definition) => definition.id));
+    const wantsPush = new Set(context.focusGroups.filter((group) => group === 'chest' || group === 'shoulders'));
 
-        // Une poussée en plus n'entre que s'il y a déjà autant de vrais tirages que de poussées.
-        if (optional && slot.patterns.every((pattern) => PUSHES.includes(pattern)) && pushes >= pulls) {
+    const place = (slot: Slot, optional = false): void => {
+        const pushes = items.filter((entry) => isPush(entry.definition)).length;
+        const pulls = items.filter((entry) => PULLS.includes(entry.definition.pattern)).length;
+        // Jamais plus de poussées que de vrais tirages (la première poussée exceptée) : sans tirage faisable, une seule
+        // poussée. Les pompes sphinx en sont une. Seul un focus pectoraux ou épaules, demandé, passe outre.
+        const focusPush = slot.key.startsWith('focus-') && wantsPush.size > 0;
+        const pushBlocked = BALANCED.includes(type) && !focusPush && pushes + 1 > Math.max(1, pulls);
+
+        if (pushBlocked && slot.patterns.every((pattern) => PUSHES.includes(pattern))) {
             return;
         }
 
+        const slotContext = pushBlocked ? { ...context, exclude: new Set([...context.exclude, ...pushIds]) } : context;
+
         // Les schémas de secours s'essaient dans l'ordre : les omoplates avant le gainage du dos.
-        const direct = pick(slot, context, chosen(), optional);
+        const direct = pick(slot, slotContext, chosen(), optional);
         const definition =
             direct ??
             (slot.fallback ?? []).reduce<ExerciseDefinition | undefined>(
-                (found, pattern) => found ?? pick({ ...slot, key: `${slot.key}-fallback`, patterns: [pattern] }, context, chosen(), optional),
+                (found, pattern) => found ?? pick({ ...slot, key: `${slot.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional),
                 undefined,
             );
 

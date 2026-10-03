@@ -21831,11 +21831,12 @@ var RAW_TEMPLATES = {
     ]
   },
   upper: {
+    // Par paires, le tirage d’abord : quand le temps manque, c’est la deuxième poussée qui saute.
     base: [
-      slot("push", "main", ["horizontal-push"]),
       slot("pull", "main", ["vertical-pull", "horizontal-pull"], STRENGTH, PULL_FALLBACK),
-      slot("push-v", "main", ["vertical-push"]),
-      slot("pull-h", "main", ["horizontal-pull"], STRENGTH, PULL_FALLBACK)
+      slot("push", "main", ["horizontal-push"]),
+      slot("pull-h", "main", ["horizontal-pull"], STRENGTH, PULL_FALLBACK),
+      slot("push-v", "main", ["vertical-push"])
     ],
     extras: [
       slot("biceps", "accessory", ["elbow-flexion"]),
@@ -22044,6 +22045,8 @@ function slotsFor(type, context) {
 }
 var PUSHES = ["horizontal-push", "vertical-push"];
 var PULLS = ["horizontal-pull", "vertical-pull"];
+var isPush = (definition) => PUSHES.includes(definition.pattern) || definition.pattern === "elbow-extension" && definition.posture === "support";
+var BALANCED = ["full-body", "upper"];
 function missingEquipment(slot2, context) {
   const counts = /* @__PURE__ */ new Map();
   const candidates = context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns });
@@ -22270,15 +22273,20 @@ function strengthSession(context, choice, type) {
       }
     }
   };
+  const pushIds = new Set(context.library.filter({}).filter(isPush).map((definition) => definition.id));
+  const wantsPush = new Set(context.focusGroups.filter((group) => group === "chest" || group === "shoulders"));
   const place = (slot2, optional = false) => {
-    const pushes = items.filter((entry) => PUSHES.includes(entry.definition.pattern)).length;
+    const pushes = items.filter((entry) => isPush(entry.definition)).length;
     const pulls = items.filter((entry) => PULLS.includes(entry.definition.pattern)).length;
-    if (optional && slot2.patterns.every((pattern) => PUSHES.includes(pattern)) && pushes >= pulls) {
+    const focusPush = slot2.key.startsWith("focus-") && wantsPush.size > 0;
+    const pushBlocked = BALANCED.includes(type) && !focusPush && pushes + 1 > Math.max(1, pulls);
+    if (pushBlocked && slot2.patterns.every((pattern) => PUSHES.includes(pattern))) {
       return;
     }
-    const direct = pick(slot2, context, chosen(), optional);
+    const slotContext = pushBlocked ? { ...context, exclude: /* @__PURE__ */ new Set([...context.exclude, ...pushIds]) } : context;
+    const direct = pick(slot2, slotContext, chosen(), optional);
     const definition = direct ?? (slot2.fallback ?? []).reduce(
-      (found, pattern) => found ?? pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, context, chosen(), optional),
+      (found, pattern) => found ?? pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional),
       void 0
     );
     if (definition && !direct && baseKeys.has(slot2.key)) {

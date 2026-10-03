@@ -48,9 +48,9 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 - **Ne pas toucher au dépôt DidIt** (`C:\Users\jason\OneDrive\Documents\Claude\Didit`) :
   une autre session y travaille. On le lit, c'est tout.
 
-## État au 3 octobre 2026 (soir)
+## État au 3 octobre 2026 (nuit)
 
-- **Version utilisable sur `master`.** 283 tests au vert, types propres.
+- **Version utilisable sur `master`.** 285 tests au vert, types propres.
 - **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
   `main`, derrière l’interrupteur `DIDIT_GENERATEUR`) : `app/Support/WorkoutGenerator.php`
   appelle la commande JSON, dépend de `github:jasonmgl/workout-generator#master`
@@ -114,11 +114,14 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
    - [x] forme du jour : hasard tiré dans un ordre fixe, ni AMRAP ni EMOM un
      jour léger, travail plafonné ; récupération qui passe avant le type
      demandé (securite-1, -2) ;
-   - [ ] poussée / tirage : pompes sphinx comptées en poussée, places de
-     base par paires en commençant par le tirage ; focus servi d'abord ;
-     développé chargé en salle ; pas d'extensions lombaires après une
-     charnière ; doublons de mouvement (programmation-2, -6, -7, -11 ;
-     clarte-12) ;
+   - [x] poussée / tirage : pompes sphinx comptées en poussée, places de
+     base du haut du corps en commençant par le tirage (programmation-2) ;
+   - [ ] **à reprendre ici** : focus servi d'abord (un rôle « focus »,
+     plafond d'une place principale, servi en premier par `grow`, dans le
+     premier circuit ; pénalité d'activation sur toute place) ; développé
+     chargé en salle (une fiche par famille au tirage) ; pas d'extensions
+     lombaires après une charnière ; doublons de mouvement (famille sans
+     « loaded- ») (programmation-6, -7, -11 ; clarte-12) ;
    - [ ] cardio en continu : retour au calme de 2 à 3 min, échauffement en
      un tour, durée tenue ; « très facile » écrit ; machine et corde
      utilisées (programmation-3, -9 ; securite-9 ; clarte-3, -4, -10) ;
@@ -217,6 +220,11 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   ressentie dure fait tenir la cible** ; on ne change de variante qu'après
   deux séances de suite qui ont coincé. Au plateau, l'exercice exact est
   gardé (×3 au tirage), jamais une variante plus dure.
+- **Jamais plus de poussées que de vrais tirages** en corps entier et en
+  haut du corps (la première poussée exceptée ; sans tirage faisable, une
+  seule poussée) ; les pompes sphinx comptent comme une poussée. Seul un
+  focus pectoraux ou épaules passe outre. Le haut du corps place le tirage
+  d'abord : quand le temps manque, c'est la deuxième poussée qui saute.
 - **Un jour léger** (petite forme, séance légère du plan) : ni AMRAP ni
   EMOM, 15 s de plus entre les tours d'un circuit. **Le hasard se tire
   toujours dans le même ordre** (finisher, format) : un jour léger donne la
@@ -338,3 +346,9 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   EMOM un jour léger, plus de repos entre les tours ; la mobilité passe
   avant le type demandé en forme « récupération », avec une phrase qui le
   dit ; plus de message qui invite à minimiser ses douleurs. 283 tests.
+  Troisième lot commencé : poussées et tirages équilibrés (aucun
+  déséquilibre sur six balayages de 20 graines, contre jusqu'à 24 sur 24).
+  285 tests. Arrêt pour ce soir à la demande de l'utilisateur (« dès que tu
+  as une version viable, arrête-toi »), à 57 % de la consommation de la
+  semaine. Ensuite : la fin du lot 3, puis les lots cardio, notes, tempo et
+  le reste, puis les cycles de plusieurs semaines.

@@ -76,11 +76,12 @@ const RAW_TEMPLATES: Readonly<Record<SessionType, Template>> = {
         ],
     },
     upper: {
+        // Par paires, le tirage d’abord : quand le temps manque, c’est la deuxième poussée qui saute.
         base: [
-            slot('push', 'main', ['horizontal-push']),
             slot('pull', 'main', ['vertical-pull', 'horizontal-pull'], STRENGTH, PULL_FALLBACK),
-            slot('push-v', 'main', ['vertical-push']),
+            slot('push', 'main', ['horizontal-push']),
             slot('pull-h', 'main', ['horizontal-pull'], STRENGTH, PULL_FALLBACK),
+            slot('push-v', 'main', ['vertical-push']),
         ],
         extras: [
             slot('biceps', 'accessory', ['elbow-flexion']),

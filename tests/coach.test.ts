@@ -498,3 +498,39 @@ describe('la deuxième relecture : la forme du jour', () => {
         }
     });
 });
+
+describe('la deuxième relecture : poussées et tirages', () => {
+    const push = (id: string): boolean => {
+        const definition = library.get(id);
+
+        return definition.pattern === 'horizontal-push' || definition.pattern === 'vertical-push' || (definition.pattern === 'elbow-extension' && definition.posture === 'support');
+    };
+    const pull = (id: string): boolean => ['horizontal-pull', 'vertical-pull'].includes(library.get(id).pattern);
+    const setsOf = (session: Session, test: (id: string) => boolean): number =>
+        session.blocks.filter((block) => block.role === 'main').reduce((sum, block) => sum + block.items.filter((item) => test(item.exercise)).reduce((count, item) => count + item.sets * block.rounds, 0), 0);
+    const cases: [string, Omit<GenerateInput, 'seed'>][] = [
+        ['haut du corps 20 min, barre', { date: DATE, equipment: ['pullup-bar'], request: { type: 'upper', minutes: 20 } }],
+        ['haut du corps 20 min, table et chaises', { date: DATE, equipment: ['table', 'two-chairs'], request: { type: 'upper', minutes: 20 } }],
+        ['corps entier 45 min, sans matériel', { date: DATE, request: { minutes: 45 } }],
+        ['corps entier 45 min, endurance, sans matériel', { date: DATE, profile: { goal: 'endurance' }, request: { minutes: 45 } }],
+        ['haut du corps 30 min, focus bras', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: [{ id: 'dumbbells', loads: [4, 8, 12, 16] }, 'bench'], request: { type: 'upper', minutes: 30, focus: ['arms'] } }],
+    ];
+
+    it('ne fait jamais plus de séries de poussée que de tirage quand un vrai tirage est faisable', () => {
+        for (const [label, input] of cases) {
+            for (const session of many(input)) {
+                if (setsOf(session, pull) > 0) expect(setsOf(session, push), label).toBeLessThanOrEqual(setsOf(session, pull));
+            }
+        }
+    });
+
+    it('sans tirage faisable, se contente d’une seule poussée, pompes sphinx comprises', () => {
+        for (const [label, input] of cases) {
+            for (const session of many(input)) {
+                const main = items(session, ['main']);
+
+                if (!main.some((item) => pull(item.exercise))) expect(main.filter((item) => push(item.exercise)).length, label).toBeLessThanOrEqual(1);
+            }
+        }
+    });
+});
