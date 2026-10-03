@@ -390,15 +390,15 @@ function format(template, params = {}, plural = FRENCH_PLURAL) {
 function formatSeconds(seconds) {
   const total = Math.max(0, Math.round(seconds));
   if (total < 60) {
-    return `${total} s`;
+    return `${total}\xA0s`;
   }
   const hours = Math.floor(total / 3600);
   const minutes = Math.floor(total % 3600 / 60);
   const rest2 = total % 60;
   if (hours > 0) {
-    return `${hours} h ${String(minutes).padStart(2, "0")}`;
+    return `${hours}\xA0h\xA0${String(minutes).padStart(2, "0")}`;
   }
-  return rest2 === 0 ? `${minutes} min` : `${minutes} min ${String(rest2).padStart(2, "0")}`;
+  return rest2 === 0 ? `${minutes}\xA0min` : `${minutes}\xA0min\xA0${String(rest2).padStart(2, "0")}`;
 }
 function normalize(text) {
   return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[’'`]/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
@@ -407,14 +407,14 @@ function normalize(text) {
 // src/i18n/fr/messages.ts
 var MESSAGES_FR = {
   // La forme du jour
-  "declared-rest": "Jour de repos d\xE9clar\xE9 : un repos actif tout au plus, si l\u2019envie est l\xE0.",
-  ill: "Malade : le corps a mieux \xE0 faire. Repos, et reprise une fois gu\xE9ri.",
-  "pulse-high": "Pouls du matin \xE0 +{gap} % de l\u2019habitude ({bpm} contre {baseline}) : repos conseill\xE9.",
-  "pulse-raised": "Pouls du matin un peu haut (+{gap} %) : s\xE9ance all\xE9g\xE9e.",
-  "pulse-recovering": "Pouls revenu \xE0 la normale, mais on attend deux matins de suite avant de recharger : s\xE9ance l\xE9g\xE8re.",
-  "no-rest-streak": "{days} jours d\u2019affil\xE9e sans repos : aujourd\u2019hui, on r\xE9cup\xE8re.",
-  "feeling-low": "Petite forme ({signals}) : mobilit\xE9 et \xE9tirements, sans charge.",
-  "feeling-tired": "Forme moyenne ({signals}) : s\xE9ance all\xE9g\xE9e.",
+  "declared-rest": "Jour de repos d\xE9clar\xE9\u202F: un repos actif tout au plus, si l\u2019envie est l\xE0.",
+  ill: "Malade\u202F: le corps a mieux \xE0 faire. Repos, et reprise une fois gu\xE9ri.",
+  "pulse-high": "Pouls du matin \xE0 +{gap}\u202F% de l\u2019habitude ({bpm} contre {baseline})\u202F: repos conseill\xE9.",
+  "pulse-raised": "Pouls du matin un peu haut (+{gap}\u202F%)\u202F: s\xE9ance all\xE9g\xE9e.",
+  "pulse-recovering": "Pouls revenu \xE0 la normale, mais on attend deux matins de suite avant de recharger\u202F: s\xE9ance l\xE9g\xE8re.",
+  "no-rest-streak": "{days} jours d\u2019affil\xE9e sans repos\u202F: aujourd\u2019hui, on r\xE9cup\xE8re.",
+  "feeling-low": "Petite forme ({signals})\u202F: mobilit\xE9 et \xE9tirements, sans charge.",
+  "feeling-tired": "Forme moyenne ({signals})\u202F: s\xE9ance all\xE9g\xE9e.",
   "signal-energy": "\xE9nergie basse",
   "signal-sleep": "mauvaise nuit",
   "signal-sleep-short": "nuit courte",
@@ -422,36 +422,36 @@ var MESSAGES_FR = {
   "signal-soreness": "courbatures",
   "signal-motivation": "peu d\u2019envie",
   "signal-general": "signaux bas",
-  "feeling-great": "Grande forme : on peut pousser un peu.",
-  "short-sleep": "Nuit courte ({hours} h) : pas d\u2019intensit\xE9 maximale aujourd\u2019hui.",
-  "last-hard": "La derni\xE8re s\xE9ance a paru trop dure : celle-ci est all\xE9g\xE9e.",
-  "last-easy": "La derni\xE8re s\xE9ance a paru facile : on monte d\u2019un cran.",
-  "cycle-period-strong": "R\xE8gles tr\xE8s douloureuses : mobilit\xE9 douce et respiration, rien de plus.",
-  "cycle-period": "R\xE8gles avec des sympt\xF4mes : s\xE9ance douce, sans sauts, \xE0 arr\xEAter au moindre inconfort.",
-  "cycle-period-light": "Pendant les r\xE8gles : volume un peu r\xE9duit, \xE0 adapter au ressenti.",
-  "cycle-luteal": "Fin de cycle : volume un peu plus doux.",
-  "cycle-follicular": "D\xE9but de cycle : bon moment pour charger.",
-  "cycle-ovulation": "Milieu de cycle : la forme est souvent l\xE0, \xE9chauffement soign\xE9 pour les articulations.",
-  "load-spike": "Charge de la semaine bien au-dessus de l\u2019habitude (\xD7{ratio}) : on l\xE8ve le pied pour \xE9viter la blessure.",
-  "load-rising": "Charge de la semaine en hausse (\xD7{ratio}) : \xE0 surveiller.",
-  comeback: "Reprise apr\xE8s {days} jours sans s\xE9ance : on repart une marche en dessous.",
-  "joint-pain": "\xC0 m\xE9nager ({joints}) : les exercices qui chargent ces articulations sont \xE9cart\xE9s.",
-  "joint-pain-strong": "Douleur forte ({joints}) : arr\xEAter si elle augmente pendant la s\xE9ance, et demander un avis si elle dure.",
-  sore: "Courbatures ({targets}) : on les laisse r\xE9cup\xE9rer.",
-  "readiness-ignored": "S\xE9ance faite malgr\xE9 la forme du jour : \xE0 l\u2019\xE9coute de son corps, et on s\u2019arr\xEAte au moindre signal.",
+  "feeling-great": "Grande forme\u202F: on peut pousser un peu.",
+  "short-sleep": "Nuit courte ({hours}\xA0h)\u202F: pas d\u2019intensit\xE9 maximale aujourd\u2019hui.",
+  "last-hard": "La derni\xE8re s\xE9ance a paru trop dure\u202F: celle-ci est all\xE9g\xE9e.",
+  "last-easy": "La derni\xE8re s\xE9ance a paru facile\u202F: on monte d\u2019un cran.",
+  "cycle-period-strong": "R\xE8gles tr\xE8s douloureuses\u202F: mobilit\xE9 douce et respiration, rien de plus.",
+  "cycle-period": "R\xE8gles avec des sympt\xF4mes\u202F: s\xE9ance douce, sans sauts, \xE0 arr\xEAter au moindre inconfort.",
+  "cycle-period-light": "Pendant les r\xE8gles\u202F: volume un peu r\xE9duit, \xE0 adapter au ressenti.",
+  "cycle-luteal": "Fin de cycle\u202F: volume un peu plus doux.",
+  "cycle-follicular": "D\xE9but de cycle\u202F: bon moment pour charger.",
+  "cycle-ovulation": "Milieu de cycle\u202F: la forme est souvent l\xE0, \xE9chauffement soign\xE9 pour les articulations.",
+  "load-spike": "Charge de la semaine bien au-dessus de l\u2019habitude (\xD7{ratio})\u202F: on l\xE8ve le pied pour \xE9viter la blessure.",
+  "load-rising": "Charge de la semaine en hausse (\xD7{ratio})\u202F: \xE0 surveiller.",
+  comeback: "Reprise apr\xE8s {days} jours sans s\xE9ance\u202F: on repart une marche en dessous.",
+  "joint-pain": "\xC0 m\xE9nager ({joints})\u202F: les exercices qui chargent ces articulations sont \xE9cart\xE9s.",
+  "joint-pain-strong": "Douleur forte ({joints})\u202F: arr\xEAter si elle augmente pendant la s\xE9ance, et demander un avis si elle dure.",
+  sore: "Courbatures ({targets})\u202F: on les laisse r\xE9cup\xE9rer.",
+  "readiness-ignored": "S\xE9ance faite malgr\xE9 la forme du jour\u202F: \xE0 l\u2019\xE9coute de son corps, et on s\u2019arr\xEAte au moindre signal.",
   // La progression, exercice par exercice
-  "progress-start": "Premi\xE8re fois : on part bas, et on voit.",
-  "progress-harder": "Nouvelle variante, plus dure : on repart du bas de la fourchette.",
-  "progress-easier": "Variante plus facile que d\u2019habitude : de la marge aujourd\u2019hui.",
-  "progress-more": "{from} \u2192 {to}{unit} : un cran de plus que la derni\xE8re fois.",
-  "progress-hold": "M\xEAme cible que la derni\xE8re fois : on la valide avant de monter.",
-  "progress-build": "Sous la fourchette vis\xE9e : des s\xE9ries de {value}{unit}, une de plus, pour monter.",
-  "progress-add-set": "Haut de la fourchette atteint : une s\xE9rie de plus.",
-  "progress-add-load": "Haut de la fourchette atteint : la charge au-dessus.",
-  "progress-load-up": "Haut de la fourchette atteint : {from} \u2192 {to} kg, et on repart du bas.",
-  "progress-vary": "Plateau ({sessions} s\xE9ances sans progr\xE8s) : plus lent, un peu moins de r\xE9p\xE9titions et une s\xE9rie de plus, pour relancer.",
-  "progress-comeback": "Reprise : un cran en dessous de la derni\xE8re fois.",
-  "load-guess": "Charge indicative : l\u2019ajuster pour garder {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions} en r\xE9serve.",
+  "progress-start": "Premi\xE8re fois\u202F: on part bas, et on voit.",
+  "progress-harder": "Nouvelle variante, plus dure\u202F: on repart du bas de la fourchette.",
+  "progress-easier": "Variante plus facile que d\u2019habitude\u202F: de la marge aujourd\u2019hui.",
+  "progress-more": "{from} \u2192 {to}{unit}\u202F: un cran de plus que la derni\xE8re fois.",
+  "progress-hold": "M\xEAme cible que la derni\xE8re fois\u202F: on la valide avant de monter.",
+  "progress-build": "Sous la fourchette vis\xE9e\u202F: des s\xE9ries de {value}{unit}, une de plus, pour monter.",
+  "progress-add-set": "Haut de la fourchette atteint\u202F: une s\xE9rie de plus.",
+  "progress-add-load": "Haut de la fourchette atteint\u202F: la charge au-dessus.",
+  "progress-load-up": "Haut de la fourchette atteint\u202F: {from} \u2192 {to}\xA0kg, et on repart du bas.",
+  "progress-vary": "Plateau ({sessions} s\xE9ances sans progr\xE8s)\u202F: plus lent, un peu moins de r\xE9p\xE9titions et une s\xE9rie de plus, pour relancer.",
+  "progress-comeback": "Reprise\u202F: un cran en dessous de la derni\xE8re fois.",
+  "load-guess": "Charge indicative\u202F: l\u2019ajuster pour garder {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions} en r\xE9serve.",
   "load-choose": "Choisir une charge qui laisse {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions} en r\xE9serve.",
   // L'intensité demandée
   "intensity-easy": "S\xE9ance douce, comme demand\xE9.",
@@ -462,27 +462,27 @@ var MESSAGES_FR = {
   "type-asked": "Type de s\xE9ance demand\xE9.",
   "type-plan": "S\xE9ance pr\xE9vue au plan de la semaine.",
   "type-plan-rest": "Jour de r\xE9cup\xE9ration au plan de la semaine.",
-  "type-recovery": "Petite forme : on bouge sans charger.",
+  "type-recovery": "Petite forme\u202F: on bouge sans charger.",
   "type-focus": "S\xE9ance centr\xE9e sur ce qui est demand\xE9.",
-  "type-all-tired-core": "Haut et bas du corps encore fatigu\xE9s : gainage aujourd\u2019hui.",
-  "type-all-tired": "Haut et bas du corps encore fatigu\xE9s : mobilit\xE9 aujourd\u2019hui.",
-  "type-legs-tired": "Jambes encore fatigu\xE9es : haut du corps aujourd\u2019hui.",
-  "type-legs-tired-activity": "Jambes encore charg\xE9es par l\u2019activit\xE9 des derniers jours : haut du corps aujourd\u2019hui.",
-  "type-avoid-legs": "Sans les jambes, comme demand\xE9 : haut du corps.",
-  "type-upper-tired": "Haut du corps encore fatigu\xE9 : bas du corps aujourd\u2019hui.",
-  "type-avoid-upper": "Sans le haut du corps, comme demand\xE9 : bas du corps.",
-  "type-cardio-week": "Pas encore de cardio cette semaine : s\xE9ance fractionn\xE9e.",
+  "type-all-tired-core": "Haut et bas du corps encore fatigu\xE9s\u202F: gainage aujourd\u2019hui.",
+  "type-all-tired": "Haut et bas du corps encore fatigu\xE9s\u202F: mobilit\xE9 aujourd\u2019hui.",
+  "type-legs-tired": "Jambes encore fatigu\xE9es\u202F: haut du corps aujourd\u2019hui.",
+  "type-legs-tired-activity": "Jambes encore charg\xE9es par l\u2019activit\xE9 des derniers jours\u202F: haut du corps aujourd\u2019hui.",
+  "type-avoid-legs": "Sans les jambes, comme demand\xE9\u202F: haut du corps.",
+  "type-upper-tired": "Haut du corps encore fatigu\xE9\u202F: bas du corps aujourd\u2019hui.",
+  "type-avoid-upper": "Sans le haut du corps, comme demand\xE9\u202F: bas du corps.",
+  "type-cardio-week": "Pas encore de cardio cette semaine\u202F: s\xE9ance fractionn\xE9e.",
   "type-split-upper": "Le haut du corps est le plus en retard cette semaine.",
   "type-split-lower": "Le bas du corps est le plus en retard cette semaine.",
-  "type-full-body": "Tout est frais : corps entier.",
-  "type-full-body-default": "Corps entier : chaque grand groupe a sa part.",
-  "type-plan-adapted-legs": "Plan adapt\xE9 : jambes encore charg\xE9es, haut du corps aujourd\u2019hui.",
-  "type-plan-adapted-upper": "Plan adapt\xE9 : haut du corps encore charg\xE9, bas du corps aujourd\u2019hui.",
+  "type-full-body": "Tout est frais\u202F: corps entier.",
+  "type-full-body-default": "Corps entier\u202F: chaque grand groupe a sa part.",
+  "type-plan-adapted-legs": "Plan adapt\xE9\u202F: jambes encore charg\xE9es, haut du corps aujourd\u2019hui.",
+  "type-plan-adapted-upper": "Plan adapt\xE9\u202F: haut du corps encore charg\xE9, bas du corps aujourd\u2019hui.",
   "type-focus-groups": "S\xE9ance centr\xE9e sur {groups}, comme demand\xE9.",
   // Les noms des séances
-  title: "{type} \xB7 {minutes} min",
-  "title-rest": "Repos actif \xB7 {minutes} min",
-  "rest-session": "Repos conseill\xE9 aujourd\u2019hui. Si l\u2019envie de bouger est l\xE0 : quelques minutes de mobilit\xE9 douce.",
+  title: "{type} \xB7 {minutes}\xA0min",
+  "title-rest": "Repos actif \xB7 {minutes}\xA0min",
+  "rest-session": "Repos conseill\xE9 aujourd\u2019hui. Si l\u2019envie de bouger est l\xE0\u202F: quelques minutes de mobilit\xE9 douce.",
   "session-full-body": "Corps entier",
   "session-upper": "Haut du corps",
   "session-lower": "Bas du corps",
@@ -502,8 +502,8 @@ var MESSAGES_FR = {
   "block-superset": "En alternance",
   "block-triset": "En alternance, trois exercices",
   "block-circuit": "Circuit",
-  "block-amrap": "Le plus de tours en {minutes} min",
-  "block-emom": "Chaque minute, {minutes} min",
+  "block-amrap": "Le plus de tours en {minutes}\xA0min",
+  "block-emom": "Chaque minute, {minutes}\xA0min",
   "block-ladder": "\xC9chelle",
   "block-intervals": "Intervalles",
   "block-tabata": "Tabata",
@@ -512,15 +512,15 @@ var MESSAGES_FR = {
   "block-mobility": "Mobilit\xE9",
   "block-stretch": "\xC9tirements",
   // Les formats
-  "format-straight": "S\xE9ries classiques : toutes les s\xE9ries d\u2019un exercice, puis le suivant.",
-  "format-superset": "Exercices par deux, en alternance : plus de travail dans le m\xEAme temps.",
-  "format-circuit": "En circuit : un tour de tous les exercices, et on recommence.",
+  "format-straight": "S\xE9ries classiques\u202F: toutes les s\xE9ries d\u2019un exercice, puis le suivant.",
+  "format-superset": "Exercices par deux, en alternance\u202F: plus de travail dans le m\xEAme temps.",
+  "format-circuit": "En circuit\u202F: un tour de tous les exercices, et on recommence.",
   "format-circuit-once": "Les exercices s\u2019encha\xEEnent, en un seul passage.",
-  "format-amrap": "Le plus de tours possible en {minutes} min, sans rien l\xE2cher sur la technique.",
+  "format-amrap": "Le plus de tours possible en {minutes}\xA0min, sans rien l\xE2cher sur la technique.",
   "format-emom": "Une s\xE9rie au d\xE9but de chaque minute, le reste de la minute pour souffler.",
-  "format-ladder": "En \xE9chelle : 1, 2, 3 r\xE9p\xE9titions\u2026, et on repart d\u2019en bas.",
-  "format-intervals": "{work} s d\u2019effort, {rest} s de r\xE9cup\xE9ration.",
-  "format-tabata": "Tabata : huit fois 20 s d\u2019effort et 10 s de repos.",
+  "format-ladder": "En \xE9chelle\u202F: 1, 2, 3 r\xE9p\xE9titions\u2026, et on repart d\u2019en bas.",
+  "format-intervals": "{work}\xA0s d\u2019effort, {rest}\xA0s de r\xE9cup\xE9ration.",
+  "format-tabata": "Tabata\u202F: huit fois 20\xA0s d\u2019effort et 10\xA0s de repos.",
   "format-flow": "Les mouvements s\u2019encha\xEEnent, sans compter.",
   "format-steady": "En continu, \xE0 une allure o\xF9 l\u2019on peut encore parler.",
   finisher: "Un peu de cardio pour finir.",
@@ -528,7 +528,7 @@ var MESSAGES_FR = {
   // Les exercices
   "item-focus": "Pour {group}, comme demand\xE9.",
   "item-favorite": "Un exercice favori.",
-  "item-need": "{group} : en retard cette semaine.",
+  "item-need": "{group}\u202F: en retard cette semaine.",
   "warmup-pulse": "Pour faire monter le pouls doucement.",
   "warmup-ramp": "Version facile du premier exercice, pour pr\xE9parer le geste.",
   "warmup-ramp-light": "Le premier exercice avec une charge l\xE9g\xE8re (environ la moiti\xE9), pour pr\xE9parer le geste.",
@@ -539,59 +539,59 @@ var MESSAGES_FR = {
   "cooldown-breathing": "Respiration lente, pour finir au calme.",
   // Ce qui manque
   "slot-empty": "Rien de faisable pour \xAB {pattern} \xBB aujourd\u2019hui.",
-  "slot-empty-equipment": "Rien pour \xAB {pattern} \xBB avec ce mat\xE9riel : {equipment} suffirait.",
-  "slot-empty-joint": "Rien pour \xAB {pattern} \xBB qui m\xE9nage aujourd\u2019hui : {joints}.",
-  "slot-fallback-equipment": "Pas de quoi faire un vrai \xAB {pattern} \xBB : le haut du dos travaille au sol. {equipment} suffirait.",
-  "session-lighter": "S\xE9ance all\xE9g\xE9e : moins de travail que d\u2019habitude, le reste du temps pour r\xE9cup\xE9rer.",
+  "slot-empty-equipment": "Rien pour \xAB {pattern} \xBB avec ce mat\xE9riel\u202F: {equipment} suffirait.",
+  "slot-empty-joint": "Rien pour \xAB {pattern} \xBB qui m\xE9nage aujourd\u2019hui\u202F: {joints}.",
+  "slot-fallback-equipment": "Pas de quoi faire un vrai \xAB {pattern} \xBB\u202F: le haut du dos travaille au sol. {equipment} suffirait.",
+  "session-lighter": "S\xE9ance all\xE9g\xE9e\u202F: moins de travail que d\u2019habitude, le reste du temps pour r\xE9cup\xE9rer.",
   "list-or": "ou",
-  "nothing-feasible": "Aucun exercice faisable avec ces contraintes : all\xE9ger les douleurs d\xE9clar\xE9es ou ajouter du mat\xE9riel.",
+  "nothing-feasible": "Aucun exercice faisable avec ces contraintes\u202F: all\xE9ger les douleurs d\xE9clar\xE9es ou ajouter du mat\xE9riel.",
   // La séance en texte
   "text-reps": "{n} {n|r\xE9p\xE9tition|r\xE9p\xE9titions}",
   "text-reps-alternating": "{n} r\xE9p\xE9titions en alternant ({half} de chaque c\xF4t\xE9)",
   "text-sets-of": "{n} s\xE9ries de {target}",
-  "text-load": "{kg} kg",
-  "text-load-guess": "\u2248 {kg} kg (\xE0 ajuster)",
-  "text-load-explained": "Charges indicatives pour une premi\xE8re fois : les ajuster pour finir chaque s\xE9rie avec la r\xE9serve indiqu\xE9e.",
-  "text-approach": "Approche : {sets}, puis {name}",
-  "text-rir-explained": "R\xE9serve : les r\xE9p\xE9titions qu\u2019on pourrait encore faire en fin de s\xE9rie. On ne va jamais jusqu\u2019\xE0 l\u2019\xE9chec.",
+  "text-load": "{kg}\xA0kg",
+  "text-load-guess": "\u2248 {kg}\xA0kg (\xE0 ajuster)",
+  "text-load-explained": "Charges indicatives pour une premi\xE8re fois\u202F: les ajuster pour finir chaque s\xE9rie avec la r\xE9serve indiqu\xE9e.",
+  "text-approach": "Approche\u202F: {sets}, puis {name}",
+  "text-rir-explained": "R\xE9serve\u202F: les r\xE9p\xE9titions qu\u2019on pourrait encore faire en fin de s\xE9rie. On ne va jamais jusqu\u2019\xE0 l\u2019\xE9chec.",
   "text-rest-items": "{rest} entre les exercices",
   "text-reps-short": "{n|r\xE9p.|r\xE9p.}",
   "text-per-side": "de chaque c\xF4t\xE9",
   "text-rest": "repos {rest}",
   "text-rest-rounds": "{rest} entre les tours",
   "text-rounds": "{n} {n|tour|tours}",
-  "text-intervals": "{n} {n|tour|tours} de {work} s d\u2019effort / {rest} s de r\xE9cup\xE9ration",
-  "text-tempo-slow": "lentement (3 s pour descendre, 3 s pour remonter)",
+  "text-intervals": "{n} {n|tour|tours} de {work}\xA0s d\u2019effort / {rest}\xA0s de r\xE9cup\xE9ration",
+  "text-tempo-slow": "lentement (3\xA0s pour descendre, 3\xA0s pour remonter)",
   "text-tempo-normal": "tempo normal",
   "text-tempo-fast": "vite et contr\xF4l\xE9",
-  "text-rir": "r\xE9serve : {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions}",
+  "text-rir": "r\xE9serve\u202F: {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions}",
   // Le lecteur
   "timeline-rest": "Repos",
   "timeline-round": "Tour {n}/{total}",
   "timeline-set": "S\xE9rie {n}/{total}",
   // Le plan de la semaine
-  "week-split-1": "Une s\xE9ance : corps entier, pour garder le contact.",
-  "week-split-2": "Deux s\xE9ances corps entier : chaque groupe deux fois par semaine.",
-  "week-split-3": "Trois s\xE9ances : corps entier, chaque groupe deux \xE0 trois fois par semaine.",
-  "week-split-4": "Quatre s\xE9ances : haut et bas du corps en alternance.",
-  "week-split-5": "Cinq s\xE9ances : haut, bas, corps entier, haut, bas.",
-  "week-split-6": "Six s\xE9ances : pousser, tirer, jambes, deux fois.",
-  "week-split-7": "Sept s\xE9ances : pousser, tirer, jambes, cardio. \xC0 n\u2019envisager qu\u2019avec beaucoup d\u2019habitude.",
-  "week-fewer-days": "{wanted} s\xE9ances voulues mais {days} {days|jour disponible|jours disponibles} : une s\xE9ance par jour au plus.",
-  "week-legs-activity": "{activity} {date} ({duration}) : pas de s\xE9ance de jambes autour, le haut du corps \xE0 la place.",
-  "week-legs-activity-kept": "{activity} {date} ({duration}) : pas d\u2019autre s\xE9ance \xE0 \xE9changer, la s\xE9ance de jambes voisine est l\xE9g\xE8re.",
-  "week-split": "{count} {count|s\xE9ance|s\xE9ances} : {types}.",
-  "week-split-7-warning": "Sept s\xE9ances par semaine : \xE0 n\u2019envisager qu\u2019avec beaucoup d\u2019habitude.",
+  "week-split-1": "Une s\xE9ance\u202F: corps entier, pour garder le contact.",
+  "week-split-2": "Deux s\xE9ances corps entier\u202F: chaque groupe deux fois par semaine.",
+  "week-split-3": "Trois s\xE9ances\u202F: corps entier, chaque groupe deux \xE0 trois fois par semaine.",
+  "week-split-4": "Quatre s\xE9ances\u202F: haut et bas du corps en alternance.",
+  "week-split-5": "Cinq s\xE9ances\u202F: haut, bas, corps entier, haut, bas.",
+  "week-split-6": "Six s\xE9ances\u202F: pousser, tirer, jambes, deux fois.",
+  "week-split-7": "Sept s\xE9ances\u202F: pousser, tirer, jambes, cardio. \xC0 n\u2019envisager qu\u2019avec beaucoup d\u2019habitude.",
+  "week-fewer-days": "{wanted} s\xE9ances voulues mais {days} {days|jour disponible|jours disponibles}\u202F: une s\xE9ance par jour au plus.",
+  "week-legs-activity": "{activity} {date} ({duration})\u202F: pas de s\xE9ance de jambes autour, le haut du corps \xE0 la place.",
+  "week-legs-activity-kept": "{activity} {date} ({duration})\u202F: pas d\u2019autre s\xE9ance \xE0 \xE9changer, la s\xE9ance de jambes voisine est l\xE9g\xE8re.",
+  "week-split": "{count} {count|s\xE9ance|s\xE9ances}\u202F: {types}.",
+  "week-split-7-warning": "Sept s\xE9ances par semaine\u202F: \xE0 n\u2019envisager qu\u2019avec beaucoup d\u2019habitude.",
   "week-low-frequency": "Certains grands groupes ne sont travaill\xE9s qu\u2019une fois cette semaine.",
   "week-day-training": "{type} \xB7 s\xE9ance {intensity}",
   "week-day-activity": "{activity} \xB7 {duration}",
   "week-day-mobility": "Mobilit\xE9, si l\u2019envie est l\xE0",
   "week-day-rest": "Repos",
-  "week-optional": "Jour facultatif : on peut le sauter sans rien perdre.",
-  "week-activity-replaces": "La sortie du jour fait la s\xE9ance de jambes : un peu de mobilit\xE9, si l\u2019envie est l\xE0.",
+  "week-optional": "Jour facultatif\u202F: on peut le sauter sans rien perdre.",
+  "week-activity-replaces": "La sortie du jour fait la s\xE9ance de jambes\u202F: un peu de mobilit\xE9, si l\u2019envie est l\xE0.",
   "week-wave-hard": "S\xE9ance dure de la semaine.",
-  "week-wave-moderate": "S\xE9ance moyenne : environ trois quarts de l\u2019effort de la s\xE9ance dure.",
-  "week-wave-easy": "S\xE9ance l\xE9g\xE8re : pour entretenir et r\xE9cup\xE9rer.",
+  "week-wave-moderate": "S\xE9ance moyenne\u202F: environ trois quarts de l\u2019effort de la s\xE9ance dure.",
+  "week-wave-easy": "S\xE9ance l\xE9g\xE8re\u202F: pour entretenir et r\xE9cup\xE9rer.",
   "intensity-name-hard": "dure",
   "intensity-name-moderate": "moyenne",
   "intensity-name-easy": "l\xE9g\xE8re"
@@ -14824,8 +14824,8 @@ var HINGE_FR = {
   },
   // Extensions de hanche à quatre pattes et à plat ventre
   "donkey-kick": {
-    name: "Donkey kicks",
-    aliases: ["Donkey kick", "Kickbacks fessiers \xE0 quatre pattes", "Ruades", "Extensions de hanche \xE0 quatre pattes"],
+    name: "Ruades \xE0 quatre pattes",
+    aliases: ["Donkey kicks", "Donkey kick", "Kickbacks fessiers \xE0 quatre pattes", "Ruades", "Extensions de hanche \xE0 quatre pattes"],
     summary: "\xC0 quatre pattes, pousser un pied vers le plafond, genou pli\xE9 : le grand fessier travaille presque seul, sans mat\xE9riel.",
     setup: ["Se mettre \xE0 quatre pattes, mains sous les \xE9paules, genoux sous les hanches.", "Gainer le ventre pour garder le dos plat."],
     steps: [
@@ -15830,8 +15830,8 @@ var CORE_FR = {
   },
   // Rotations
   "russian-twist": {
-    name: "Russian twists",
-    aliases: ["Russian twist", "Rotations russes", "Twist russe"],
+    name: "Rotations russes",
+    aliases: ["Russian twists", "Russian twist", "Rotations russes", "Twist russe"],
     summary: "Assis, buste inclin\xE9 en arri\xE8re, on tourne les \xE9paules d\u2019un c\xF4t\xE9 puis de l\u2019autre : un travail de rotation pour les obliques.",
     setup: ["S\u2019asseoir au sol, genoux pli\xE9s, talons pos\xE9s.", "Incliner le buste vers l\u2019arri\xE8re, dos droit, mains jointes devant la poitrine."],
     steps: [
@@ -15845,8 +15845,8 @@ var CORE_FR = {
     safety: "\xC0 \xE9viter en cas de douleur lombaire ou de hernie discale."
   },
   "weighted-russian-twist": {
-    name: "Russian twists lest\xE9s",
-    aliases: ["Russian twist lest\xE9", "Rotations russes lest\xE9es", "Russian twist avec charge"],
+    name: "Rotations russes lest\xE9es",
+    aliases: ["Russian twists lest\xE9s", "Russian twist lest\xE9", "Rotations russes lest\xE9es", "Russian twist avec charge"],
     summary: "Le russian twist avec une charge tenue \xE0 deux mains : plus de r\xE9sistance pour les obliques, qui doivent freiner chaque rotation.",
     setup: [
       "S\u2019asseoir au sol, genoux pli\xE9s, talons pos\xE9s.",
@@ -16179,8 +16179,8 @@ var CONDITIONING_FR = {
     breathing: "Respirer r\xE9guli\xE8rement, \xE9paules rel\xE2ch\xE9es."
   },
   "shadow-boxing": {
-    name: "Shadow boxing",
-    aliases: ["Boxe dans le vide", "Boxe \xE0 vide", "Shadow"],
+    name: "Boxe dans le vide",
+    aliases: ["Shadow boxing", "Boxe dans le vide", "Boxe \xE0 vide", "Shadow"],
     summary: "Encha\xEEner coups de poing et d\xE9placements dans le vide : un cardio sans saut ni bruit pour les \xE9paules, le tronc et la coordination.",
     setup: ["Se mettre en garde : pieds d\xE9cal\xE9s, genoux souples, poings \xE0 hauteur du menton, coudes pr\xE8s du corps."],
     steps: [
@@ -18165,8 +18165,8 @@ var STRETCH_FR = {
     breathing: "Respirer lentement et serrer un peu plus la fesse \xE0 chaque expiration."
   },
   "couch-stretch": {
-    name: "\xC9tirement du canap\xE9",
-    aliases: ["Couch stretch", "\xC9tirement du psoas contre le mur", "\xC9tirement du quadriceps contre le mur"],
+    name: "\xC9tirement du quadriceps contre le mur",
+    aliases: ["\xC9tirement du canap\xE9", "Couch stretch", "\xC9tirement du psoas contre le mur", "\xC9tirement du quadriceps contre le mur"],
     summary: "Un genou au pied du mur, le tibia pos\xE9 contre lui : l\u2019\xE9tirement le plus pouss\xE9 de l\u2019avant de la cuisse et des fl\xE9chisseurs de la hanche.",
     setup: [
       "Poser un coussin ou un tapis pli\xE9 au pied d\u2019un mur, d\u2019un canap\xE9 ou d\u2019une chaise.",
@@ -20108,7 +20108,7 @@ function describeTarget(item2, locale = "fr", alternating = false) {
     return `${item2.perSet.join(" \xB7 ")} ${message("text-reps-short", { n: 2 }, locale)}${side}`;
   }
   if (target.measure === "time") return `${formatSeconds(target.value)}${side}`;
-  if (target.measure === "distance") return `${target.value} m${side}`;
+  if (target.measure === "distance") return `${target.value}\xA0m${side}`;
   if (alternating) return message("text-reps-alternating", { n: target.value, half: target.value / 2 }, locale);
   return `${message("text-reps", { n: target.value }, locale)}${side}`;
 }
@@ -20123,7 +20123,7 @@ function describeItem(item2, block, locale, alternating) {
   if (item2.rir !== void 0 && block.role !== "warmup" && block.role !== "cooldown") parts.push(message("text-rir", { rir: item2.rir }, locale));
   const lines = [`  \xB7 ${item2.name} \u2014 ${parts.join(" \xB7 ")}`];
   if (item2.warmupSets?.length) {
-    lines.unshift(`  \xB7 ${message("text-approach", { sets: item2.warmupSets.map((set) => `${set.kg} kg \xD7 ${set.reps}`).join(", "), name: item2.name }, locale)}`);
+    lines.unshift(`  \xB7 ${message("text-approach", { sets: item2.warmupSets.map((set) => `${set.kg}\xA0kg\xA0\xD7\xA0${set.reps}`).join(", "), name: item2.name }, locale)}`);
   }
   return lines;
 }

@@ -86,7 +86,7 @@ describe('le pouls du matin', () => {
         const raised = assessReadiness({ date: DATE, readiness: { restingHeartRate: 56, heartRateHistory: base } });
 
         expect(high.level).toBe('rest');
-        expect(high.reasons.find((entry) => entry.code === 'pulse-high')?.text).toMatch(/\+11 %/);
+        expect(high.reasons.find((entry) => entry.code === 'pulse-high')?.text).toMatch(/\+11 %/);
         expect(raised.level).toBe('easy');
         expect(codes(raised)).toContain('pulse-raised');
         expect(assessReadiness({ date: DATE, readiness: { restingHeartRate: 53, heartRateHistory: base } }).level).toBe('normal');

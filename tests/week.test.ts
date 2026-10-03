@@ -123,7 +123,7 @@ describe('ce que les coachs ont demandé au plan', () => {
         const texts = plan.reasons.map((entry) => entry.text).join(' ');
 
         expect(plan.reasons[0]!.text).toMatch(/cardio fractionné/);
-        expect(texts).toMatch(/Vélo jeudi 8 octobre \(2 h 30\)/);
+        expect(texts).toMatch(/Vélo jeudi 8 octobre \(2 h 30\)/);
         expect(plan.days.find((day) => day.date === '2026-10-08')!.title).toMatch(/Vélo/);
     });
 

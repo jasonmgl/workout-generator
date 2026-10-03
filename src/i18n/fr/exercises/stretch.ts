@@ -188,8 +188,8 @@ export const STRETCH_FR: Readonly<Record<string, ExerciseText>> = {
         breathing: 'Respirer lentement et serrer un peu plus la fesse à chaque expiration.',
     },
     'couch-stretch': {
-        name: 'Étirement du canapé',
-        aliases: ['Couch stretch', 'Étirement du psoas contre le mur', 'Étirement du quadriceps contre le mur'],
+        name: 'Étirement du quadriceps contre le mur',
+        aliases: ['Étirement du canapé', 'Couch stretch', 'Étirement du psoas contre le mur', 'Étirement du quadriceps contre le mur'],
         summary: 'Un genou au pied du mur, le tibia posé contre lui : l’étirement le plus poussé de l’avant de la cuisse et des fléchisseurs de la hanche.',
         setup: [
             'Poser un coussin ou un tapis plié au pied d’un mur, d’un canapé ou d’une chaise.',

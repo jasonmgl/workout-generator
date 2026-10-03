@@ -47,8 +47,8 @@ export const CONDITIONING_FR: Readonly<Record<string, ExerciseText>> = {
         breathing: 'Respirer régulièrement, épaules relâchées.',
     },
     'shadow-boxing': {
-        name: 'Shadow boxing',
-        aliases: ['Boxe dans le vide', 'Boxe à vide', 'Shadow'],
+        name: 'Boxe dans le vide',
+        aliases: ['Shadow boxing', 'Boxe dans le vide', 'Boxe à vide', 'Shadow'],
         summary: 'Enchaîner coups de poing et déplacements dans le vide : un cardio sans saut ni bruit pour les épaules, le tronc et la coordination.',
         setup: ['Se mettre en garde : pieds décalés, genoux souples, poings à hauteur du menton, coudes près du corps.'],
         steps: [

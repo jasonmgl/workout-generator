@@ -96,9 +96,6 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
    progression sur les vrais chiffres, dosage selon le rôle, séries
    d'approche, échauffement et retour au calme du cardio, mobilité.
    Reste :
-   - les noms anglais qui ont un équivalent français courant (Russian
-     twists…), « Étirement du canapé » ; la typographie (espaces insécables
-     avant « : » et « % », entre nombre et unité) ;
    - ranger aussi les circuits par position, à rôle égal.
 3. **Le contrat avec DidIt** : c'est la session DidIt qui branche, sur une
    branche à part. Lui donner ce qu'elle demande (API stable, exemples
@@ -244,4 +241,9 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   alternance (21 fiches, nombre pair, « en alternant (6 de chaque côté) »),
   chiffres d'échauffement et de retour au calme arrondis comme un coach.
   250 tests. Puis les photos de free-exercise-db sur 266 fiches (voir État),
-  par lien vers GitHub. 257 tests.
+  par lien vers GitHub. 257 tests. Questions posées : deuxième relecture
+  des coachs d'abord, pas d'autre source de photos pour l'instant. Noms
+  français (Rotations russes, Boxe dans le vide, Ruades à quatre pattes,
+  Étirement du quadriceps contre le mur ; l'ancien nom reste un alias) et
+  typographie française (espace fine insécable avant « : » et « % »,
+  insécable entre un nombre et son unité, un test la garde). 259 tests.

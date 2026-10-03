@@ -23,7 +23,7 @@ export function describeTarget(item: SessionItem, locale = 'fr', alternating = f
     }
 
     if (target.measure === 'time') return `${formatSeconds(target.value)}${side}`;
-    if (target.measure === 'distance') return `${target.value} m${side}`;
+    if (target.measure === 'distance') return `${target.value}\u00A0m${side}`;
     if (alternating) return message('text-reps-alternating', { n: target.value, half: target.value / 2 }, locale);
 
     return `${message('text-reps', { n: target.value }, locale)}${side}`;
@@ -43,7 +43,7 @@ function describeItem(item: SessionItem, block: SessionBlock, locale: string, al
     const lines = [`  · ${item.name} — ${parts.join(' · ')}`];
 
     if (item.warmupSets?.length) {
-        lines.unshift(`  · ${message('text-approach', { sets: item.warmupSets.map((set) => `${set.kg} kg × ${set.reps}`).join(', '), name: item.name }, locale)}`);
+        lines.unshift(`  · ${message('text-approach', { sets: item.warmupSets.map((set) => `${set.kg}\u00A0kg\u00A0×\u00A0${set.reps}`).join(', '), name: item.name }, locale)}`);
     }
 
     return lines;

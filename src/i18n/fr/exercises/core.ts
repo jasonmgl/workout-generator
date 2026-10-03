@@ -587,8 +587,8 @@ export const CORE_FR: Readonly<Record<string, ExerciseText>> = {
 
     // Rotations
     'russian-twist': {
-        name: 'Russian twists',
-        aliases: ['Russian twist', 'Rotations russes', 'Twist russe'],
+        name: 'Rotations russes',
+        aliases: ['Russian twists', 'Russian twist', 'Rotations russes', 'Twist russe'],
         summary: 'Assis, buste incliné en arrière, on tourne les épaules d’un côté puis de l’autre : un travail de rotation pour les obliques.',
         setup: ['S’asseoir au sol, genoux pliés, talons posés.', 'Incliner le buste vers l’arrière, dos droit, mains jointes devant la poitrine.'],
         steps: [
@@ -602,8 +602,8 @@ export const CORE_FR: Readonly<Record<string, ExerciseText>> = {
         safety: 'À éviter en cas de douleur lombaire ou de hernie discale.',
     },
     'weighted-russian-twist': {
-        name: 'Russian twists lestés',
-        aliases: ['Russian twist lesté', 'Rotations russes lestées', 'Russian twist avec charge'],
+        name: 'Rotations russes lestées',
+        aliases: ['Russian twists lestés', 'Russian twist lesté', 'Rotations russes lestées', 'Russian twist avec charge'],
         summary: 'Le russian twist avec une charge tenue à deux mains : plus de résistance pour les obliques, qui doivent freiner chaque rotation.',
         setup: [
             'S’asseoir au sol, genoux pliés, talons posés.',

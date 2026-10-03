@@ -1,6 +1,7 @@
 // Les phrases à trous, les durées lisibles et la recherche sans accents.
 import { describe, expect, it } from 'vitest';
 import { format, formatSeconds, normalize } from '../src/i18n/format';
+import { MESSAGES_FR } from '../src/i18n/fr/messages';
 
 describe('les phrases à trous', () => {
     it('remplit les valeurs', () => {
@@ -26,11 +27,11 @@ describe('les phrases à trous', () => {
 
 describe('les durées lisibles', () => {
     it('écrit les secondes, les minutes et les heures', () => {
-        expect(formatSeconds(45)).toBe('45 s');
-        expect(formatSeconds(120)).toBe('2 min');
-        expect(formatSeconds(90)).toBe('1 min 30');
-        expect(formatSeconds(3900)).toBe('1 h 05');
-        expect(formatSeconds(-3)).toBe('0 s');
+        expect(formatSeconds(45)).toBe('45 s');
+        expect(formatSeconds(120)).toBe('2 min');
+        expect(formatSeconds(90)).toBe('1 min 30');
+        expect(formatSeconds(3900)).toBe('1 h 05');
+        expect(formatSeconds(-3)).toBe('0 s');
     });
 });
 
@@ -39,5 +40,19 @@ describe('la recherche sans accents', () => {
         expect(normalize('Pompes inclinées, mains surélevées')).toBe('pompes inclinees mains surelevees');
         expect(normalize('  Tirage à l’élastique ')).toBe('tirage a l elastique');
         expect(normalize('Squat bulgare — pied arrière')).toBe('squat bulgare pied arriere');
+    });
+});
+
+describe('la typographie française', () => {
+    it('met une espace fine insécable avant les deux-points, le point-virgule et le pour cent', () => {
+        for (const [code, text] of Object.entries(MESSAGES_FR)) {
+            expect(text, code).not.toMatch(/ [:;!?%]/);
+        }
+    });
+
+    it('ne coupe jamais un nombre de son unité', () => {
+        for (const [code, text] of Object.entries(MESSAGES_FR)) {
+            expect(text, code).not.toMatch(/(\d|\}) (s|min|kg|h)(?!\p{L})/u);
+        }
     });
 });

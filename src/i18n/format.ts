@@ -33,12 +33,12 @@ export function format(template: string, params: Params = {}, plural: PluralRule
     });
 }
 
-/** Une durée lisible : « 45 s », « 2 min », « 1 min 30 », « 1 h 05 ». */
+/** Une durée lisible : « 45 s », « 2 min », « 1 min 30 », « 1 h 05 », avec des espaces insécables. */
 export function formatSeconds(seconds: number): string {
     const total = Math.max(0, Math.round(seconds));
 
     if (total < 60) {
-        return `${total} s`;
+        return `${total}\u00A0s`;
     }
 
     const hours = Math.floor(total / 3600);
@@ -46,10 +46,10 @@ export function formatSeconds(seconds: number): string {
     const rest = total % 60;
 
     if (hours > 0) {
-        return `${hours} h ${String(minutes).padStart(2, '0')}`;
+        return `${hours}\u00A0h\u00A0${String(minutes).padStart(2, '0')}`;
     }
 
-    return rest === 0 ? `${minutes} min` : `${minutes} min ${String(rest).padStart(2, '0')}`;
+    return rest === 0 ? `${minutes}\u00A0min` : `${minutes}\u00A0min\u00A0${String(rest).padStart(2, '0')}`;
 }
 
 /**

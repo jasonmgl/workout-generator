@@ -408,8 +408,8 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
 
     // Extensions de hanche à quatre pattes et à plat ventre
     'donkey-kick': {
-        name: 'Donkey kicks',
-        aliases: ['Donkey kick', 'Kickbacks fessiers à quatre pattes', 'Ruades', 'Extensions de hanche à quatre pattes'],
+        name: 'Ruades à quatre pattes',
+        aliases: ['Donkey kicks', 'Donkey kick', 'Kickbacks fessiers à quatre pattes', 'Ruades', 'Extensions de hanche à quatre pattes'],
         summary: 'À quatre pattes, pousser un pied vers le plafond, genou plié : le grand fessier travaille presque seul, sans matériel.',
         setup: ['Se mettre à quatre pattes, mains sous les épaules, genoux sous les hanches.', 'Gainer le ventre pour garder le dos plat.'],
         steps: [
