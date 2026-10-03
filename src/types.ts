@@ -344,6 +344,8 @@ export interface SessionItem {
     readonly equipment: readonly EquipmentId[];
     readonly progression?: { readonly step: ProgressionStep; readonly text: string };
     readonly note?: string;
+    /** Se fait en alternant les côtés : la cible compte les deux côtés, en nombre pair. */
+    readonly alternating?: boolean;
     /** Les séries d'approche, avant les séries de travail d'un exercice chargé et lourd : la moitié, puis les trois quarts. */
     readonly warmupSets?: readonly { readonly reps: number; readonly kg: number }[];
     readonly reasons: readonly Reason[];

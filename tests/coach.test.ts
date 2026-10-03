@@ -257,6 +257,19 @@ describe('le dosage selon le rôle', () => {
     });
 });
 
+describe('les exercices en alternance', () => {
+    it('reçoivent un nombre pair de répétitions, partout dans la séance', () => {
+        for (const session of many({ date: DATE, request: { minutes: 45, type: 'core' } })) {
+            for (const item of session.blocks.flatMap((block) => block.items)) {
+                if (library.get(item.exercise).alternating && item.target.measure === 'reps' && !item.perSet) {
+                    expect(item.target.value % 2, item.exercise).toBe(0);
+                    expect(item.alternating).toBe(true);
+                }
+            }
+        }
+    });
+});
+
 describe('la mobilité', () => {
     it('se range du debout vers le sol et tient la durée', () => {
         for (const session of many({ date: DATE, request: { type: 'mobility', minutes: 30 } })) {

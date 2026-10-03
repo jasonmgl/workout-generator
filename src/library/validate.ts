@@ -104,6 +104,7 @@ function checkDefinition(definition: ExerciseDefinition, known: ReadonlySet<stri
     if ((definition.kind === 'stretch') !== (definition.pattern === 'stretch')) say('un étirement a la sorte et le schéma « stretch », et eux seuls');
     if ((definition.kind === 'breathing') !== (definition.pattern === 'breathing')) say('une respiration a la sorte et le schéma « breathing », et elles seules');
     if (definition.kind === 'stretch' && definition.measure !== 'time') say('un étirement se tient en secondes');
+    if (definition.alternating && (definition.unilateral || definition.measure !== 'reps')) say('une alternance se compte en répétitions, des deux côtés à la fois (pas « un côté puis l’autre »)');
     if (definition.impact === 'high' && !['power', 'conditioning', 'skill'].includes(definition.kind)) say('un impact fort est réservé à l’explosivité, au cardio et aux figures');
 
     return problems;

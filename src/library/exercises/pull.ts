@@ -936,6 +936,7 @@ export const PULL: readonly ExerciseDefinition[] = [
         },
         equipment: [['dumbbells', 'kettlebell']],
         measure: 'reps',
+        alternating: true,
         compound: true,
         impact: 'none',
         posture: 'support',

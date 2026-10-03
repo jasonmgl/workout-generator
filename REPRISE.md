@@ -88,15 +88,6 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
    progression sur les vrais chiffres, dosage selon le rôle, séries
    d'approche, échauffement et retour au calme du cardio, mobilité.
    Reste :
-   - **les exercices en alternance** : un champ `alternating` existe dans
-     les fiches (nombre pair prescrit) mais aucune fiche ne le porte encore
-     (dead bug, bird dog, touches d'épaules, fentes alternées, rotations
-     russes…) ; afficher « 12 en alternant (6 de chaque côté) » ;
-   - **le plan de la semaine** : un fractionné n'est jamais « léger » ; une
-     activité dure compte comme la séance dure de la région qu'elle charge ;
-     phrase de découpage écrite à partir des types réellement placés ; une
-     phrase par activité, avec sa date lisible (« jeudi 8 octobre ») et son
-     nom (noms français des activités à ajouter) ;
    - les noms anglais qui ont un équivalent français courant (Russian
      twists…), « Étirement du canapé » ; la typographie (espaces insécables
      avant « : » et « % », entre nombre et unité) ;
@@ -233,4 +224,10 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   Puis le texte de la séance : séries et cible collées, tempo normal tu,
   tempo lent expliqué, séries d'approche, charges « à ajuster », réserve
   expliquée une fois, tous les repos, durées à la demi-minute (transitions
-  comprises), blocs « Renforcement » et « En alternance ».
+  comprises), blocs « Renforcement » et « En alternance ». Puis le plan de
+  la semaine (fractionné jamais léger, sortie dure qui allège la séance de
+  jambes voisine ou la remplace le jour même, phrases écrites à partir des
+  séances placées, sorties nommées avec leur date) et les exercices en
+  alternance (21 fiches, nombre pair, « en alternant (6 de chaque côté) »),
+  chiffres d'échauffement et de retour au calme arrondis comme un coach.
+  250 tests.

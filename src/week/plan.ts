@@ -20,6 +20,8 @@
 import { MUSCLE_GROUPS, type MuscleGroupId } from '../library/anatomy';
 import { addDays, dayOf, daysBetween, weekdayOf } from '../dates';
 import { capacity } from '../history/progress';
+import { formatSeconds } from '../i18n/format';
+import { ACTIVITY_NAMES, formatDay } from '../i18n/fr/labels';
 import { reason } from '../i18n/messages';
 import { defaultLibrary } from '../library/index';
 import type { Library } from '../library/library';
@@ -186,11 +188,16 @@ export function planWeek(input: WeekInput): WeekPlan {
     const chosen = spreadDays(available, sessions).sort((a, b) => order(a) - order(b));
     const split = splitFor(sessions, goal);
     const activitiesOn = (date: string): PlannedActivity[] => (input.activities ?? []).filter((activity) => dayOf(activity.date) === date);
-    const legsBusy = (date: string): boolean => [addDays(date, -1), date, addDays(date, 1)].some((day) => activitiesOn(day).some(loadsLegs));
+    // Une sortie longue ou dure pèse sur les jambes la veille, le jour même et le lendemain ; deux jours après aussi
+    // quand elle dure deux heures ou qu'elle était dure.
+    const reach = (activity: PlannedActivity): number => (activity.minutes >= 120 || activity.intensity === 'hard' ? 2 : 1);
+    const legActivities = (input.activities ?? []).filter(loadsLegs);
+    const legsBusy = (date: string): boolean => legActivities.some((activity) => Math.abs(daysBetween(activity.date, date)) <= (daysBetween(activity.date, date) > 0 ? reach(activity) : 1));
 
-    // Placer les types : une séance de jambes évite les sorties longues de la veille, du jour et du lendemain.
+    // Placer les types : une séance de jambes évite les jours que charge une sortie.
     const assigned: SessionType[] = [];
     const remaining = [...split];
+    const kept: string[] = [];
 
     for (const day of chosen) {
         const date = dates[order(day)]!;
@@ -198,17 +205,49 @@ export function planWeek(input: WeekInput): WeekPlan {
         const index = preferUpper ? remaining.findIndex((type) => !LOWER_TYPES.includes(type)) : 0;
         const type = remaining.splice(index >= 0 ? index : 0, 1)[0]!;
 
-        if (preferUpper && LOWER_TYPES.includes(type)) {
-            reasons.push(reason('week-legs-activity-kept', { date }, locale));
-        } else if (preferUpper) {
-            reasons.push(reason('week-legs-activity', { date }, locale));
-        }
+        if (preferUpper && LOWER_TYPES.includes(type)) kept.push(date);
 
         assigned.push(type);
     }
 
+    // Une phrase par sortie, avec sa date et son nom.
+    for (const activity of legActivities) {
+        const near = chosen.map((day) => dates[order(day)]!).filter((date) => legsBusy(date) && Math.abs(daysBetween(activity.date, date)) <= reach(activity));
+        const params = {
+            activity: ACTIVITY_NAMES[activity.type],
+            date: formatDay(dayOf(activity.date)),
+            duration: formatSeconds(activity.minutes * 60),
+        };
+
+        if (near.some((date) => kept.includes(date))) reasons.push(reason('week-legs-activity-kept', params, locale));
+        else if (near.length) reasons.push(reason('week-legs-activity', params, locale));
+    }
+
     // L'ondulation : dur, moyen, léger, sans deux séances dures à la suite.
     const intensities: Intensity[] = assigned.map((_, index) => WAVE[index % WAVE.length]!);
+
+    // Un fractionné n'est jamais « léger » : on échange avec une voisine, ou il passe en moyen.
+    assigned.forEach((type, index) => {
+        if (type !== 'hiit' || intensities[index] !== 'easy') return;
+
+        const neighbour = [index - 1, index + 1].find((other) => other >= 0 && other < assigned.length && assigned[other] !== 'hiit');
+
+        if (neighbour !== undefined) {
+            intensities[index] = intensities[neighbour]!;
+            intensities[neighbour] = 'easy';
+        } else {
+            intensities[index] = 'moderate';
+        }
+    });
+
+    // Une sortie dure est déjà la séance dure de la semaine pour les jambes : la séance de jambes voisine est légère.
+    assigned.forEach((type, index) => {
+        const date = dates[order(chosen[index]!)]!;
+
+        if (LOWER_TYPES.includes(type) && legActivities.some((activity) => activity.intensity === 'hard' && Math.abs(daysBetween(activity.date, date)) <= 2)) {
+            intensities[index] = 'easy';
+        }
+    });
 
     for (let index = 1; index < intensities.length; index++) {
         const gap = order(chosen[index]!) - order(chosen[index - 1]!);
@@ -217,6 +256,9 @@ export function planWeek(input: WeekInput): WeekPlan {
             intensities[index] = 'moderate';
         }
     }
+
+    const activityTitle = (activity: PlannedActivity): string =>
+        reason('week-day-activity', { activity: ACTIVITY_NAMES[activity.type], duration: formatSeconds(activity.minutes * 60) }, locale).text;
 
     const minutesFor = (day: Weekday): number =>
         typeof input.minutes === 'number' ? input.minutes : (input.minutes?.[day] ?? (goal === 'strength' || goal === 'hypertrophy' ? 45 : 30));
@@ -230,6 +272,25 @@ export function planWeek(input: WeekInput): WeekPlan {
         const position = chosen.indexOf(weekday);
         const activities = activitiesOn(date);
 
+        // Une séance de jambes qu'on n'a pas pu déplacer, le jour même d'une sortie dure ou longue : la sortie suffit,
+        // la séance devient une mobilité facultative.
+        const sameDaySortie = activities.some((activity) => loadsLegs(activity));
+
+        if (position >= 0 && sameDaySortie && LOWER_TYPES.includes(assigned[position]!)) {
+            return {
+                date,
+                weekday,
+                kind: 'active-recovery',
+                type: 'mobility',
+                intensity: 'easy',
+                minutes: 15,
+                optional: true,
+                title: [reason('week-day-mobility', {}, locale).text, ...activities.map((activity) => activityTitle(activity))].join(' · '),
+                activities,
+                reasons: [reason('week-activity-replaces', {}, locale)],
+            };
+        }
+
         if (position >= 0) {
             const type = assigned[position]!;
             const intensity = intensities[position]!;
@@ -242,7 +303,10 @@ export function planWeek(input: WeekInput): WeekPlan {
                 groups: [...(TYPE_GROUPS[type] ?? [])],
                 intensity,
                 minutes: minutesFor(weekday),
-                title: reason('week-day-training', { type: reason(`session-${type}`, {}, locale).text, intensity: reason(`intensity-name-${intensity}`, {}, locale).text }, locale).text,
+                title: [
+                    reason('week-day-training', { type: reason(`session-${type}`, {}, locale).text, intensity: reason(`intensity-name-${intensity}`, {}, locale).text }, locale).text,
+                    ...activities.map((activity) => activityTitle(activity)),
+                ].join(' · '),
                 activities,
                 reasons: [reason(`week-wave-${intensity}`, {}, locale)],
             };
@@ -251,7 +315,9 @@ export function planWeek(input: WeekInput): WeekPlan {
         if (activities.length) {
             const hardest = activities.map((activity) => intensityOfActivity(activity.intensity)).sort((a, b) => WAVE.indexOf(a) - WAVE.indexOf(b))[0]!;
 
-            return { date, weekday, kind: 'activity', intensity: hardest, title: reason('week-day-activity', {}, locale).text, activities, reasons: [] };
+            const title = activities.map((activity) => activityTitle(activity)).join(', ');
+
+            return { date, weekday, kind: 'activity', intensity: hardest, title, activities, reasons: [] };
         }
 
         if (weekday === optionalDay) {
@@ -278,7 +344,12 @@ export function planWeek(input: WeekInput): WeekPlan {
         (group) => assigned.filter((type) => (TYPE_GROUPS[type] ?? []).includes(group)).length,
     );
 
-    reasons.unshift(reason(`week-split-${sessions}`, {}, locale));
+    // La phrase de découpage décrit les séances réellement placées, fractionné compris.
+    const names = assigned.map((type) => reason(`session-${type}`, {}, locale).text.toLowerCase());
+
+    reasons.unshift(reason('week-split', { count: sessions, types: names.join(', ') }, locale));
+
+    if (sessions >= 7) reasons.push(reason('week-split-7-warning', {}, locale));
 
     if (sessions >= 2 && Math.min(...frequency) < 2) {
         reasons.push(reason('week-low-frequency', {}, locale));

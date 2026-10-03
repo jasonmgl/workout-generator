@@ -83,6 +83,7 @@ export function toSessionItem(item: PlannedItem, block: PlannedBlock, context: C
         ...(item.progression ? { progression: item.progression } : {}),
         ...(item.note ? { note: item.note } : {}),
         ...(item.warmupSets ? { warmupSets: item.warmupSets } : {}),
+        ...(item.definition.alternating && item.target.measure === 'reps' ? { alternating: true } : {}),
         reasons: item.reasons,
         setSeconds: Math.round(block.format === 'tabata' || block.format === 'intervals' ? (block.workSeconds ?? item.target.value) : workSeconds(item.definition, item.target, item.tempo)),
         estimatedSeconds: Math.round(itemSeconds(item, block)),
@@ -107,10 +108,24 @@ export function toSessionBlock(block: PlannedBlock, context: Context, transition
 }
 
 /** Une cible simple pour un exercice d'échauffement ou de retour au calme : le bas de sa fourchette, ou un peu plus. */
+/** Les nombres qu’écrit un coach : 10, 12, 15, 20… répétitions, 20, 30, 45 secondes ; jamais 23. */
+const REPS_GRID = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80, 100];
+const SECONDS_GRID = [5, 10, 15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 420, 480, 600];
+
+/** Arrondir une cible d’échauffement ou de retour au calme sur la grille d’un coach, dans la fourchette de la fiche, paire pour une alternance. */
+export function coachValue(definition: ExerciseDefinition, raw: number): number {
+    const [low, high] = definition.range;
+    const grid = definition.measure === 'time' ? SECONDS_GRID : definition.measure === 'reps' ? REPS_GRID : [];
+    const candidates = grid.filter((value) => value >= low && value <= high && (!definition.alternating || value % 2 === 0));
+    const nearest = candidates.length ? candidates.reduce((best, value) => (Math.abs(value - raw) < Math.abs(best - raw) ? value : best)) : Math.round(raw);
+
+    return Math.min(high, Math.max(low, definition.measure === 'time' && !candidates.length ? Math.max(5, Math.round(raw / 5) * 5) : nearest));
+}
+
 export function easyTarget(definition: ExerciseDefinition, share = 0.3): Target {
     const [low, high] = definition.range;
     const raw = low + (high - low) * share;
-    const value = definition.measure === 'time' ? Math.max(5, Math.round(raw / 5) * 5) : Math.max(1, Math.round(raw));
+    const value = coachValue(definition, raw);
 
     return { measure: definition.measure, value, range: [low, high], perSide: Boolean(definition.unilateral) };
 }
@@ -126,7 +141,7 @@ export function targetForSeconds(definition: ExerciseDefinition, seconds: number
               ? seconds * 1.4
               : seconds / ((definition.secondsPerRep ?? 3) * sides);
     const clamped = Math.min(high, Math.max(low, raw));
-    const value = definition.measure === 'time' ? Math.max(5, Math.round(clamped / 5) * 5) : Math.max(1, Math.round(clamped));
+    const value = coachValue(definition, clamped);
 
     return { measure: definition.measure, value, range: [low, high], perSide: Boolean(definition.unilateral) };
 }

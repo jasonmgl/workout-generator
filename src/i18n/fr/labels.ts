@@ -6,6 +6,8 @@
 import { isMuscle, isMuscleGroup, type BodyTarget, type JointId, type MuscleGroupId, type MuscleId, type RegionId } from '../../library/anatomy';
 import type { EquipmentId } from '../../library/equipment';
 import type { ExerciseKind, MovementPattern } from '../../library/types';
+import { weekdayOf } from '../../dates';
+import type { ActivityType } from '../../types';
 
 export const MUSCLE_NAMES: Readonly<Record<MuscleId, string>> = {
     pecs: 'Pectoraux',
@@ -64,6 +66,34 @@ export const GROUP_NAMES_WITH_ARTICLE: Readonly<Record<MuscleGroupId, string>> =
     legs: 'les cuisses',
     calves: 'les mollets',
 };
+
+/** Les activités hors séance. */
+export const ACTIVITY_NAMES: Readonly<Record<ActivityType, string>> = {
+    run: 'Course',
+    walk: 'Marche',
+    hike: 'Randonnée',
+    bike: 'Vélo',
+    swim: 'Natation',
+    row: 'Aviron',
+    climb: 'Escalade',
+    ski: 'Ski',
+    'team-sport': 'Sport collectif',
+    racket: 'Sport de raquette',
+    combat: 'Sport de combat',
+    yoga: 'Yoga',
+    dance: 'Danse',
+    other: 'Activité',
+};
+
+const WEEKDAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'] as const;
+const MONTH_NAMES = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'] as const;
+
+/** Un jour lisible : « jeudi 8 octobre », « lundi 1er septembre ». Sans horloge : la date est donnée. */
+export function formatDay(day: string): string {
+    const [, month, date] = day.slice(0, 10).split('-').map(Number) as [number, number, number];
+
+    return `${WEEKDAY_NAMES[weekdayOf(day) - 1]} ${date === 1 ? '1er' : date} ${MONTH_NAMES[month - 1]}`;
+}
 
 export const REGION_NAMES: Readonly<Record<RegionId, string>> = {
     upper: 'Haut du corps',

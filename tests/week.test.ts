@@ -3,6 +3,7 @@
 // la séance du jour qui suit le plan.
 import { describe, expect, it } from 'vitest';
 import { generateSession } from '../src/session/generate';
+import { formatDay } from '../src/i18n/fr/labels';
 import { planWeek, plannedDayFor, splitFor, spreadDays } from '../src/week/plan';
 
 const MONDAY = '2026-10-05';
@@ -85,6 +86,50 @@ describe('l’intensité et les activités', () => {
         const heavy = planWeek({ start: MONDAY, profile: { goal: 'hypertrophy', level: 'advanced' } });
 
         expect(heavy.targets.chest).toBeGreaterThan(light.targets.chest);
+    });
+});
+
+describe('ce que les coachs ont demandé au plan', () => {
+    it('ne fait jamais un fractionné « léger »', () => {
+        for (const sessionsPerWeek of [3, 4, 5, 6]) {
+            const plan = planWeek({ start: MONDAY, sessionsPerWeek, profile: { goal: 'fat-loss' } });
+
+            for (const day of plan.days.filter((entry) => entry.type === 'hiit')) {
+                expect(day.intensity, `${sessionsPerWeek} séances`).not.toBe('easy');
+            }
+        }
+    });
+
+    it('rend légère la séance de jambes voisine d’une sortie dure qu’on ne peut pas éviter', () => {
+        const plan = planWeek({
+            start: MONDAY,
+            sessionsPerWeek: 3,
+            days: [3, 5, 7],
+            activities: [{ date: '2026-10-08', type: 'run', minutes: 90, intensity: 'hard' }],
+        });
+        const legs = plan.days.filter((day) => day.kind === 'training' && ['2026-10-07', '2026-10-09'].includes(day.date));
+
+        expect(legs.every((day) => day.intensity === 'easy')).toBe(true);
+        expect(plan.reasons.map((entry) => entry.code)).toContain('week-legs-activity-kept');
+    });
+
+    it('décrit les séances réellement placées, et nomme la sortie avec sa date', () => {
+        const plan = planWeek({
+            start: MONDAY,
+            sessionsPerWeek: 4,
+            profile: { goal: 'endurance' },
+            activities: [{ date: '2026-10-08', type: 'bike', minutes: 150, intensity: 'hard' }],
+        });
+        const texts = plan.reasons.map((entry) => entry.text).join(' ');
+
+        expect(plan.reasons[0]!.text).toMatch(/cardio fractionné/);
+        expect(texts).toMatch(/Vélo jeudi 8 octobre \(2 h 30\)/);
+        expect(plan.days.find((day) => day.date === '2026-10-08')!.title).toMatch(/Vélo/);
+    });
+
+    it('écrit les jours comme on les dit', () => {
+        expect(formatDay('2026-09-01')).toBe('mardi 1er septembre');
+        expect(formatDay('2026-10-08')).toBe('jeudi 8 octobre');
     });
 });
 

@@ -257,6 +257,28 @@ var GROUP_NAMES_WITH_ARTICLE = {
   legs: "les cuisses",
   calves: "les mollets"
 };
+var ACTIVITY_NAMES = {
+  run: "Course",
+  walk: "Marche",
+  hike: "Randonn\xE9e",
+  bike: "V\xE9lo",
+  swim: "Natation",
+  row: "Aviron",
+  climb: "Escalade",
+  ski: "Ski",
+  "team-sport": "Sport collectif",
+  racket: "Sport de raquette",
+  combat: "Sport de combat",
+  yoga: "Yoga",
+  dance: "Danse",
+  other: "Activit\xE9"
+};
+var WEEKDAY_NAMES = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+var MONTH_NAMES = ["janvier", "f\xE9vrier", "mars", "avril", "mai", "juin", "juillet", "ao\xFBt", "septembre", "octobre", "novembre", "d\xE9cembre"];
+function formatDay(day) {
+  const [, month, date] = day.slice(0, 10).split("-").map(Number);
+  return `${WEEKDAY_NAMES[weekdayOf(day) - 1]} ${date === 1 ? "1er" : date} ${MONTH_NAMES[month - 1]}`;
+}
 var REGION_NAMES = {
   upper: "Haut du corps",
   trunk: "Tronc",
@@ -556,14 +578,17 @@ var MESSAGES_FR = {
   "week-split-6": "Six s\xE9ances : pousser, tirer, jambes, deux fois.",
   "week-split-7": "Sept s\xE9ances : pousser, tirer, jambes, cardio. \xC0 n\u2019envisager qu\u2019avec beaucoup d\u2019habitude.",
   "week-fewer-days": "{wanted} s\xE9ances voulues mais {days} {days|jour disponible|jours disponibles} : une s\xE9ance par jour au plus.",
-  "week-legs-activity": "Activit\xE9 qui charge les jambes autour du {date} : s\xE9ance du haut du corps ce jour-l\xE0.",
-  "week-legs-activity-kept": "Activit\xE9 qui charge les jambes autour du {date}, mais pas d\u2019autre s\xE9ance \xE0 \xE9changer : jambes \xE0 doser.",
+  "week-legs-activity": "{activity} {date} ({duration}) : pas de s\xE9ance de jambes autour, le haut du corps \xE0 la place.",
+  "week-legs-activity-kept": "{activity} {date} ({duration}) : pas d\u2019autre s\xE9ance \xE0 \xE9changer, la s\xE9ance de jambes voisine est l\xE9g\xE8re.",
+  "week-split": "{count} {count|s\xE9ance|s\xE9ances} : {types}.",
+  "week-split-7-warning": "Sept s\xE9ances par semaine : \xE0 n\u2019envisager qu\u2019avec beaucoup d\u2019habitude.",
   "week-low-frequency": "Certains grands groupes ne sont travaill\xE9s qu\u2019une fois cette semaine.",
-  "week-day-training": "{type} \xB7 {intensity}",
-  "week-day-activity": "Activit\xE9 pr\xE9vue",
+  "week-day-training": "{type} \xB7 s\xE9ance {intensity}",
+  "week-day-activity": "{activity} \xB7 {duration}",
   "week-day-mobility": "Mobilit\xE9, si l\u2019envie est l\xE0",
   "week-day-rest": "Repos",
   "week-optional": "Jour facultatif : on peut le sauter sans rien perdre.",
+  "week-activity-replaces": "La sortie du jour fait la s\xE9ance de jambes : un peu de mobilit\xE9, si l\u2019envie est l\xE0.",
   "week-wave-hard": "S\xE9ance dure de la semaine.",
   "week-wave-moderate": "S\xE9ance moyenne : environ trois quarts de l\u2019effort de la s\xE9ance dure.",
   "week-wave-easy": "S\xE9ance l\xE9g\xE8re : pour entretenir et r\xE9cup\xE9rer.",
@@ -3461,6 +3486,7 @@ var PULL = [
     },
     equipment: [["dumbbells", "kettlebell"]],
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "none",
     posture: "support",
@@ -4374,6 +4400,7 @@ var SQUAT_LUNGE = [
     muscles: { primary: ["quads", "glute-max"], secondary: ["adductors", "hamstrings"], stabilizers: ["glute-med", "abs"] },
     loadableWith: ["backpack", "weight-vest", "dumbbells", "kettlebell"],
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -4393,6 +4420,7 @@ var SQUAT_LUNGE = [
     muscles: { primary: ["quads", "glute-max"], secondary: ["adductors", "hamstrings"], stabilizers: ["glute-med", "abs"] },
     loadableWith: ["backpack", "weight-vest"],
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -4412,6 +4440,7 @@ var SQUAT_LUNGE = [
     muscles: { primary: ["glute-max", "quads"], secondary: ["glute-med", "adductors"], stabilizers: ["obliques", "abs"] },
     loadableWith: ["backpack", "weight-vest"],
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -4494,6 +4523,7 @@ var SQUAT_LUNGE = [
     muscles: { primary: ["quads", "glute-max", "adductors"], secondary: ["glute-med"], stabilizers: ["erectors", "abs"] },
     loadableWith: ["backpack", "weight-vest", "dumbbells", "kettlebell"],
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -4945,6 +4975,7 @@ var SQUAT_LUNGE = [
     },
     equipment: [["dumbbells", "kettlebell"]],
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -5054,6 +5085,7 @@ var HINGE = [
     difficulty: 2,
     muscles: { primary: ["glute-max"], secondary: ["hamstrings", "hip-flexors"], stabilizers: ["glute-med", "obliques", "transverse"] },
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "floor",
@@ -5728,6 +5760,7 @@ var HINGE = [
     muscles: { primary: ["glute-med", "glute-max"], stabilizers: ["quads", "transverse"] },
     equipment: [["mini-band"]],
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "low",
     posture: "standing",
@@ -6020,6 +6053,7 @@ var CORE = [
     difficulty: 4,
     muscles: { primary: ["obliques", "abs", "transverse"], secondary: ["serratus", "front-delts"], stabilizers: ["triceps", "pecs", "glute-med", "quads"] },
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "support",
@@ -6038,6 +6072,7 @@ var CORE = [
     difficulty: 4,
     muscles: { primary: ["abs", "transverse", "obliques"], secondary: ["glute-max", "front-delts"], stabilizers: ["serratus", "erectors", "glute-med"] },
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "support",
@@ -6126,6 +6161,7 @@ var CORE = [
     difficulty: 2,
     muscles: { primary: ["erectors", "glute-max"], secondary: ["transverse", "obliques"], stabilizers: ["front-delts", "glute-med", "serratus"] },
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "floor",
@@ -6354,6 +6390,7 @@ var CORE = [
     difficulty: 1,
     muscles: { primary: ["transverse", "abs"], secondary: ["obliques", "hip-flexors"] },
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "floor",
@@ -6499,6 +6536,7 @@ var CORE = [
     difficulty: 3,
     muscles: { primary: ["obliques", "abs"], secondary: ["hip-flexors"], stabilizers: ["transverse"] },
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "floor",
@@ -6590,6 +6628,7 @@ var CORE = [
     difficulty: 3,
     muscles: { primary: ["obliques"], secondary: ["abs", "hip-flexors"], stabilizers: ["transverse", "erectors"] },
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "floor",
@@ -6608,6 +6647,7 @@ var CORE = [
     muscles: { primary: ["obliques"], secondary: ["abs", "hip-flexors"], stabilizers: ["transverse", "erectors", "front-delts"] },
     equipment: [["medicine-ball", "dumbbells", "kettlebell", "backpack"]],
     measure: "reps",
+    alternating: true,
     compound: false,
     impact: "none",
     posture: "floor",
@@ -6952,6 +6992,7 @@ var CONDITIONING = [
     difficulty: 1,
     muscles: { primary: ["glute-med", "side-delts"], secondary: ["adductors", "upper-traps"], stabilizers: ["abs"] },
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -7047,6 +7088,7 @@ var CONDITIONING = [
     difficulty: 2,
     muscles: { primary: ["glute-med", "glute-max", "quads"], secondary: ["adductors", "hamstrings"], stabilizers: ["abs", "obliques"] },
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -8507,6 +8549,7 @@ var MOBILITY = [
     difficulty: 2,
     muscles: { primary: ["hip-flexors", "adductors", "glute-max"], secondary: ["hamstrings", "quads"], stabilizers: ["abs", "serratus", "front-delts"] },
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "none",
     posture: "support",
@@ -8606,6 +8649,7 @@ var MOBILITY = [
     difficulty: 1,
     muscles: { primary: ["hamstrings"], secondary: ["glute-max", "gastrocnemius"], stabilizers: ["erectors", "abs"] },
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -8625,6 +8669,7 @@ var MOBILITY = [
     difficulty: 2,
     muscles: { primary: ["glute-max"], secondary: ["hamstrings", "hip-flexors", "gastrocnemius"], stabilizers: ["glute-med", "abs"] },
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -8644,6 +8689,7 @@ var MOBILITY = [
     difficulty: 2,
     muscles: { primary: ["quads", "hip-flexors"], secondary: ["gastrocnemius"], stabilizers: ["glute-med", "abs"] },
     measure: "reps",
+    alternating: true,
     compound: true,
     impact: "low",
     posture: "standing",
@@ -19787,7 +19833,7 @@ function describeTarget(item2, locale = "fr", alternating = false) {
 }
 function describeItem(item2, block, locale, alternating) {
   const straight = block.format === "straight" || block.format === "ladder" || block.format === "steady";
-  const target = describeTarget(item2, locale, alternating.has(item2.exercise));
+  const target = describeTarget(item2, locale, Boolean(item2.alternating) || alternating.has(item2.exercise));
   const first = straight && !item2.perSet && item2.sets > 1 ? message("text-sets-of", { n: item2.sets, target }, locale) : target;
   const parts = [first];
   if (straight && item2.sets > 1 && item2.restSeconds > 0) parts.push(message("text-rest", { rest: formatSeconds(item2.restSeconds) }, locale));
@@ -20044,6 +20090,7 @@ function toSessionItem(item2, block, context) {
     ...item2.progression ? { progression: item2.progression } : {},
     ...item2.note ? { note: item2.note } : {},
     ...item2.warmupSets ? { warmupSets: item2.warmupSets } : {},
+    ...item2.definition.alternating && item2.target.measure === "reps" ? { alternating: true } : {},
     reasons: item2.reasons,
     setSeconds: Math.round(block.format === "tabata" || block.format === "intervals" ? block.workSeconds ?? item2.target.value : workSeconds(item2.definition, item2.target, item2.tempo)),
     estimatedSeconds: Math.round(itemSeconds(item2, block))
@@ -20065,10 +20112,19 @@ function toSessionBlock(block, context, transition = 0) {
     estimatedSeconds: Math.round(plannedBlockSeconds(block) + transition)
   };
 }
+var REPS_GRID = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80, 100];
+var SECONDS_GRID = [5, 10, 15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 420, 480, 600];
+function coachValue(definition, raw) {
+  const [low, high] = definition.range;
+  const grid = definition.measure === "time" ? SECONDS_GRID : definition.measure === "reps" ? REPS_GRID : [];
+  const candidates = grid.filter((value) => value >= low && value <= high && (!definition.alternating || value % 2 === 0));
+  const nearest = candidates.length ? candidates.reduce((best, value) => Math.abs(value - raw) < Math.abs(best - raw) ? value : best) : Math.round(raw);
+  return Math.min(high, Math.max(low, definition.measure === "time" && !candidates.length ? Math.max(5, Math.round(raw / 5) * 5) : nearest));
+}
 function easyTarget(definition, share = 0.3) {
   const [low, high] = definition.range;
   const raw = low + (high - low) * share;
-  const value = definition.measure === "time" ? Math.max(5, Math.round(raw / 5) * 5) : Math.max(1, Math.round(raw));
+  const value = coachValue(definition, raw);
   return { measure: definition.measure, value, range: [low, high], perSide: Boolean(definition.unilateral) };
 }
 function targetForSeconds(definition, seconds) {
@@ -20076,7 +20132,7 @@ function targetForSeconds(definition, seconds) {
   const [low, high] = definition.range;
   const raw = definition.measure === "time" ? seconds / sides : definition.measure === "distance" ? seconds * 1.4 : seconds / ((definition.secondsPerRep ?? 3) * sides);
   const clamped = Math.min(high, Math.max(low, raw));
-  const value = definition.measure === "time" ? Math.max(5, Math.round(clamped / 5) * 5) : Math.max(1, Math.round(clamped));
+  const value = coachValue(definition, clamped);
   return { measure: definition.measure, value, range: [low, high], perSide: Boolean(definition.unilateral) };
 }
 
@@ -22154,28 +22210,54 @@ function planWeek(input) {
   const chosen = spreadDays(available, sessions).sort((a, b) => order2(a) - order2(b));
   const split = splitFor(sessions, goal);
   const activitiesOn = (date) => (input.activities ?? []).filter((activity) => dayOf(activity.date) === date);
-  const legsBusy = (date) => [addDays(date, -1), date, addDays(date, 1)].some((day) => activitiesOn(day).some(loadsLegs));
+  const reach = (activity) => activity.minutes >= 120 || activity.intensity === "hard" ? 2 : 1;
+  const legActivities = (input.activities ?? []).filter(loadsLegs);
+  const legsBusy = (date) => legActivities.some((activity) => Math.abs(daysBetween(activity.date, date)) <= (daysBetween(activity.date, date) > 0 ? reach(activity) : 1));
   const assigned = [];
   const remaining = [...split];
+  const kept = [];
   for (const day of chosen) {
     const date = dates[order2(day)];
     const preferUpper = legsBusy(date);
     const index = preferUpper ? remaining.findIndex((type2) => !LOWER_TYPES.includes(type2)) : 0;
     const type = remaining.splice(index >= 0 ? index : 0, 1)[0];
-    if (preferUpper && LOWER_TYPES.includes(type)) {
-      reasons.push(reason("week-legs-activity-kept", { date }, locale));
-    } else if (preferUpper) {
-      reasons.push(reason("week-legs-activity", { date }, locale));
-    }
+    if (preferUpper && LOWER_TYPES.includes(type)) kept.push(date);
     assigned.push(type);
   }
+  for (const activity of legActivities) {
+    const near = chosen.map((day) => dates[order2(day)]).filter((date) => legsBusy(date) && Math.abs(daysBetween(activity.date, date)) <= reach(activity));
+    const params = {
+      activity: ACTIVITY_NAMES[activity.type],
+      date: formatDay(dayOf(activity.date)),
+      duration: formatSeconds(activity.minutes * 60)
+    };
+    if (near.some((date) => kept.includes(date))) reasons.push(reason("week-legs-activity-kept", params, locale));
+    else if (near.length) reasons.push(reason("week-legs-activity", params, locale));
+  }
   const intensities = assigned.map((_, index) => WAVE[index % WAVE.length]);
+  assigned.forEach((type, index) => {
+    if (type !== "hiit" || intensities[index] !== "easy") return;
+    const neighbour = [index - 1, index + 1].find((other) => other >= 0 && other < assigned.length && assigned[other] !== "hiit");
+    if (neighbour !== void 0) {
+      intensities[index] = intensities[neighbour];
+      intensities[neighbour] = "easy";
+    } else {
+      intensities[index] = "moderate";
+    }
+  });
+  assigned.forEach((type, index) => {
+    const date = dates[order2(chosen[index])];
+    if (LOWER_TYPES.includes(type) && legActivities.some((activity) => activity.intensity === "hard" && Math.abs(daysBetween(activity.date, date)) <= 2)) {
+      intensities[index] = "easy";
+    }
+  });
   for (let index = 1; index < intensities.length; index++) {
     const gap = order2(chosen[index]) - order2(chosen[index - 1]);
     if (gap === 1 && intensities[index] === "hard" && intensities[index - 1] === "hard") {
       intensities[index] = "moderate";
     }
   }
+  const activityTitle = (activity) => reason("week-day-activity", { activity: ACTIVITY_NAMES[activity.type], duration: formatSeconds(activity.minutes * 60) }, locale).text;
   const minutesFor = (day) => typeof input.minutes === "number" ? input.minutes : input.minutes?.[day] ?? (goal === "strength" || goal === "hypertrophy" ? 45 : 30);
   const restDays = weekdays.filter((day) => !chosen.includes(day));
   const optionalDay = sessions <= 3 && restDays.length >= 3 ? restDays[Math.floor(restDays.length / 2)] : void 0;
@@ -22183,6 +22265,21 @@ function planWeek(input) {
     const weekday = weekdays[index];
     const position = chosen.indexOf(weekday);
     const activities = activitiesOn(date);
+    const sameDaySortie = activities.some((activity) => loadsLegs(activity));
+    if (position >= 0 && sameDaySortie && LOWER_TYPES.includes(assigned[position])) {
+      return {
+        date,
+        weekday,
+        kind: "active-recovery",
+        type: "mobility",
+        intensity: "easy",
+        minutes: 15,
+        optional: true,
+        title: [reason("week-day-mobility", {}, locale).text, ...activities.map((activity) => activityTitle(activity))].join(" \xB7 "),
+        activities,
+        reasons: [reason("week-activity-replaces", {}, locale)]
+      };
+    }
     if (position >= 0) {
       const type = assigned[position];
       const intensity = intensities[position];
@@ -22194,14 +22291,18 @@ function planWeek(input) {
         groups: [...TYPE_GROUPS[type] ?? []],
         intensity,
         minutes: minutesFor(weekday),
-        title: reason("week-day-training", { type: reason(`session-${type}`, {}, locale).text, intensity: reason(`intensity-name-${intensity}`, {}, locale).text }, locale).text,
+        title: [
+          reason("week-day-training", { type: reason(`session-${type}`, {}, locale).text, intensity: reason(`intensity-name-${intensity}`, {}, locale).text }, locale).text,
+          ...activities.map((activity) => activityTitle(activity))
+        ].join(" \xB7 "),
         activities,
         reasons: [reason(`week-wave-${intensity}`, {}, locale)]
       };
     }
     if (activities.length) {
       const hardest = activities.map((activity) => intensityOfActivity(activity.intensity)).sort((a, b) => WAVE.indexOf(a) - WAVE.indexOf(b))[0];
-      return { date, weekday, kind: "activity", intensity: hardest, title: reason("week-day-activity", {}, locale).text, activities, reasons: [] };
+      const title2 = activities.map((activity) => activityTitle(activity)).join(", ");
+      return { date, weekday, kind: "activity", intensity: hardest, title: title2, activities, reasons: [] };
     }
     if (weekday === optionalDay) {
       return {
@@ -22224,7 +22325,9 @@ function planWeek(input) {
   const frequency = MUSCLE_GROUPS.filter((group) => ["chest", "back", "legs", "glutes"].includes(group)).map(
     (group) => assigned.filter((type) => (TYPE_GROUPS[type] ?? []).includes(group)).length
   );
-  reasons.unshift(reason(`week-split-${sessions}`, {}, locale));
+  const names = assigned.map((type) => reason(`session-${type}`, {}, locale).text.toLowerCase());
+  reasons.unshift(reason("week-split", { count: sessions, types: names.join(", ") }, locale));
+  if (sessions >= 7) reasons.push(reason("week-split-7-warning", {}, locale));
   if (sessions >= 2 && Math.min(...frequency) < 2) {
     reasons.push(reason("week-low-frequency", {}, locale));
   }

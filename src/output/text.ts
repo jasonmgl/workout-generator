@@ -31,7 +31,7 @@ export function describeTarget(item: SessionItem, locale = 'fr', alternating = f
 
 function describeItem(item: SessionItem, block: SessionBlock, locale: string, alternating: ReadonlySet<string>): string[] {
     const straight = block.format === 'straight' || block.format === 'ladder' || block.format === 'steady';
-    const target = describeTarget(item, locale, alternating.has(item.exercise));
+    const target = describeTarget(item, locale, Boolean(item.alternating) || alternating.has(item.exercise));
     const first = straight && !item.perSet && item.sets > 1 ? message('text-sets-of', { n: item.sets, target }, locale) : target;
     const parts = [first];
 
