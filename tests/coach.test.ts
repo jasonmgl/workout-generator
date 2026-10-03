@@ -2,6 +2,7 @@
 // est vérifiée sur plusieurs graines : c'est le comportement général qui compte, pas un tirage heureux.
 import { describe, expect, it } from 'vitest';
 import { defaultLibrary } from '../src/library';
+import { MESSAGES_FR } from '../src/i18n/fr/messages';
 import { MUSCLE_INFO } from '../src/library/anatomy';
 import { generateSession } from '../src/session/generate';
 import { buildContext } from '../src/session/context';
@@ -434,6 +435,66 @@ describe('la deuxième relecture : la première fois et l’échec', () => {
     it('traite les curls nordiques comme des descentes freinées', () => {
         for (const definition of library.family('nordic-curl')) {
             expect(definition.tags, definition.id).toContain('eccentric');
+        }
+    });
+});
+
+describe('la deuxième relecture : la forme du jour', () => {
+    /** Le travail de la séance, finisher compris, un exercice de chaque côté comptant double. */
+    const work = (session: Session): number =>
+        session.blocks
+            .filter((block) => block.role === 'main' || block.role === 'finisher')
+            .reduce((sum, block) => sum + block.items.reduce((count, item) => count + item.sets * Math.max(1, block.rounds) * item.target.value * (item.target.perSide ? 2 : 1), 0), 0);
+
+    it('donne moins de travail un jour de petite forme, graine par graine', () => {
+        for (const goal of ['health', 'fat-loss', 'endurance', 'hypertrophy'] as const) {
+            for (let seed = 1; seed <= 10; seed++) {
+                const base: GenerateInput = { date: DATE, seed, profile: { goal }, request: { minutes: 30 } };
+                const normal = generateSession(base);
+                const tired = generateSession({ ...base, readiness: { energy: 2, sleepQuality: 3 } });
+
+                expect(work(tired), `${goal} · graine ${seed}`).toBeLessThanOrEqual(work(normal) * 0.85);
+            }
+        }
+    });
+
+    it('ne propose ni AMRAP ni EMOM un jour léger', () => {
+        for (const goal of ['fat-loss', 'strength', 'endurance'] as const) {
+            for (const readiness of [{ energy: 2, sleepQuality: 2 } as const, {}]) {
+                const plan = Object.keys(readiness).length ? undefined : { date: '2026-10-03', kind: 'training' as const, type: 'full-body' as const, intensity: 'easy' as const };
+
+                for (const session of many({ date: DATE, profile: { goal }, readiness, ...(plan ? { plan } : {}), request: { minutes: 30 } })) {
+                    for (const block of session.blocks.filter((entry) => entry.role === 'main')) {
+                        expect(['amrap', 'emom'], `${goal} · ${block.format}`).not.toContain(block.format);
+                    }
+                }
+            }
+        }
+    });
+
+    it('fait passer la mobilité avant le type demandé quand la forme ne permet pas plus', () => {
+        const signals = [{ cycle: { phase: 'menstrual', symptoms: 3 } } as const, { pain: [{ joint: 'lower-back', severity: 3 }] } as const, { energy: 1, sleepQuality: 1, stress: 5 } as const];
+
+        for (const readiness of signals) {
+            for (const type of ['hiit', 'lower', 'full-body', 'cardio', 'push'] as const) {
+                const session = generateSession({ date: DATE, readiness, request: { minutes: 30, type } });
+
+                expect(session.type, `${type} · ${JSON.stringify(readiness)}`).toBe('mobility');
+                expect(session.summary).toMatch(/remplacée/);
+            }
+        }
+    });
+
+    it('fait la séance demandée quand on passe outre, en prévenant', () => {
+        const session = generateSession({ date: DATE, readiness: { pain: [{ joint: 'lower-back', severity: 3 }] }, request: { minutes: 30, type: 'lower', ignoreReadiness: true } });
+
+        expect(session.type).toBe('lower');
+        expect(session.warnings.map((entry) => entry.code)).toContain('readiness-ignored');
+    });
+
+    it('ne pousse jamais à minimiser une douleur pour avoir une séance', () => {
+        for (const text of Object.values(MESSAGES_FR)) {
+            expect(text).not.toMatch(/alléger les douleurs/);
         }
     });
 });

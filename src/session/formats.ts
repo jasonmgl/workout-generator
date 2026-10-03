@@ -32,14 +32,19 @@ export function chooseFormat(context: Context, type: SessionType, mainSeconds: n
         return 'straight';
     }
 
-    if (mainSeconds <= 12 * 60) {
-        return context.goal === 'strength' ? 'emom' : 'circuit';
-    }
-
-    // Un AMRAP ou un EMOM de plus de 20 minutes use plus qu’il ne sert : au-delà, un circuit.
+    // Le hasard se tire toujours, et dans le même ordre : un jour léger donne la même séance en plus doux, pas un autre
+    // tirage.
     const drawn = context.random.weighted(context.settings.formats, ([, chance]) => chance)[0];
+    const format: BlockFormat = mainSeconds <= 12 * 60 ? (context.goal === 'strength' ? 'emom' : 'circuit') : drawn;
 
-    return (drawn === 'amrap' || drawn === 'emom') && mainSeconds > 20 * 60 ? 'circuit' : drawn;
+    // Un AMRAP ou un EMOM pousse à l’effort maximal : jamais un jour léger, et jamais plus de 20 minutes (il use plus
+    // qu’il ne sert). Un circuit à la place.
+    return (format === 'amrap' || format === 'emom') && (lightDay(context) || mainSeconds > 20 * 60) ? 'circuit' : format;
+}
+
+/** Un jour léger : petite forme, ou séance légère du plan. Rien qui pousse à l’effort maximal, plus de repos entre les tours. */
+export function lightDay(context: Context): boolean {
+    return context.readiness.volume < 0.95 || context.readiness.level === 'easy' || context.readiness.level === 'recovery';
 }
 
 /** Les schémas qui se répondent : on les met ensemble dans un superset. */
@@ -250,7 +255,7 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
             format: 'circuit',
             title: title('block-circuit', context),
             rounds: Math.max(2, Math.round(group.reduce((sum, item) => sum + item.sets, 0) / group.length)),
-            restBetweenRounds: settings.circuit.betweenRounds,
+            restBetweenRounds: settings.circuit.betweenRounds + (lightDay(context) ? 15 : 0),
             restBetweenItems: settings.circuit.betweenItems,
             items: alternateRegions(group).map(perRound),
         }));

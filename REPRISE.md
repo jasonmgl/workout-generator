@@ -50,7 +50,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## État au 3 octobre 2026 (soir)
 
-- **Version utilisable sur `master`.** 278 tests au vert, types propres.
+- **Version utilisable sur `master`.** 283 tests au vert, types propres.
 - **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
   `main`, derrière l’interrupteur `DIDIT_GENERATEUR`) : `app/Support/WorkoutGenerator.php`
   appelle la commande JSON, dépend de `github:jasonmgl/workout-generator#master`
@@ -111,7 +111,7 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
      dosée sur la famille, plateau qui garde l'exercice, échec qui tient la
      cible, charge de reprise, charge la plus proche (programmation-1, -4 ;
      securite-3, -4, -5, -6, -10) ;
-   - [ ] forme du jour : hasard tiré dans un ordre fixe, ni AMRAP ni EMOM un
+   - [x] forme du jour : hasard tiré dans un ordre fixe, ni AMRAP ni EMOM un
      jour léger, travail plafonné ; récupération qui passe avant le type
      demandé (securite-1, -2) ;
    - [ ] poussée / tirage : pompes sphinx comptées en poussée, places de
@@ -217,6 +217,12 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   ressentie dure fait tenir la cible** ; on ne change de variante qu'après
   deux séances de suite qui ont coincé. Au plateau, l'exercice exact est
   gardé (×3 au tirage), jamais une variante plus dure.
+- **Un jour léger** (petite forme, séance légère du plan) : ni AMRAP ni
+  EMOM, 15 s de plus entre les tours d'un circuit. **Le hasard se tire
+  toujours dans le même ordre** (finisher, format) : un jour léger donne la
+  même séance en plus doux, pas un autre tirage ; un test compare graine par
+  graine. **Une forme « récupération » passe avant le type demandé** (sauf
+  `ignoreReadiness`, qui ajoute l'avertissement).
 - **Les charges** : estimée, celle du dessous ou du dessus selon que les
   répétitions recalculées (Epley) tombent dans l'objectif, le manque pesant
   trois fois plus que l'excès ; à la reprise, 0,9 / 0,8 / 0,7 de la charge
@@ -328,3 +334,7 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   chaque performance), charge de reprise réduite, charge estimée la plus
   utile, réserve absente des exercices qui ne fatiguent pas, résumé qui
   annonce le format dominant. 278 tests.
+  Deuxième lot (forme du jour) : hasard tiré dans un ordre fixe, ni AMRAP ni
+  EMOM un jour léger, plus de repos entre les tours ; la mobilité passe
+  avant le type demandé en forme « récupération », avec une phrase qui le
+  dit ; plus de message qui invite à minimiser ses douleurs. 283 tests.

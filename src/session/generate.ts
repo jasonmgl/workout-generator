@@ -302,12 +302,14 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
     const warmBudget = context.request.warmup === false ? 0 : warmupSeconds(context);
     const coolBudget = context.request.cooldown === false ? 0 : cooldownSeconds(context);
     const total = context.minutes * 60;
+    // Tiré même quand il ne sert pas : le hasard suit le même ordre un jour léger et un jour ordinaire.
+    const finisherRoll = context.random.next();
     const canFinish =
         type !== 'skill' &&
         type !== 'core' &&
         context.readiness.level !== 'easy' &&
         context.minutes >= 25 &&
-        context.random.next() < context.settings.finisher &&
+        finisherRoll < context.settings.finisher &&
         cardioCandidates(context).length > 0;
     const finisherBudget = canFinish ? (context.minutes >= 45 ? 360 : 240) : 0;
     const transitions = [warmBudget > 0, coolBudget > 0, canFinish, type === 'skill'].filter(Boolean).length * BLOCK_TRANSITION_SECONDS;
@@ -688,7 +690,7 @@ function mobilitySession(context: Context, choice: TypeChoice, type: 'mobility' 
 export function generateSession(input: GenerateInput): Session {
     const context = withIntensity(buildContext(input));
     const choice = chooseType(context);
-    const ignored = context.readiness.level === 'rest' && context.request.ignoreReadiness;
+    const ignored = (context.readiness.level === 'rest' || context.readiness.level === 'recovery') && context.request.ignoreReadiness;
     const withWarning = ignored ? { ...context, readiness: { ...context.readiness, warnings: [...context.readiness.warnings, reason('readiness-ignored', {}, context.locale)] } } : context;
 
     switch (choice.type) {

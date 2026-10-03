@@ -63,6 +63,7 @@ export const MESSAGES_FR = {
 
     // Le type de séance
     'type-asked': 'Type de séance demandé.',
+    'type-asked-overridden': 'Séance demandée remplacée par une mobilité douce, à la mesure de la forme du jour.',
     'type-plan': 'Séance prévue au plan de la semaine.',
     'type-plan-rest': 'Jour de récupération au plan de la semaine.',
     'type-recovery': 'Petite forme : on bouge sans charger.',
@@ -152,7 +153,7 @@ export const MESSAGES_FR = {
     'slot-fallback-equipment': 'Pas de quoi faire un vrai « {pattern} » : le haut du dos travaille au sol. {equipment} suffirait.',
     'session-lighter': 'Séance allégée : moins de travail que d’habitude, le reste du temps pour récupérer.',
     'list-or': 'ou',
-    'nothing-feasible': 'Aucun exercice faisable avec ces contraintes : alléger les douleurs déclarées ou ajouter du matériel.',
+    'nothing-feasible': 'Rien de faisable aujourd’hui avec ces douleurs et ce matériel : mobilité douce ou repos.',
 
     // La séance en texte
     'text-reps': '{n} {n|répétition|répétitions}',

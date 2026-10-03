@@ -71,6 +71,12 @@ export function chooseType(context: Context): TypeChoice {
         return { type: 'recovery', rest: true, reasons: [] };
     }
 
+    // Une forme qui ne permet que la mobilité (douleur forte, règles très douloureuses, grosse fatigue) passe avant le
+    // type demandé, sauf si la personne choisit expressément de passer outre.
+    if (readiness.level === 'recovery' && !request.ignoreReadiness && request.type && request.type !== 'auto' && request.type !== 'mobility' && request.type !== 'recovery') {
+        return { type: 'mobility', rest: false, reasons: [say('type-asked-overridden')] };
+    }
+
     if (request.type && request.type !== 'auto') {
         return { type: request.type, rest: false, reasons: [say('type-asked')] };
     }

@@ -462,6 +462,7 @@ var MESSAGES_FR = {
   "plan-intensity-hard": "S\xE9ance dure au plan de la semaine.",
   // Le type de séance
   "type-asked": "Type de s\xE9ance demand\xE9.",
+  "type-asked-overridden": "S\xE9ance demand\xE9e remplac\xE9e par une mobilit\xE9 douce, \xE0 la mesure de la forme du jour.",
   "type-plan": "S\xE9ance pr\xE9vue au plan de la semaine.",
   "type-plan-rest": "Jour de r\xE9cup\xE9ration au plan de la semaine.",
   "type-recovery": "Petite forme\u202F: on bouge sans charger.",
@@ -546,7 +547,7 @@ var MESSAGES_FR = {
   "slot-fallback-equipment": "Pas de quoi faire un vrai \xAB {pattern} \xBB\u202F: le haut du dos travaille au sol. {equipment} suffirait.",
   "session-lighter": "S\xE9ance all\xE9g\xE9e\u202F: moins de travail que d\u2019habitude, le reste du temps pour r\xE9cup\xE9rer.",
   "list-or": "ou",
-  "nothing-feasible": "Aucun exercice faisable avec ces contraintes\u202F: all\xE9ger les douleurs d\xE9clar\xE9es ou ajouter du mat\xE9riel.",
+  "nothing-feasible": "Rien de faisable aujourd\u2019hui avec ces douleurs et ce mat\xE9riel\u202F: mobilit\xE9 douce ou repos.",
   // La séance en texte
   "text-reps": "{n} {n|r\xE9p\xE9tition|r\xE9p\xE9titions}",
   "text-reps-alternating": "{n} r\xE9p\xE9titions en alternant ({half} de chaque c\xF4t\xE9)",
@@ -20478,6 +20479,9 @@ function chooseType(context) {
   if (readiness.level === "rest" && !request.ignoreReadiness) {
     return { type: "recovery", rest: true, reasons: [] };
   }
+  if (readiness.level === "recovery" && !request.ignoreReadiness && request.type && request.type !== "auto" && request.type !== "mobility" && request.type !== "recovery") {
+    return { type: "mobility", rest: false, reasons: [say("type-asked-overridden")] };
+  }
   if (request.type && request.type !== "auto") {
     return { type: request.type, rest: false, reasons: [say("type-asked")] };
   }
@@ -21514,11 +21518,12 @@ function chooseFormat(context, type, mainSeconds) {
   if (type === "skill") {
     return "straight";
   }
-  if (mainSeconds <= 12 * 60) {
-    return context.goal === "strength" ? "emom" : "circuit";
-  }
   const drawn = context.random.weighted(context.settings.formats, ([, chance]) => chance)[0];
-  return (drawn === "amrap" || drawn === "emom") && mainSeconds > 20 * 60 ? "circuit" : drawn;
+  const format2 = mainSeconds <= 12 * 60 ? context.goal === "strength" ? "emom" : "circuit" : drawn;
+  return (format2 === "amrap" || format2 === "emom") && (lightDay(context) || mainSeconds > 20 * 60) ? "circuit" : format2;
+}
+function lightDay(context) {
+  return context.readiness.volume < 0.95 || context.readiness.level === "easy" || context.readiness.level === "recovery";
 }
 var PARTNERS = {
   "horizontal-push": ["horizontal-pull", "vertical-pull"],
@@ -21665,7 +21670,7 @@ function assembleBlocks(items, format2, context, mainSeconds) {
       format: "circuit",
       title: title("block-circuit", context),
       rounds: Math.max(2, Math.round(group.reduce((sum, item2) => sum + item2.sets, 0) / group.length)),
-      restBetweenRounds: settings.circuit.betweenRounds,
+      restBetweenRounds: settings.circuit.betweenRounds + (lightDay(context) ? 15 : 0),
       restBetweenItems: settings.circuit.betweenItems,
       items: alternateRegions(group).map(perRound)
     }));
@@ -22204,7 +22209,8 @@ function strengthSession(context, choice, type) {
   const warmBudget = context.request.warmup === false ? 0 : warmupSeconds(context);
   const coolBudget = context.request.cooldown === false ? 0 : cooldownSeconds(context);
   const total = context.minutes * 60;
-  const canFinish = type !== "skill" && type !== "core" && context.readiness.level !== "easy" && context.minutes >= 25 && context.random.next() < context.settings.finisher && cardioCandidates(context).length > 0;
+  const finisherRoll = context.random.next();
+  const canFinish = type !== "skill" && type !== "core" && context.readiness.level !== "easy" && context.minutes >= 25 && finisherRoll < context.settings.finisher && cardioCandidates(context).length > 0;
   const finisherBudget = canFinish ? context.minutes >= 45 ? 360 : 240 : 0;
   const transitions = [warmBudget > 0, coolBudget > 0, canFinish, type === "skill"].filter(Boolean).length * BLOCK_TRANSITION_SECONDS;
   const available = Math.max(120, total - warmBudget - coolBudget - finisherBudget - transitions);
@@ -22475,7 +22481,7 @@ function mobilitySession(context, choice, type) {
 function generateSession(input) {
   const context = withIntensity(buildContext(input));
   const choice = chooseType(context);
-  const ignored = context.readiness.level === "rest" && context.request.ignoreReadiness;
+  const ignored = (context.readiness.level === "rest" || context.readiness.level === "recovery") && context.request.ignoreReadiness;
   const withWarning = ignored ? { ...context, readiness: { ...context.readiness, warnings: [...context.readiness.warnings, reason("readiness-ignored", {}, context.locale)] } } : context;
   switch (choice.type) {
     case "mobility":
