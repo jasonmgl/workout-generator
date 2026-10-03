@@ -24,6 +24,7 @@ export type { BodyState, GroupState, MuscleState } from './history/fatigue';
 export { sessionLoad, sessionMinutes, trainingLoad } from './history/load';
 export type { TrainingLoad } from './history/load';
 export { capacity, levelFor, performancesOf } from './history/progress';
+export { resolveHistory } from './history/resolve';
 export type { Capacity, ExercisePerformance } from './history/progress';
 export { ACTIVITY_LOAD, activityLoad } from './history/activities';
 

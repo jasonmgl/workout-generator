@@ -13,6 +13,7 @@ import type { Library } from '../library/library';
 import type { ExerciseDefinition, Measure, MovementPattern } from '../library/types';
 import type { Level, PastSession, PerformedSet } from '../types';
 import { pastSessions } from './load';
+import { resolveHistory } from './resolve';
 
 /** Au-delà de 90 jours, une performance ne dit plus grand-chose de la forme actuelle. */
 const WINDOW_DAYS = 90;
@@ -96,7 +97,8 @@ export function levelFor(difficulty: number): Level {
     return 'expert';
 }
 
-export function capacity(history: readonly PastSession[], now: string, library: Library): Capacity {
+export function capacity(given: readonly PastSession[], now: string, library: Library): Capacity {
+    const history = resolveHistory(given, library);
     const families: Record<string, number> = {};
     const patterns: Partial<Record<MovementPattern, number>> = {};
 

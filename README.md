@@ -191,6 +191,26 @@ Les commandes :
 | Tempo `lent`, `normal`, `rapide` | `slow`, `normal`, `fast` (mêmes 3, 2, 1 s par phase) |
 | Rôle de boucle `echauffement`, `retour` | rôle de bloc `warmup`, `cooldown` |
 | Nom d'exercice de la bibliothèque | `library.findByName(nom)` : les noms de DidIt sont des noms ou des alias du catalogue |
+| `session_entries` (nom, séries, meilleur nombre) | `history[].exercises` : le nom suffit, le moteur retrouve la fiche (`resolveHistory`) et ignore un nom inconnu |
+| Endurance `course`, `marche`, `velo`, `natation` | `activities` : `run`, `walk`, `bike`, `swim`, avec les minutes |
+| Phase du cycle (`Cycle::phaseFor`) | `readiness.cycle.phase` : `menstrual`, `follicular`, `ovulation`, `luteal` |
+
+Ce que DidIt envoie déjà est vérifié par `tests/didit.test.ts` : l'entrée
+de `WorkoutGenerator::inputFor`, et chaque champ que `movementsOf` relit.
+Quelques détails pour en tirer davantage :
+
+- **Le niveau fait plutôt que l'exercice.** Un nom de niveau qui se suffit
+  (« Pompes inclinées », « Squat bulgare ») est retrouvé tel quel et dit
+  mieux que « Pompes » quelle variante a été faite. Un niveau qui ne se
+  comprend qu'avec son exercice (« Corps incliné ») gagne à être envoyé
+  avec l’identifiant de la fiche.
+- **Un exercice en durée.** Quand une entrée ne garde qu'un nombre dans
+  `reps`, celui d'une planche est lu comme des secondes.
+- **Les séances d'endurance et les activités libres** comptent dans la
+  fatigue et la charge : `activities` pour une sortie, `worked` (les zones
+  traduites comme plus haut) pour une activité sans détail.
+- **Les séries une à une**, avec la réserve (`rir`) et la charge
+  (`loadKg`), affineraient la progression : le moteur les lit déjà.
 
 ## Développer
 

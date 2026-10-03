@@ -47,9 +47,15 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 - **Ne pas toucher au dépôt DidIt** (`C:\Users\jason\OneDrive\Documents\Claude\Didit`) :
   une autre session y travaille. On le lit, c'est tout.
 
-## État au 2 octobre 2026 (soir)
+## État au 3 octobre 2026 (soir)
 
-- **Version utilisable sur `master`.** 257 tests au vert, types propres.
+- **Version utilisable sur `master`.** 266 tests au vert, types propres.
+- **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
+  `main`, derrière l’interrupteur `DIDIT_GENERATEUR`) : `app/Support/WorkoutGenerator.php`
+  appelle la commande JSON, dépend de `github:jasonmgl/workout-generator#master`
+  (verrouillé sur `ec65175`). **Tout ce qui est poussé sur `master` arrive
+  chez DidIt à sa prochaine mise à jour** : `tests/didit.test.ts` reproduit
+  son entrée (`inputFor`) et vérifie chaque champ que `movementsOf` relit.
 - `src/library/` : anatomie (30 muscles → 9 groupes → 3 régions,
   articulations), matériel (38 pièces, `inventory`, charges en kg), format des
   fiches (`types.ts`), règles (`validate.ts`), bibliothèque (`library.ts` :
@@ -67,7 +73,9 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   articulations, courbatures).
 - `src/history/` : charge (`load.ts`), fatigue par muscle avec décroissance
   selon la taille (`fatigue.ts`), activités hors séance (`activities.ts`),
-  performances et capacité par famille (`progress.ts`).
+  performances et capacité par famille (`progress.ts`), historique ramené
+  aux fiches (`resolve.ts` : un exercice donné par son nom, comme DidIt le
+  fait, est retrouvé ; des `reps` sur une fiche en durée sont des secondes).
 - `src/session/` : contexte, objectifs (`goals.ts`), gabarits
   (`templates.ts`), choix du type (`choose.ts`), choix des exercices
   (`select.ts`), dosage et progression (`prescribe.ts`), temps et tempo
@@ -88,6 +96,10 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## Reste à faire
 
+**Ordre décidé le 03/10 au soir** : corriger les constats de la deuxième
+relecture des coachs, puis préparer le branchement DidIt (point 3), puis les
+cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
+
 1. **Finir les constats des coachs du 03/10** (relecture de 28 séances ; la
    liste complète et ses causes sont dans le journal de cette date). Faits :
    forme du jour sur le volume, plan qui cède à la fatigue, séances courtes,
@@ -97,11 +109,15 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
    d'approche, échauffement et retour au calme du cardio, mobilité.
    Reste :
    - ranger aussi les circuits par position, à rôle égal.
-3. **Le contrat avec DidIt** : c'est la session DidIt qui branche, sur une
-   branche à part. Lui donner ce qu'elle demande (API stable, exemples
-   d'entrée tirés de ses tables : `session_entries`, `body_logs`,
-   `user_days`, `cycle_periods`, ressenti). Le VPS fait `npm ci` : si le
-   dépôt est privé, il faudra une clé de déploiement (à régler avec Jason).
+3. **Le contrat avec DidIt** : DidIt a branché lui-même, en PHP (voir
+   État). Garder `tests/didit.test.ts` au vert ; ne rien renommer de ce que
+   `movementsOf` lit (`title`, `summary`, `estimatedMinutes`, `type`,
+   `blocks[].id/title/role/rounds/items`, `items[].name/exercise/sets/perSet/
+   target.measure/value/perSide/restSeconds/reasons[0].text/progression`).
+   Ce que DidIt pourrait envoyer en plus (niveau fait, endurance, cycle,
+   séries une à une) est dans le README, « Le vocabulaire de DidIt ». Son
+   `package-lock` passe par `git+ssh` : sur le VPS, une clé de déploiement
+   si le dépôt est privé (à régler avec Jason).
 4. **Les séries faites une à une** : DidIt ne garde qu'un `reps` par
    exercice (le maximum) ; le moteur sait lire des séries détaillées, avec
    réserve et charge. À proposer à DidIt quand elle branchera.
@@ -198,9 +214,12 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   des morceaux de commentaires disparaissent.
 - Comparer le travail de deux séances par le nombre de séries trompe (un
   circuit est plus dense qu'un superset) : comparer séries × répétitions.
-- La session DidIt a mis le branchement en pause (03/10, branche
-  `generateur-seances` figée sur `2bf6f55`) : inutile de la prévenir à
-  chaque push, elle prendra la dernière version à la reprise.
+- La session DidIt a fusionné son branchement (0.13.0, paquet verrouillé
+  sur `ec65175`) puis s’est mise en pause : inutile de la prévenir à chaque
+  push, elle prendra la dernière version à sa prochaine mise à jour. Mais
+  un champ renommé dans la réponse casse son écran sans bruit (elle
+  retombe sur son ancien générateur) : c’est `tests/didit.test.ts` qui
+  prévient.
 
 ## Journal
 
@@ -247,3 +266,12 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   Étirement du quadriceps contre le mur ; l'ancien nom reste un alias) et
   typographie française (espace fine insécable avant « : » et « % »,
   insécable entre un nombre et son unité, un test la garde). 259 tests.
+  Deuxième relecture des coachs lancée. En l’attendant, lecture du pont de
+  DidIt (`WorkoutGenerator.php`, déjà fusionné) : il envoie le **nom** des
+  exercices dans l’historique, que le moteur ne cherchait que par
+  identifiant, donc toutes les séances passées de DidIt étaient ignorées
+  (ni fatigue, ni progression). Corrigé (`resolveHistory`, appliqué au
+  contexte, à `bodyState` et à `capacity`), et le contrat est testé
+  (`tests/didit.test.ts` : 75 séances de DidIt, chaque champ relu). L’exemple
+  de conversion en TypeScript commencé est abandonné : DidIt a son pont, et
+  `toTree` donne déjà l’arbre de ses programmes. 266 tests.

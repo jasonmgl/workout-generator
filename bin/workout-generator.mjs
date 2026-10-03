@@ -843,6 +843,31 @@ function activityLoad(type, minutes, intensity = "moderate") {
   return load;
 }
 
+// src/history/resolve.ts
+function resolveExercise(performed, library, locale) {
+  const definition = library.find(performed.exercise) ?? library.findByName(performed.exercise, locale);
+  if (!definition) {
+    return performed;
+  }
+  const timed = definition.measure === "time" && performed.sets.some((set) => set.seconds === void 0 && set.reps !== void 0);
+  if (definition.id === performed.exercise && !timed) {
+    return performed;
+  }
+  return {
+    exercise: definition.id,
+    sets: timed ? performed.sets.map(({ reps, ...set }) => set.seconds === void 0 && reps !== void 0 ? { ...set, seconds: reps } : { ...set, ...reps !== void 0 ? { reps } : {} }) : performed.sets
+  };
+}
+function resolveHistory(history, library, locale = "fr") {
+  return history.map((session) => {
+    if (!session.exercises?.length) {
+      return session;
+    }
+    const exercises = session.exercises.map((performed) => resolveExercise(performed, library, locale));
+    return exercises.every((performed, index) => performed === session.exercises[index]) ? session : { ...session, exercises };
+  });
+}
+
 // src/history/fatigue.ts
 var RECOVERY_HOURS = { large: 30, medium: 24, small: 18 };
 var FATIGUE_SCALE = 4;
@@ -872,7 +897,8 @@ function setWeight(set, session) {
   return session.effort ? EFFORT_WEIGHT[session.effort] : 1;
 }
 var SIZE_WEIGHT = { large: 3, medium: 2, small: 1 };
-function bodyState(history, now, library, readiness = {}) {
+function bodyState(given, now, library, readiness = {}) {
+  const history = resolveHistory(given, library);
   const residual = Object.fromEntries(MUSCLES.map((muscle) => [muscle, 0]));
   const lastWorked = {};
   const weeklySets = Object.fromEntries(MUSCLE_GROUPS.map((group) => [group, 0]));
@@ -20552,7 +20578,8 @@ function levelFor(difficulty) {
   if (difficulty <= 6.5) return "advanced";
   return "expert";
 }
-function capacity(history, now, library) {
+function capacity(given, now, library) {
+  const history = resolveHistory(given, library);
   const families = {};
   const patterns = {};
   for (const session of pastSessions(history, now)) {
@@ -20762,8 +20789,8 @@ function buildContext(input) {
   const library = input.library ?? defaultLibrary();
   const request = input.request ?? {};
   const profile = input.profile ?? {};
-  const history = input.history ?? [];
   const locale = input.locale ?? "fr";
+  const history = resolveHistory(input.history ?? [], library, locale);
   const seed = input.seed ?? seedFrom(dayOf(input.date));
   const readiness = assessReadiness({
     date: input.date,
@@ -20823,7 +20850,7 @@ function buildContext(input) {
   }
   const minutes = Math.round(Math.min(MAX_MINUTES, Math.max(MIN_MINUTES, request.minutes ?? input.plan?.minutes ?? DEFAULT_MINUTES)));
   return {
-    input,
+    input: { ...input, history },
     date: input.date,
     seed,
     locale,

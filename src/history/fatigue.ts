@@ -17,6 +17,7 @@ import { daysBetween, hoursBetween } from '../dates';
 import type { Effort, PastSession, PerformedSet, ReadinessInput } from '../types';
 import { activityLoad } from './activities';
 import { pastSessions, sessionMinutes } from './load';
+import { resolveHistory } from './resolve';
 
 /** Le temps (en heures) au bout duquel la trace d'une série tombe à 37 % : 30 h pour un gros muscle, 18 h pour un petit. */
 export const RECOVERY_HOURS: Readonly<Record<MuscleSize, number>> = { large: 30, medium: 24, small: 18 };
@@ -87,7 +88,8 @@ function setWeight(set: PerformedSet, session: PastSession): number {
 const SIZE_WEIGHT: Readonly<Record<MuscleSize, number>> = { large: 3, medium: 2, small: 1 };
 
 /** L'état de chaque muscle et de chaque groupe à l'instant `now`. */
-export function bodyState(history: readonly PastSession[], now: string, library: Library, readiness: ReadinessInput = {}): BodyState {
+export function bodyState(given: readonly PastSession[], now: string, library: Library, readiness: ReadinessInput = {}): BodyState {
+    const history = resolveHistory(given, library);
     const residual = Object.fromEntries(MUSCLES.map((muscle) => [muscle, 0])) as Record<MuscleId, number>;
     const lastWorked: Partial<Record<MuscleId, string>> = {};
     const weeklySets = Object.fromEntries(MUSCLE_GROUPS.map((group) => [group, 0])) as Record<MuscleGroupId, number>;

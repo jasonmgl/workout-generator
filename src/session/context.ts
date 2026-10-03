@@ -12,6 +12,7 @@ import { daysBetween, dayOf } from '../dates';
 import { bodyState, type BodyState } from '../history/fatigue';
 import { pastSessions } from '../history/load';
 import { capacity, type Capacity } from '../history/progress';
+import { resolveHistory } from '../history/resolve';
 import { Random, seedFrom } from '../random';
 import { assessReadiness } from '../readiness/assess';
 import type { GenerateInput, Goal, Level, ReadinessAssessment, SessionRequest } from '../types';
@@ -79,8 +80,9 @@ export function buildContext(input: GenerateInput): Context {
     const library = input.library ?? defaultLibrary();
     const request = input.request ?? {};
     const profile = input.profile ?? {};
-    const history = input.history ?? [];
     const locale = input.locale ?? 'fr';
+    // Les exercices de l’historique par leur fiche, même donnés par leur nom : tout le reste lit `context.input.history`.
+    const history = resolveHistory(input.history ?? [], library, locale);
     const seed = input.seed ?? seedFrom(dayOf(input.date));
     const readiness = assessReadiness({
         date: input.date,
@@ -154,7 +156,7 @@ export function buildContext(input: GenerateInput): Context {
     const minutes = Math.round(Math.min(MAX_MINUTES, Math.max(MIN_MINUTES, request.minutes ?? input.plan?.minutes ?? DEFAULT_MINUTES)));
 
     return {
-        input,
+        input: { ...input, history },
         date: input.date,
         seed,
         locale,
