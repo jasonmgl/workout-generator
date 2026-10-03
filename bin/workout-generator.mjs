@@ -445,6 +445,8 @@ var MESSAGES_FR = {
   "progress-easier": "Variante plus facile que d\u2019habitude\u202F: de la marge aujourd\u2019hui.",
   "progress-more": "{from} \u2192 {to}{unit}\u202F: un cran de plus que la derni\xE8re fois.",
   "progress-hold": "M\xEAme cible que la derni\xE8re fois\u202F: on la valide avant de monter.",
+  "progress-hold-failure": "Derni\xE8re s\xE9ance \xE0 l\u2019\xE9chec ou ressentie dure\u202F: on tient {value}{unit}, sans monter.",
+  "progress-sibling": "Variante proche de {name}\u202F: on part de ce qui s\u2019y fait ({value}{unit}).",
   "progress-build": "Sous la fourchette vis\xE9e\u202F: des s\xE9ries de {value}{unit}, une de plus, pour monter.",
   "progress-add-set": "Haut de la fourchette atteint\u202F: une s\xE9rie de plus.",
   "progress-add-load": "Haut de la fourchette atteint\u202F: la charge au-dessus.",
@@ -551,7 +553,7 @@ var MESSAGES_FR = {
   "text-sets-of": "{n} s\xE9ries de {target}",
   "text-load": "{kg}\xA0kg",
   "text-load-guess": "\u2248 {kg}\xA0kg (\xE0 ajuster)",
-  "text-load-explained": "Charges indicatives pour une premi\xE8re fois\u202F: les ajuster pour finir chaque s\xE9rie avec la r\xE9serve indiqu\xE9e.",
+  "text-load-explained": "Charges indicatives (premi\xE8re fois ou reprise)\u202F: les ajuster pour finir chaque s\xE9rie avec la r\xE9serve indiqu\xE9e.",
   "text-approach": "Approche\u202F: {sets}, puis {name}",
   "text-rir-explained": "R\xE9serve\u202F: les r\xE9p\xE9titions qu\u2019on pourrait encore faire en fin de s\xE9rie. On ne va jamais jusqu\u2019\xE0 l\u2019\xE9chec.",
   "text-rest-items": "{rest} entre les exercices",
@@ -5545,7 +5547,7 @@ var HINGE = [
     secondsPerRep: 5,
     range: [4, 10],
     easier: ["hamstring-walkout"],
-    tags: ["assisted"]
+    tags: ["assisted", "eccentric"]
   },
   {
     id: "eccentric-nordic-curl",
@@ -5583,7 +5585,8 @@ var HINGE = [
     joints: { knees: 2, wrists: 1 },
     met: 4,
     secondsPerRep: 6,
-    range: [2, 6]
+    range: [2, 6],
+    tags: ["eccentric"]
   },
   // Leg curls et marches en pont : l'arrière des cuisses, allongé sur le dos ou le ventre
   {
@@ -20144,7 +20147,7 @@ function describeItem(item2, block, locale, alternating) {
   const first = straight && !item2.perSet && item2.sets > 1 ? message("text-sets-of", { n: item2.sets, target }, locale) : target;
   const parts = [first];
   if (straight && item2.sets > 1 && item2.restSeconds > 0) parts.push(message("text-rest", { rest: formatSeconds(item2.restSeconds) }, locale));
-  if (item2.load) parts.push(message(item2.note && item2.progression?.step === "start" ? "text-load-guess" : "text-load", { kg: item2.load.kg }, locale));
+  if (item2.load) parts.push(message(item2.load.estimated ? "text-load-guess" : "text-load", { kg: item2.load.kg }, locale));
   if (item2.tempo && item2.tempo !== "normal") parts.push(message(`text-tempo-${item2.tempo}`, {}, locale));
   if (item2.rir !== void 0 && block.role !== "warmup" && block.role !== "cooldown") parts.push(message("text-rir", { rir: item2.rir }, locale));
   const lines = [`  \xB7 ${item2.name} \u2014 ${parts.join(" \xB7 ")}`];
@@ -20176,7 +20179,7 @@ function sessionToText(session, locale = "fr", alternating = /* @__PURE__ */ new
     ...session.notes.map((note) => `\u2192 ${note.text}`),
     // Ce que veulent dire la réserve et les charges indicatives, une seule fois en tête.
     ...all.some((item2) => item2.rir !== void 0) ? [`\u2192 ${message("text-rir-explained", {}, locale)}`] : [],
-    ...all.some((item2) => item2.load && item2.note && item2.progression?.step === "start") ? [`\u2192 ${message("text-load-explained", {}, locale)}`] : []
+    ...all.some((item2) => item2.load?.estimated) ? [`\u2192 ${message("text-load-explained", {}, locale)}`] : []
   ];
   if (notes.length) lines.push(...notes, "");
   for (const block of session.blocks) {
@@ -20541,6 +20544,7 @@ function chooseType(context) {
 
 // src/history/progress.ts
 var WINDOW_DAYS2 = 90;
+var struggledOn = (performance) => performance.minRir === 0 || performance.effort === "hard";
 function valueOf(set, measure) {
   if (measure === "time") return set.seconds ?? 0;
   if (measure === "distance") return set.meters ?? 0;
@@ -20565,7 +20569,8 @@ function performancesOf(history, definition, now) {
         best: Math.max(...values),
         total: values.reduce((sum, value) => sum + value, 0),
         ...loads.length ? { loadKg: Math.max(...loads) } : {},
-        ...reserves.length ? { minRir: Math.min(...reserves) } : {}
+        ...reserves.length ? { minRir: Math.min(...reserves) } : {},
+        ...session.effort ? { effort: session.effort } : {}
       });
     }
   }
@@ -20943,7 +20948,29 @@ function closestLoad(loads, wanted) {
   }
   return below ?? loads[0];
 }
+function loadAtMost(loads, wanted) {
+  return loads.filter((load) => load <= wanted).pop() ?? loads[0];
+}
 var repsFactor = (reps, rir) => (1 + 10 / 30) / (1 + (reps + rir) / 30);
+var repsAt = (kg, base, rir) => Math.round(30 * ((1 + 10 / 30) * base / kg - 1) - rir);
+function estimatedLoad(loads, base, value, rir, goal, allowed) {
+  const wanted = base * repsFactor(value, rir);
+  const below = loads.filter((load) => load <= wanted).pop();
+  const above = loads.find((load) => load > wanted);
+  const outside = (reps) => Math.max(0, (goal[0] - reps) * 3, reps - goal[1]);
+  const [kg] = [below, above].filter((load) => load !== void 0).map((load) => [load, outside(repsAt(load, base, rir)), Math.abs(load - wanted)]).sort((a, b) => a[1] - b[1] || a[2] - b[2])[0];
+  return { kg, value: Math.max(allowed[0], Math.min(allowed[1], repsAt(kg, base, rir))) };
+}
+function comebackLoadFactor(daysOff) {
+  if (daysOff > 42) return 0.7;
+  if (daysOff > 20) return 0.8;
+  if (daysOff > 7) return 0.9;
+  return 1;
+}
+function firstTimeCap(definition, rir) {
+  const [lowest2, highest] = definition.range;
+  return Math.max(lowest2, Math.floor(lowest2 + 0.6 * (highest - lowest2)) - rir);
+}
 function onPlateau(performances) {
   if (performances.length < PLATEAU_SESSIONS) {
     return false;
@@ -20963,12 +20990,31 @@ function previousInFamily(definition, context) {
   }
   return found;
 }
+function gentle(definition) {
+  const trunk = definition.pattern.startsWith("anti-") || definition.pattern.startsWith("trunk-");
+  return Boolean(definition.tags?.some((tag) => tag === "activation" || tag === "posture" || tag === "rehab")) || trunk && definition.difficulty <= 2;
+}
+function siblingPerformances(definition, context) {
+  let found;
+  for (const member of context.library.family(definition.family)) {
+    if (member.id === definition.id || member.measure !== definition.measure || Math.abs(member.difficulty - definition.difficulty) > 0.5) continue;
+    const performances = performancesOf(context.input.history ?? [], member, context.date);
+    if (performances.length && (!found || performances[0].date > found.performances[0].date)) {
+      found = { definition: member, performances };
+    }
+  }
+  return found;
+}
 var even = (value) => Math.max(2, Math.ceil(value / 2) * 2);
 function prescribe(definition, role, context) {
   const { settings, readiness, locale } = context;
   const range = targetRange(definition, settings, role);
   const [low, high] = range;
-  const performances = performancesOf(context.input.history ?? [], definition, context.date);
+  const own = performancesOf(context.input.history ?? [], definition, context.date);
+  const sibling = own.length ? void 0 : siblingPerformances(definition, context);
+  const performances = own.length ? own : sibling?.performances ?? [];
+  const counted = definition.measure === "reps" && (definition.kind === "strength" || definition.kind === "power") && !gentle(definition);
+  const rir = definition.kind === "power" ? 3 : settings.rir + (readiness.level === "easy" || readiness.level === "recovery" ? 1 : 0);
   const familyCapacity = context.capacity.families[definition.family];
   const unit = definition.measure === "time" ? " s" : definition.measure === "distance" ? " m" : "";
   const increment = definition.measure === "reps" ? 1 : definition.measure === "time" ? 5 : 50;
@@ -21008,7 +21054,13 @@ function prescribe(definition, role, context) {
     const values = last.sets.map((set) => valueOf(set, definition.measure));
     const lowest2 = Math.min(...values);
     const average = values.reduce((sum, entry) => sum + entry, 0) / values.length;
-    if (onPlateau(performances)) {
+    if (struggledOn(last)) {
+      const safe = last.sets.filter((set) => set.rir !== void 0 && set.rir >= 1).map((set) => valueOf(set, definition.measure));
+      step = "hold";
+      value = safe.length ? Math.max(...safe) : Math.max(1, Math.round(average) - increment);
+      floor = Math.min(low, value);
+      progressionText = reason("progress-hold-failure", { value, unit }, locale).text;
+    } else if (onPlateau(performances)) {
       step = "vary";
       value = Math.max(1, Math.round(average * 0.8));
       floor = Math.min(low, value);
@@ -21032,6 +21084,9 @@ function prescribe(definition, role, context) {
       extraSets = value < low ? 1 : 0;
       progressionText = reason(value < low ? "progress-build" : "progress-hold", { value, unit }, locale).text;
     }
+    if (sibling) {
+      progressionText = reason("progress-sibling", { name: context.library.name(sibling.definition.id, locale), value: Math.round(average), unit }, locale).text;
+    }
   }
   if (readiness.reasons.some((entry) => entry.code === "comeback")) {
     step = "comeback";
@@ -21043,6 +21098,14 @@ function prescribe(definition, role, context) {
   if (readiness.level === "easy" || readiness.level === "recovery") {
     value = Math.max(1, Math.round(value * 0.9));
     floor = Math.min(floor, value);
+  }
+  if (firstExposure && definition.measure !== "distance" && !definition.tags?.includes("loaded")) {
+    const cap = firstTimeCap(definition, counted ? rir : 0);
+    if (value > cap) {
+      value = cap;
+      floor = Math.min(floor, value);
+      if (value < low) extraSets = 1;
+    }
   }
   const volume = Math.min(1, readiness.volume);
   let sets = role === "main" || role === "skill" ? most : fewest;
@@ -21057,8 +21120,6 @@ function prescribe(definition, role, context) {
   if (definition.kind === "power") restSeconds = Math.max(restSeconds, 60);
   if (definition.kind === "skill") restSeconds = Math.max(restSeconds, 90);
   if (readiness.level === "easy" || readiness.level === "recovery") restSeconds += 15;
-  const counted = definition.measure === "reps" && (definition.kind === "strength" || definition.kind === "power");
-  const rir = definition.kind === "power" ? 3 : settings.rir + (readiness.level === "easy" || readiness.level === "recovery" ? 1 : 0);
   if (definition.measure === "reps") {
     if (definition.kind === "power") tempo = "fast";
     else if (definition.kind === "strength" || definition.kind === "skill") {
@@ -21075,7 +21136,10 @@ function prescribe(definition, role, context) {
     const loads = context.inventory.loadsOf(loadEquipment);
     if (loads.length) {
       const lastLoad = last?.loadKg;
-      if (lastLoad !== void 0) {
+      if (lastLoad !== void 0 && step === "comeback") {
+        const factor = comebackLoadFactor(daysBetween(last.date, context.date));
+        load = { kg: loadAtMost(loads, lastLoad * factor), equipment: loadEquipment, ...factor < 1 ? { estimated: true } : {} };
+      } else if (lastLoad !== void 0) {
         const current = closestLoad(loads, lastLoad);
         const heavier = loads.find((entry) => entry > current);
         load = { kg: step === "add-load" && heavier !== void 0 ? heavier : current, equipment: loadEquipment };
@@ -21090,8 +21154,10 @@ function prescribe(definition, role, context) {
       } else {
         const bodyweight = context.input.profile?.bodyweightKg ?? 70;
         const ratio = LOAD_RATIO[definition.pattern]?.[loadEquipment] ?? 0.1;
-        const wanted = bodyweight * ratio * LEVEL_LOAD[context.level] * repsFactor(value, rir);
-        load = { kg: closestLoad(loads, wanted), equipment: loadEquipment };
+        const estimate = estimatedLoad(loads, bodyweight * ratio * LEVEL_LOAD[context.level], value, rir, [Math.min(floor, low), high], [definition.range[0], high]);
+        load = { kg: estimate.kg, equipment: loadEquipment, estimated: true };
+        value = estimate.value;
+        floor = Math.min(floor, value);
         note = reason("load-guess", { rir }, locale).text;
       }
       const heavy = context.goal === "strength" || value <= 6 || load.kg >= (context.input.profile?.bodyweightKg ?? 70) * 0.4;
@@ -21113,7 +21179,8 @@ function prescribe(definition, role, context) {
     sets,
     target: { measure: definition.measure, value: finalValue, range: [Math.min(floor, finalValue), Math.max(high, finalValue)], perSide: Boolean(definition.unilateral) },
     restSeconds,
-    ...counted ? { rir } : {},
+    // La réserve ne promet pas plus que la fiche : une traction sur un bras à une répétition n’en garde pas trois.
+    ...counted ? { rir: definition.tags?.includes("loaded") ? rir : Math.max(1, Math.min(rir, definition.range[1] - finalValue)) } : {},
     ...tempo ? { tempo } : {},
     ...load ? { load } : {},
     equipment: used,
@@ -21149,7 +21216,7 @@ function targetDifficulty(definition, context) {
       const [, high] = targetRange(variant, context.settings);
       const values = last.sets.map((set) => valueOf(set, variant.measure));
       const before = performancesOf(context.input.history ?? [], variant, context.date)[1];
-      const struggled = last.best < variant.range[0] || last.minRir === 0 || before !== void 0 && last.total < before.total * 0.85;
+      const struggled = last.best < variant.range[0] || before !== void 0 && (last.total < before.total * 0.85 || struggledOn(last) && struggledOn(before));
       if (Math.min(...values) >= high) base += 1;
       else if (struggled) base -= 1;
     }
@@ -21160,6 +21227,10 @@ function targetDifficulty(definition, context) {
   if (context.readiness.intensity < 0.85) base -= 2;
   else if (context.readiness.intensity < 1) base -= 1;
   return Math.min(10, Math.max(1, base));
+}
+function familyOnPlateau(definition, context) {
+  const known = context.capacity.families[definition.family];
+  return context.library.family(definition.family).some((member) => member.difficulty === known && onPlateau(performancesOf(context.input.history ?? [], member, context.date)));
 }
 function muscleAppeal(muscle, context) {
   const recovery = context.body.muscles[muscle].recovery;
@@ -21187,6 +21258,10 @@ function score(definition, slot2, context, chosen) {
   if (seen && seen.days <= 2) value *= 0.5;
   if (slot2.role === "main" && family && family.days <= 14) value *= 1.25;
   if (seen && seen.count >= 10) value *= 0.7;
+  if (slot2.role === "main" && seen && seen.days <= 14) {
+    value *= onPlateau(performancesOf(context.input.history ?? [], definition, context.date)) ? 3 : 2;
+  }
+  if (definition.difficulty > (context.capacity.families[definition.family] ?? 10) && familyOnPlateau(definition, context)) value *= 0.2;
   if (context.favorites.has(definition.id)) value *= 1.4;
   if (slot2.role === "main") {
     if (definition.compound) value *= 1.3;
@@ -21512,8 +21587,36 @@ function alternateRegions(items) {
   }
   return best;
 }
+var TRUNK = /* @__PURE__ */ new Set(["anti-extension", "anti-rotation", "anti-lateral-flexion", "trunk-flexion", "trunk-rotation", "trunk-extension"]);
 var perRound = (item2) => ({ ...item2, sets: 1, reasons: [...item2.reasons] });
 function buildMainBlocks(items, format2, context, mainSeconds) {
+  const blocks = assembleBlocks(items, format2, context, mainSeconds);
+  const held = [];
+  const kept = [];
+  for (const block of blocks) {
+    const out = block.format === "straight" || block.format === "ladder" ? [] : block.items.filter((item2) => (item2.maxSets ?? Infinity) < block.rounds && (item2.maxSets ?? Infinity) <= 2);
+    if (!out.length) {
+      kept.push(block);
+      continue;
+    }
+    held.push(...out.map((item2) => items.find((original) => original.definition.id === item2.definition.id) ?? item2));
+    const left = block.items.filter((item2) => !out.includes(item2));
+    if (left.length === 1) {
+      const original = items.find((entry) => entry.definition.id === left[0].definition.id) ?? left[0];
+      held.push({ ...original, sets: Math.max(original.sets, block.rounds) });
+    } else if (left.length > 1) {
+      const pair = left.length === 2 && (block.format === "superset" || block.format === "circuit") && block.items.length === 3;
+      kept.push({ ...block, items: left, ...pair ? { format: "superset", title: title("block-superset", context) } : {} });
+    }
+  }
+  if (!held.length) {
+    return blocks;
+  }
+  const rank2 = (item2) => TRUNK.has(item2.definition.pattern) ? 2 : item2.definition.compound ? 0 : 1;
+  const first = { id: "main-0", role: "main", format: "straight", title: title("block-main", context), rounds: 1, restBetweenRounds: 0, items: [...held].sort((a, b) => rank2(a) - rank2(b)) };
+  return [first, ...kept].map((block, index) => ({ ...block, id: `main-${index + 1}` }));
+}
+function assembleBlocks(items, format2, context, mainSeconds) {
   if (items.length === 0) {
     return [];
   }
@@ -21609,7 +21712,8 @@ function buildMainBlocks(items, format2, context, mainSeconds) {
   return [{ id: "main-1", role: "main", format: "straight", title: title("block-main", context), rounds: 1, restBetweenRounds: 0, items: [...items] }];
 }
 function formatReason(blocks, context) {
-  const main2 = blocks.find((block) => block.role === "main" || block.role === "finisher");
+  const candidates = blocks.filter((block) => block.role === "main" || block.role === "finisher");
+  const main2 = candidates.find((block) => block.role === "main" && block.format !== "straight") ?? candidates[0];
   if (!main2) {
     return void 0;
   }
@@ -22330,13 +22434,13 @@ function cardioSession(context, choice, type) {
   return finish(context, choice, type, blocks, { reasons, ...main2 ? {} : { warnings: [reason("nothing-feasible", {}, context.locale)] } });
 }
 function mobilitySession(context, choice, type) {
-  const gentle = type === "recovery";
-  const minutes = gentle ? Math.min(context.minutes, 15) : context.minutes;
+  const gentle2 = type === "recovery";
+  const minutes = gentle2 ? Math.min(context.minutes, 15) : context.minutes;
   const budget = minutes * 60;
-  const ceiling = gentle ? 2 : gentleCeiling(context);
+  const ceiling = gentle2 ? 2 : gentleCeiling(context);
   const used = /* @__PURE__ */ new Set();
   const blocks = [];
-  const breathingSeconds = gentle ? 180 : 120;
+  const breathingSeconds = gentle2 ? 180 : 120;
   const fill = (id, role, code, kinds, seconds) => {
     const block = { id, role, format: "flow", title: reason(code, {}, context.locale).text, rounds: 1, restBetweenRounds: 0, items: [] };
     const options = context.random.shuffle(

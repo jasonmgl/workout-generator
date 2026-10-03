@@ -17,7 +17,7 @@ export interface PlannedItem {
     restSeconds: number;
     rir?: number;
     tempo?: Tempo;
-    load?: { readonly kg: number; readonly equipment: EquipmentId };
+    load?: { readonly kg: number; readonly equipment: EquipmentId; readonly estimated?: boolean };
     equipment: readonly EquipmentId[];
     progression?: { readonly step: ProgressionStep; readonly text: string };
     note?: string;

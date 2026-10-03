@@ -340,7 +340,8 @@ export interface SessionItem {
     readonly restSeconds: number;
     readonly rir?: number;
     readonly tempo?: Tempo;
-    readonly load?: { readonly kg: number; readonly equipment: EquipmentId };
+    /** La charge ; `estimated` quand elle est devinée (pas de charge passée, ou une reprise) : à ajuster sur la première série. */
+    readonly load?: { readonly kg: number; readonly equipment: EquipmentId; readonly estimated?: boolean };
     readonly equipment: readonly EquipmentId[];
     readonly progression?: { readonly step: ProgressionStep; readonly text: string };
     readonly note?: string;

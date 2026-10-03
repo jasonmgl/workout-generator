@@ -509,7 +509,7 @@ export const HINGE: readonly ExerciseDefinition[] = [
         secondsPerRep: 5,
         range: [4, 10],
         easier: ['hamstring-walkout'],
-        tags: ['assisted'],
+        tags: ['assisted', 'eccentric'],
     },
     {
         id: 'eccentric-nordic-curl',
@@ -548,6 +548,7 @@ export const HINGE: readonly ExerciseDefinition[] = [
         met: 4,
         secondsPerRep: 6,
         range: [2, 6],
+        tags: ['eccentric'],
     },
 
     // Leg curls et marches en pont : l'arrière des cuisses, allongé sur le dos ou le ventre

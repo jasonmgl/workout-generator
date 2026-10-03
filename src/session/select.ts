@@ -18,9 +18,9 @@
 import { MUSCLE_INFO, type MuscleId } from '../library/anatomy';
 import { satisfies } from '../library/equipment';
 import type { ExerciseDefinition, Impact } from '../library/types';
-import { performancesOf, valueOf, LEVEL_DIFFICULTY } from '../history/progress';
+import { performancesOf, struggledOn, valueOf, LEVEL_DIFFICULTY } from '../history/progress';
 import type { Context } from './context';
-import { targetRange } from './prescribe';
+import { onPlateau, targetRange } from './prescribe';
 import type { Slot } from './templates';
 
 const IMPACT_ORDER: Readonly<Record<Impact, number>> = { none: 0, low: 1, high: 2 };
@@ -60,9 +60,11 @@ export function targetDifficulty(definition: ExerciseDefinition, context: Contex
             const [, high] = targetRange(variant, context.settings);
             const values = last.sets.map((set) => valueOf(set, variant.measure));
             const before = performancesOf(context.input.history ?? [], variant, context.date)[1];
-            // « A coincé », c’est moins bien que d’habitude ou une série à l’échec, ou sous la fourchette de la variante
-            // elle-même : six tractions sont une vraie série de tractions, même si l’objectif en voudrait huit.
-            const struggled = last.best < variant.range[0] || last.minRir === 0 || (before !== undefined && last.total < before.total * 0.85);
+            // « A coincé », c’est sous la fourchette de la variante elle-même (six tractions sont une vraie série de
+            // tractions, même si l’objectif en voudrait huit), nettement moins bien que d’habitude, ou deux séances de
+            // suite à l’échec : un échec isolé fait tenir la cible (prescribe), pas changer de variante.
+            const struggled =
+                last.best < variant.range[0] || (before !== undefined && (last.total < before.total * 0.85 || (struggledOn(last) && struggledOn(before))));
 
             if (Math.min(...values) >= high) base += 1;
             else if (struggled) base -= 1;
@@ -77,6 +79,15 @@ export function targetDifficulty(definition: ExerciseDefinition, context: Contex
     else if (context.readiness.intensity < 1) base -= 1;
 
     return Math.min(10, Math.max(1, base));
+}
+
+/** La variante la plus dure réussie d’une famille est-elle au plateau ? */
+function familyOnPlateau(definition: ExerciseDefinition, context: Context): boolean {
+    const known = context.capacity.families[definition.family];
+
+    return context.library
+        .family(definition.family)
+        .some((member) => member.difficulty === known && onPlateau(performancesOf(context.input.history ?? [], member, context.date)));
 }
 
 /** La note d'un muscle : frais, en retard sur la semaine, visé. */
@@ -118,6 +129,15 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
     if (seen && seen.days <= 2) value *= 0.5;
     if (slot.role === 'main' && family && family.days <= 14) value *= 1.25;
     if (seen && seen.count >= 10) value *= 0.7;
+
+    // Sur une place principale, l’exercice exact fait ces deux dernières semaines passe devant ses variantes sœurs :
+    // on progresse sur ce qu’on refait, et au plateau on le garde pour en changer le rythme (prescribe), pas l’exercice.
+    if (slot.role === 'main' && seen && seen.days <= 14) {
+        value *= onPlateau(performancesOf(context.input.history ?? [], definition, context.date)) ? 3 : 2;
+    }
+
+    // Une famille au plateau ne passe pas à plus dur : on débloque d’abord le plateau.
+    if (definition.difficulty > (context.capacity.families[definition.family] ?? 10) && familyOnPlateau(definition, context)) value *= 0.2;
 
     if (context.favorites.has(definition.id)) value *= 1.4;
 

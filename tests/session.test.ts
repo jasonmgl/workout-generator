@@ -349,7 +349,8 @@ describe('les défauts vus en relisant les séances', () => {
             const session = generateSession({ date: DATE, seed, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: EQUIPMENT.maison!, request: { minutes: 45, format: 'superset' } });
             const main = session.blocks.filter((block) => block.role === 'main');
 
-            expect(main.some((block) => block.format === 'straight' && block.items.length === 1) && main.length > 1, `graine ${seed}`).toBe(false);
+            // Seule exception : une première descente freinée, sortie des supersets pour ne pas dépasser deux séries, en tête.
+            expect(main.some((block, index) => index > 0 && block.format === 'straight' && block.items.length === 1), `graine ${seed}`).toBe(false);
         }
     });
 
@@ -489,7 +490,8 @@ describe('les objectifs', () => {
     });
 
     it('fait beaucoup de répétitions pour l’endurance', () => {
-        expect(average(sample('endurance').map((item) => item.target.value))).toBeGreaterThanOrEqual(13);
+        // Une première fois tient dans la fiche, réserve comprise : le volume qui manque vient d’une série de plus.
+        expect(average(sample('endurance').map((item) => item.target.value))).toBeGreaterThanOrEqual(12);
     });
 
     it('place la prise de muscle entre les deux', () => {

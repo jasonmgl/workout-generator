@@ -141,11 +141,57 @@ export function alternateRegions(items: readonly PlannedItem[]): PlannedItem[] {
     return best;
 }
 
+const TRUNK: ReadonlySet<MovementPattern> = new Set(['anti-extension', 'anti-rotation', 'anti-lateral-flexion', 'trunk-flexion', 'trunk-rotation', 'trunk-extension']);
+
 /** Une copie d'exercice faite pour un bloc en tours : une série par tour. */
 const perRound = (item: PlannedItem): PlannedItem => ({ ...item, sets: 1, reasons: [...item.reasons] });
 
-/** Les blocs principaux d'une séance, à partir des exercices dosés. */
+/**
+ * Les blocs principaux d'une séance, à partir des exercices dosés. Un exercice plafonné à deux séries (une première
+ * descente freinée) sort d'un bloc qui a plus de tours, en séries classiques avant les
+ * autres : un circuit de quatre tours ne fait pas faire quatre fois une première série de curls nordiques.
+ */
 export function buildMainBlocks(items: readonly PlannedItem[], format: BlockFormat, context: Context, mainSeconds: number): PlannedBlock[] {
+    const blocks = assembleBlocks(items, format, context, mainSeconds);
+    const held: PlannedItem[] = [];
+    const kept: PlannedBlock[] = [];
+
+    for (const block of blocks) {
+        const out = block.format === 'straight' || block.format === 'ladder' ? [] : block.items.filter((item) => (item.maxSets ?? Infinity) < block.rounds && (item.maxSets ?? Infinity) <= 2);
+
+        if (!out.length) {
+            kept.push(block);
+            continue;
+        }
+
+        held.push(...out.map((item) => items.find((original) => original.definition.id === item.definition.id) ?? item));
+
+        const left = block.items.filter((item) => !out.includes(item));
+
+        if (left.length === 1) {
+            // Son partenaire resté seul le suit en séries classiques, plutôt que de traîner seul plus loin.
+            const original = items.find((entry) => entry.definition.id === left[0]!.definition.id) ?? left[0]!;
+
+            held.push({ ...original, sets: Math.max(original.sets, block.rounds) });
+        } else if (left.length > 1) {
+            const pair = left.length === 2 && (block.format === 'superset' || block.format === 'circuit') && block.items.length === 3;
+
+            kept.push({ ...block, items: left, ...(pair ? { format: 'superset' as const, title: title('block-superset', context) } : {}) });
+        }
+    }
+
+    if (!held.length) {
+        return blocks;
+    }
+
+    // Les gros mouvements d’abord, le gainage à la fin.
+    const rank = (item: PlannedItem): number => (TRUNK.has(item.definition.pattern) ? 2 : item.definition.compound ? 0 : 1);
+    const first: PlannedBlock = { id: 'main-0', role: 'main', format: 'straight', title: title('block-main', context), rounds: 1, restBetweenRounds: 0, items: [...held].sort((a, b) => rank(a) - rank(b)) };
+
+    return [first, ...kept].map((block, index) => ({ ...block, id: `main-${index + 1}` }));
+}
+
+function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, context: Context, mainSeconds: number): PlannedBlock[] {
     if (items.length === 0) {
         return [];
     }
@@ -262,7 +308,9 @@ export function buildMainBlocks(items: readonly PlannedItem[], format: BlockForm
 
 /** La phrase qui explique un format. */
 export function formatReason(blocks: readonly PlannedBlock[], context: Context): Reason | undefined {
-    const main = blocks.find((block) => block.role === 'main' || block.role === 'finisher');
+    const candidates = blocks.filter((block) => block.role === 'main' || block.role === 'finisher');
+    // Le format qui fait la séance : des séries classiques en tête (une première descente freinée à part) n’en font pas une séance en séries classiques.
+    const main = candidates.find((block) => block.role === 'main' && block.format !== 'straight') ?? candidates[0];
 
     if (!main) {
         return undefined;

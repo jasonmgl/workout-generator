@@ -50,7 +50,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## État au 3 octobre 2026 (soir)
 
-- **Version utilisable sur `master`.** 266 tests au vert, types propres.
+- **Version utilisable sur `master`.** 278 tests au vert, types propres.
 - **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
   `main`, derrière l’interrupteur `DIDIT_GENERATEUR`) : `app/Support/WorkoutGenerator.php`
   appelle la commande JSON, dépend de `github:jasonmgl/workout-generator#master`
@@ -106,7 +106,7 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
    `docs/relectures/2026-10-03-coachs-2.md` (identifiants
    `programmation-N`, `securite-N`, `clarte-N`). Les séances relues
    sortent de `scripts/scenarios.ts`. Par lots, les plus graves d'abord :
-   - [ ] première fois et échec : cible + réserve dans la fiche, plafond de
+   - [x] première fois et échec : cible + réserve dans la fiche, plafond de
      séries tenu en circuit, nordiques en descente freinée, variante sœur
      dosée sur la famille, plateau qui garde l'exercice, échec qui tient la
      cible, charge de reprise, charge la plus proche (programmation-1, -4 ;
@@ -208,6 +208,21 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   personne réussit, en séries plus nombreuses ; au plateau, on garde
   l'exercice, plus lent, un peu moins de répétitions, une série de plus ;
   une variante plus dure repart d'une part de la dernière performance.
+- **Une première fois tient dans la fiche** (03/10, deuxième relecture) :
+  au poids du corps, cible + réserve ≤ bas de la fiche + 60 % de sa
+  fourchette, le volume manquant venant d'une série de plus ; une descente
+  freinée découverte (plafond de deux séries) sort d'un circuit ou d'un
+  superset, en séries classiques en tête. Une variante sœur (même famille,
+  même difficulté) se dose sur ce qui s'y fait. **Un échec ou une séance
+  ressentie dure fait tenir la cible** ; on ne change de variante qu'après
+  deux séances de suite qui ont coincé. Au plateau, l'exercice exact est
+  gardé (×3 au tirage), jamais une variante plus dure.
+- **Les charges** : estimée, celle du dessous ou du dessus selon que les
+  répétitions recalculées (Epley) tombent dans l'objectif, le manque pesant
+  trois fois plus que l'excès ; à la reprise, 0,9 / 0,8 / 0,7 de la charge
+  d'avant après 8 / 21 / 43 jours. `load.estimated` dit « à ajuster ». Pas
+  de réserve sur l'activation, la posture, la rééducation ni le gainage
+  facile, et jamais plus que la fiche ne le permet.
 - **Le dosage dépend du rôle** : seuls les gros mouvements suivent la
   fourchette de l'objectif ; un exercice d'appoint se fait à 8-12 au moins,
   le gainage à 8-15 ou en tenue, avec moins de repos.
@@ -305,3 +320,11 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   position en moins). Deuxième relecture des coachs reçue : 35 constats,
   rangés dans `docs/relectures/`, et le script des séances relues versé
   dans `scripts/scenarios.ts`. 268 tests.
+  Premier lot de la deuxième relecture (première fois et échec) : cible +
+  réserve dans la fiche, curls nordiques en descente freinée (avec une
+  règle de validation), descente freinée découverte sortie des circuits,
+  variante sœur dosée sur la famille, plateau qui garde l'exercice, échec
+  ou ressenti « dure » qui tient la cible (le ressenti de séance rejoint
+  chaque performance), charge de reprise réduite, charge estimée la plus
+  utile, réserve absente des exercices qui ne fatiguent pas, résumé qui
+  annonce le format dominant. 278 tests.

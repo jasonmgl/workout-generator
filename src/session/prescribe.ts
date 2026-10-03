@@ -11,7 +11,8 @@
  */
 import { equipmentUsed, LOADABLE_EQUIPMENT, type EquipmentId } from '../library/equipment';
 import type { ExerciseDefinition, MovementPattern } from '../library/types';
-import { performancesOf, valueOf, type ExercisePerformance } from '../history/progress';
+import { daysBetween } from '../dates';
+import { performancesOf, struggledOn, valueOf, type ExercisePerformance } from '../history/progress';
 import { reason } from '../i18n/messages';
 import type { Level, ProgressionStep, Reason, Target, Tempo } from '../types';
 import type { Context } from './context';
@@ -83,7 +84,7 @@ export interface Prescription {
     /** La réserve visée, seulement pour ce qui se compte en répétitions. */
     readonly rir?: number;
     readonly tempo?: Tempo;
-    readonly load?: { readonly kg: number; readonly equipment: EquipmentId };
+    readonly load?: { readonly kg: number; readonly equipment: EquipmentId; readonly estimated?: boolean };
     readonly equipment: readonly EquipmentId[];
     readonly progression: { readonly step: ProgressionStep; readonly text: string };
     readonly note?: string;
@@ -130,11 +131,66 @@ export function closestLoad(loads: readonly number[], wanted: number): number {
     return below ?? loads[0]!;
 }
 
+/** La charge la plus lourde qui ne dépasse pas un poids voulu (la plus légère si tout est plus lourd) : pour reprendre. */
+export function loadAtMost(loads: readonly number[], wanted: number): number {
+    return loads.filter((load) => load <= wanted).pop() ?? loads[0]!;
+}
+
 /**
  * Ce que pèse une série selon ses répétitions et sa réserve, par rapport à une série de dix : la règle d'Epley
  * (publique), qui donne la part du maximum qu'on soulève pour un nombre de répétitions donné.
  */
 const repsFactor = (reps: number, rir: number): number => (1 + 10 / 30) / (1 + (reps + rir) / 30);
+
+/** Les répétitions qu’on fait avec une charge en gardant la réserve visée, quand `base` est la charge d’une série de dix. */
+const repsAt = (kg: number, base: number, rir: number): number => Math.round(30 * (((1 + 10 / 30) * base) / kg - 1) - rir);
+
+/**
+ * Une charge estimée parmi celles qu’on a, celle du dessous ou celle du dessus : celle dont les répétitions,
+ * recalculées pour garder la réserve, tombent dans la fourchette de l’objectif (`goal`), la plus proche du poids
+ * voulu à égalité. Des haltères de 4 en 4 kg ne font plus partir à 4 kg quand on en voulait 6,8. Les répétitions
+ * restent dans la fiche (`allowed`).
+ */
+export function estimatedLoad(
+    loads: readonly number[],
+    base: number,
+    value: number,
+    rir: number,
+    goal: readonly [number, number],
+    allowed: readonly [number, number],
+): { kg: number; value: number } {
+    const wanted = base * repsFactor(value, rir);
+    const below = loads.filter((load) => load <= wanted).pop();
+    const above = loads.find((load) => load > wanted);
+    // Trop peu de répétitions sert mal l’objectif et charge trop : cela pèse trois fois plus que trop de répétitions.
+    const outside = (reps: number): number => Math.max(0, (goal[0] - reps) * 3, reps - goal[1]);
+    const [kg] = [below, above]
+        .filter((load): load is number => load !== undefined)
+        .map((load) => [load, outside(repsAt(load, base, rir)), Math.abs(load - wanted)] as const)
+        .sort((a, b) => a[1] - b[1] || a[2] - b[2])[0]!;
+
+    return { kg, value: Math.max(allowed[0], Math.min(allowed[1], repsAt(kg, base, rir))) };
+}
+
+/** Ce qu’on reprend de la charge d’avant après un arrêt, selon les jours sans l’exercice (chiffres à nous). */
+export function comebackLoadFactor(daysOff: number): number {
+    if (daysOff > 42) return 0.7;
+    if (daysOff > 20) return 0.8;
+    if (daysOff > 7) return 0.9;
+
+    return 1;
+}
+
+/**
+ * Le plafond d’une première fois (première séance, variante plus dure, reprise) : la cible et la réserve tiennent dans
+ * les six premiers dixièmes de la fourchette de la fiche. Neuf tractions en supination avec trois en réserve, c’est le
+ * maximum de la fiche : un nouveau venu échoue dès le premier jour.
+ */
+export function firstTimeCap(definition: ExerciseDefinition, rir: number): number {
+    const [lowest, highest] = definition.range;
+
+    return Math.max(lowest, Math.floor(lowest + 0.6 * (highest - lowest)) - rir);
+}
 
 /** Y a-t-il un plateau : les dernières séances n'ont pas battu le total d'avant ? */
 export function onPlateau(performances: readonly ExercisePerformance[]): boolean {
@@ -165,6 +221,33 @@ function previousInFamily(definition: ExerciseDefinition, context: Context): { d
     return found;
 }
 
+/**
+ * Un exercice qui ne fatigue pas assez pour qu’une réserve veuille dire quelque chose : activation, posture,
+ * rééducation, gainage facile. Ni réserve affichée, ni réserve retranchée du plafond d’une première fois.
+ */
+export function gentle(definition: ExerciseDefinition): boolean {
+    const trunk = definition.pattern.startsWith('anti-') || definition.pattern.startsWith('trunk-');
+
+    return Boolean(definition.tags?.some((tag) => tag === 'activation' || tag === 'posture' || tag === 'rehab')) || (trunk && definition.difficulty <= 2);
+}
+
+/** Une variante sœur déjà faite : même famille, même difficulté, même mesure ; la plus récente. */
+function siblingPerformances(definition: ExerciseDefinition, context: Context): { definition: ExerciseDefinition; performances: ExercisePerformance[] } | undefined {
+    let found: { definition: ExerciseDefinition; performances: ExercisePerformance[] } | undefined;
+
+    for (const member of context.library.family(definition.family)) {
+        if (member.id === definition.id || member.measure !== definition.measure || Math.abs(member.difficulty - definition.difficulty) > 0.5) continue;
+
+        const performances = performancesOf(context.input.history ?? [], member, context.date);
+
+        if (performances.length && (!found || performances[0]!.date > found.performances[0]!.date)) {
+            found = { definition: member, performances };
+        }
+    }
+
+    return found;
+}
+
 /** Un nombre pair, pour un exercice qui alterne les côtés : autant de chaque côté. */
 const even = (value: number): number => Math.max(2, Math.ceil(value / 2) * 2);
 
@@ -172,7 +255,13 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
     const { settings, readiness, locale } = context;
     const range = targetRange(definition, settings, role);
     const [low, high] = range;
-    const performances = performancesOf(context.input.history ?? [], definition, context.date);
+    const own = performancesOf(context.input.history ?? [], definition, context.date);
+    // Sans historique propre, une variante sœur déjà faite (tractions en supination après des tractions) se dose sur
+    // ce qui s’y fait, pas comme une première fois.
+    const sibling = own.length ? undefined : siblingPerformances(definition, context);
+    const performances = own.length ? own : (sibling?.performances ?? []);
+    const counted = definition.measure === 'reps' && (definition.kind === 'strength' || definition.kind === 'power') && !gentle(definition);
+    const rir = definition.kind === 'power' ? 3 : settings.rir + (readiness.level === 'easy' || readiness.level === 'recovery' ? 1 : 0);
     const familyCapacity = context.capacity.families[definition.family];
     const unit = definition.measure === 'time' ? ' s' : definition.measure === 'distance' ? ' m' : '';
     const increment = definition.measure === 'reps' ? 1 : definition.measure === 'time' ? 5 : 50;
@@ -220,7 +309,16 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
         const lowest = Math.min(...values);
         const average = values.reduce((sum, entry) => sum + entry, 0) / values.length;
 
-        if (onPlateau(performances)) {
+        if (struggledOn(last)) {
+            // Après un échec ou une séance ressentie dure : on tient la meilleure série faite avec de la réserve, ou un
+            // peu moins que la moyenne, sans monter.
+            const safe = last.sets.filter((set) => set.rir !== undefined && set.rir >= 1).map((set) => valueOf(set, definition.measure));
+
+            step = 'hold';
+            value = safe.length ? Math.max(...safe) : Math.max(1, Math.round(average) - increment);
+            floor = Math.min(low, value);
+            progressionText = reason('progress-hold-failure', { value, unit }, locale).text;
+        } else if (onPlateau(performances)) {
             // Au plateau, on garde l'exercice et on change de stimulus de façon faisable : plus lent, un peu moins de
             // répétitions, une série de plus.
             step = 'vary';
@@ -248,6 +346,10 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
             extraSets = value < low ? 1 : 0;
             progressionText = reason(value < low ? 'progress-build' : 'progress-hold', { value, unit }, locale).text;
         }
+
+        if (sibling) {
+            progressionText = reason('progress-sibling', { name: context.library.name(sibling.definition.id, locale), value: Math.round(average), unit }, locale).text;
+        }
     }
 
     if (readiness.reasons.some((entry) => entry.code === 'comeback')) {
@@ -261,6 +363,18 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
     if (readiness.level === 'easy' || readiness.level === 'recovery') {
         value = Math.max(1, Math.round(value * 0.9));
         floor = Math.min(floor, value);
+    }
+
+    // Une première fois au poids du corps tient dans la fiche, réserve comprise ; le volume qui manque vient d’une série
+    // de plus. Avec une charge, c’est elle qui règle l’effort.
+    if (firstExposure && definition.measure !== 'distance' && !definition.tags?.includes('loaded')) {
+        const cap = firstTimeCap(definition, counted ? rir : 0);
+
+        if (value > cap) {
+            value = cap;
+            floor = Math.min(floor, value);
+            if (value < low) extraSets = 1;
+        }
     }
 
     // Les séries : le haut de la fourchette pour un exercice principal, le bas pour le reste ; moins la première fois.
@@ -293,9 +407,6 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
     if (definition.kind === 'skill') restSeconds = Math.max(restSeconds, 90);
     if (readiness.level === 'easy' || readiness.level === 'recovery') restSeconds += 15;
 
-    const counted = definition.measure === 'reps' && (definition.kind === 'strength' || definition.kind === 'power');
-    const rir = definition.kind === 'power' ? 3 : settings.rir + (readiness.level === 'easy' || readiness.level === 'recovery' ? 1 : 0);
-
     // Le tempo de chaque exercice de renforcement en répétitions : rapide pour l’explosif, lent pour une descente freinée,
     // un plateau ou l’isolation en prise de muscle, normal sinon.
     if (definition.measure === 'reps') {
@@ -309,7 +420,7 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
     // La charge.
     const used = equipmentUsed(definition.equipment, context.inventory);
     const loadEquipment = used.find((id) => LOADABLE_EQUIPMENT.includes(id));
-    let load: { kg: number; equipment: EquipmentId } | undefined;
+    let load: { kg: number; equipment: EquipmentId; estimated?: boolean } | undefined;
     let note: string | undefined;
     let warmupSets: { reps: number; kg: number }[] | undefined;
 
@@ -319,7 +430,13 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
         if (loads.length) {
             const lastLoad = last?.loadKg;
 
-            if (lastLoad !== undefined) {
+            if (lastLoad !== undefined && step === 'comeback') {
+                // À la reprise, la charge baisse avec la durée de l’arrêt : la charge d’avant, avec deux en réserve après
+                // six semaines sans séance, c’est la reprise trop lourde.
+                const factor = comebackLoadFactor(daysBetween(last!.date, context.date));
+
+                load = { kg: loadAtMost(loads, lastLoad * factor), equipment: loadEquipment, ...(factor < 1 ? { estimated: true } : {}) };
+            } else if (lastLoad !== undefined) {
                 const current = closestLoad(loads, lastLoad);
                 const heavier = loads.find((entry) => entry > current);
 
@@ -336,9 +453,11 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
             } else {
                 const bodyweight = context.input.profile?.bodyweightKg ?? 70;
                 const ratio = LOAD_RATIO[definition.pattern]?.[loadEquipment] ?? 0.1;
-                const wanted = bodyweight * ratio * LEVEL_LOAD[context.level] * repsFactor(value, rir);
+                const estimate = estimatedLoad(loads, bodyweight * ratio * LEVEL_LOAD[context.level], value, rir, [Math.min(floor, low), high], [definition.range[0], high]);
 
-                load = { kg: closestLoad(loads, wanted), equipment: loadEquipment };
+                load = { kg: estimate.kg, equipment: loadEquipment, estimated: true };
+                value = estimate.value;
+                floor = Math.min(floor, value);
                 note = reason('load-guess', { rir }, locale).text;
             }
 
@@ -368,7 +487,8 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
         sets,
         target: { measure: definition.measure, value: finalValue, range: [Math.min(floor, finalValue), Math.max(high, finalValue)], perSide: Boolean(definition.unilateral) },
         restSeconds,
-        ...(counted ? { rir } : {}),
+        // La réserve ne promet pas plus que la fiche : une traction sur un bras à une répétition n’en garde pas trois.
+        ...(counted ? { rir: definition.tags?.includes('loaded') ? rir : Math.max(1, Math.min(rir, definition.range[1] - finalValue)) } : {}),
         ...(tempo ? { tempo } : {}),
         ...(load ? { load } : {}),
         equipment: used,

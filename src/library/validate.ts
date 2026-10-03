@@ -106,6 +106,8 @@ function checkDefinition(definition: ExerciseDefinition, known: ReadonlySet<stri
     if (definition.kind === 'stretch' && definition.measure !== 'time') say('un étirement se tient en secondes');
     if (definition.alternating && (definition.unilateral || definition.measure !== 'reps')) say('une alternance se compte en répétitions, des deux côtés à la fois (pas « un côté puis l’autre »)');
     if (definition.impact === 'high' && !['power', 'conditioning', 'skill'].includes(definition.kind)) say('un impact fort est réservé à l’explosivité, au cardio et aux figures');
+    // Le curl nordique est une descente freinée, même aidé : les courbatures les plus fortes du catalogue, et la première fois se dose à part.
+    if (definition.family === 'nordic-curl' && !definition.tags?.includes('eccentric')) say('un curl nordique est une descente freinée (mot-clé « eccentric »)');
 
     return problems;
 }

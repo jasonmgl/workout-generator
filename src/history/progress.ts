@@ -11,7 +11,7 @@
 import { daysBetween } from '../dates';
 import type { Library } from '../library/library';
 import type { ExerciseDefinition, Measure, MovementPattern } from '../library/types';
-import type { Level, PastSession, PerformedSet } from '../types';
+import type { Effort, Level, PastSession, PerformedSet } from '../types';
 import { pastSessions } from './load';
 import { resolveHistory } from './resolve';
 
@@ -29,7 +29,12 @@ export interface ExercisePerformance {
     readonly loadKg?: number;
     /** La plus petite réserve déclarée (0 : une série à l'échec). */
     readonly minRir?: number;
+    /** Le ressenti de toute la séance : une application qui ne note pas la réserve série par série dit au moins « dure ». */
+    readonly effort?: Effort;
 }
+
+/** Une performance qui a coincé : une série à l'échec, ou une séance ressentie comme dure. */
+export const struggledOn = (performance: ExercisePerformance): boolean => performance.minRir === 0 || performance.effort === 'hard';
 
 /** La valeur d'une série dans l'unité de la fiche. */
 export function valueOf(set: PerformedSet, measure: Measure): number {
@@ -64,6 +69,7 @@ export function performancesOf(history: readonly PastSession[], definition: Exer
                 total: values.reduce((sum, value) => sum + value, 0),
                 ...(loads.length ? { loadKg: Math.max(...loads) } : {}),
                 ...(reserves.length ? { minRir: Math.min(...reserves) } : {}),
+                ...(session.effort ? { effort: session.effort } : {}),
             });
         }
     }

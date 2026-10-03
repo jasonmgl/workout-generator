@@ -36,7 +36,7 @@ function describeItem(item: SessionItem, block: SessionBlock, locale: string, al
     const parts = [first];
 
     if (straight && item.sets > 1 && item.restSeconds > 0) parts.push(message('text-rest', { rest: formatSeconds(item.restSeconds) }, locale));
-    if (item.load) parts.push(message(item.note && item.progression?.step === 'start' ? 'text-load-guess' : 'text-load', { kg: item.load.kg }, locale));
+    if (item.load) parts.push(message(item.load.estimated ? 'text-load-guess' : 'text-load', { kg: item.load.kg }, locale));
     if (item.tempo && item.tempo !== 'normal') parts.push(message(`text-tempo-${item.tempo}`, {}, locale));
     if (item.rir !== undefined && block.role !== 'warmup' && block.role !== 'cooldown') parts.push(message('text-rir', { rir: item.rir }, locale));
 
@@ -81,7 +81,7 @@ export function sessionToText(session: Session, locale = 'fr', alternating: Read
         ...session.notes.map((note) => `→ ${note.text}`),
         // Ce que veulent dire la réserve et les charges indicatives, une seule fois en tête.
         ...(all.some((item) => item.rir !== undefined) ? [`→ ${message('text-rir-explained', {}, locale)}`] : []),
-        ...(all.some((item) => item.load && item.note && item.progression?.step === 'start') ? [`→ ${message('text-load-explained', {}, locale)}`] : []),
+        ...(all.some((item) => item.load?.estimated) ? [`→ ${message('text-load-explained', {}, locale)}`] : []),
     ];
 
     if (notes.length) lines.push(...notes, '');

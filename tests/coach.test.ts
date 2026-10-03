@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { defaultLibrary } from '../src/library';
 import { MUSCLE_INFO } from '../src/library/anatomy';
 import { generateSession } from '../src/session/generate';
+import { buildContext } from '../src/session/context';
 import { alternateRegions } from '../src/session/formats';
+import { comebackLoadFactor, estimatedLoad, prescribe } from '../src/session/prescribe';
 import type { PlannedItem } from '../src/session/blocks';
 import { POSTURE_ORDER } from '../src/session/warmup';
 import type { GenerateInput, PastSession, Session, SessionItem } from '../src/types';
@@ -305,5 +307,133 @@ describe('l’ordre d’un circuit', () => {
 
         expect(order.indexOf('glute-bridge') - order.indexOf('air-squat')).not.toBe(1);
         expect(order.indexOf('air-squat') - order.indexOf('glute-bridge')).not.toBe(1);
+    });
+});
+
+describe('la deuxième relecture : la première fois et l’échec', () => {
+    const plateau: PastSession[] = ['2026-09-21', '2026-09-24', '2026-09-27', '2026-09-30'].map((date) => ({
+        date,
+        exercises: [
+            { exercise: 'pull-up', sets: [{ reps: 6 }, { reps: 5 }, { reps: 4 }] },
+            { exercise: 'parallel-bar-dip', sets: [{ reps: 8 }, { reps: 7 }, { reps: 6 }] },
+        ],
+    }));
+    const total = (session: Session, item: SessionItem): number => item.sets * (session.blocks.find((block) => block.items.includes(item))?.rounds ?? 1);
+
+    it('fait tenir une première fois dans la fiche, réserve comprise, pour chaque objectif', () => {
+        for (const goal of ['health', 'strength', 'hypertrophy', 'endurance', 'fat-loss'] as const) {
+            const context = buildContext({ date: DATE, profile: { goal } });
+
+            for (const definition of library.filter({ kinds: ['strength'] }).filter((entry) => entry.measure === 'reps' && !entry.tags?.includes('loaded'))) {
+                const prescription = prescribe(definition, 'main', context);
+
+                expect(prescription.target.value + (prescription.rir ?? 0), `${goal} · ${definition.id}`).toBeLessThanOrEqual(definition.range[1]);
+            }
+        }
+    });
+
+    it('ne fait jamais plus de deux séries d’une première descente freinée, quel que soit le format', () => {
+        let seen = 0;
+
+        for (const format of ['superset', 'circuit', 'amrap', 'emom', 'auto'] as const) {
+            for (const goal of ['health', 'hypertrophy', 'endurance'] as const) {
+                for (const session of many({ date: DATE, profile: { goal }, request: { minutes: 30, format, include: ['negative-push-up'] } })) {
+                    for (const item of items(session, ['main']).filter((entry) => library.get(entry.exercise).tags?.includes('eccentric') && ['start', 'harder', 'comeback'].includes(entry.progression?.step ?? ''))) {
+                        seen++;
+                        expect(total(session, item), `${format} · ${goal} · ${item.exercise}`).toBeLessThanOrEqual(2);
+                    }
+                }
+            }
+        }
+
+        expect(seen).toBeGreaterThan(10);
+    });
+
+    it('dose une variante sœur sur ce qui se fait dans la famille, pas comme une première fois', () => {
+        const context = buildContext({ date: DATE, profile: { level: 'intermediate' }, equipment: ['pullup-bar', 'dip-bars'], history: plateau });
+
+        for (const definition of library.family('pull-up').filter((entry) => entry.difficulty === library.get('pull-up').difficulty && entry.measure === 'reps')) {
+            const prescription = prescribe(definition, 'main', context);
+
+            expect(prescription.target.value + (prescription.rir ?? 0), definition.id).toBeLessThanOrEqual(7);
+        }
+    });
+
+    it('garde les tractions et les dips au plateau, pour en changer le rythme', () => {
+        let kept = 0;
+        const seeds = Array.from({ length: 20 }, (_, index) => index + 1);
+
+        for (const seed of seeds) {
+            const session = generateSession({ date: DATE, seed, profile: { level: 'intermediate' }, equipment: ['pullup-bar', 'dip-bars'], history: plateau, request: { minutes: 45 } });
+            const ids = items(session, ['main']).map((item) => item.exercise);
+
+            if (ids.includes('pull-up') && ids.includes('parallel-bar-dip')) kept++;
+        }
+
+        expect(kept / seeds.length).toBeGreaterThanOrEqual(0.9);
+    });
+
+    it('tient la cible après un échec, sans monter ni reculer de deux variantes', () => {
+        const failed = (exercise: string, reps: number[], rir: number[]): PastSession[] => [
+            { date: '2026-09-30', effort: 'hard', exercises: [{ exercise, sets: reps.map((value, index) => ({ reps: value, rir: rir[index]! })) }] },
+        ];
+        const context = buildContext({ date: DATE, equipment: ['table'], history: failed('inverted-row-table', [10, 9, 8], [1, 0, 0]) });
+        const row = prescribe(library.get('inverted-row-table'), 'main', context);
+
+        expect(row.progression.step).toBe('hold');
+        expect(row.target.value).toBeLessThanOrEqual(10);
+        expect(row.target.value + (row.rir ?? 0)).toBeLessThanOrEqual(13);
+
+        for (const session of many({ date: DATE, history: failed('push-up', [12, 10, 8], [0, 0, 0]), request: { type: 'push', minutes: 30 } })) {
+            for (const item of items(session, ['main']).filter((entry) => library.get(entry.exercise).family === 'push-up')) {
+                expect(library.get(item.exercise).difficulty, item.exercise).toBeGreaterThanOrEqual(library.get('push-up').difficulty - 1);
+            }
+        }
+    });
+
+    it('fait tenir la cible quand la séance a été ressentie dure, même sans réserve notée', () => {
+        const history: PastSession[] = [{ date: '2026-09-30', effort: 'hard', exercises: [{ exercise: 'push-up', sets: [{ reps: 12 }, { reps: 12 }, { reps: 11 }] }] }];
+        const push = prescribe(library.get('push-up'), 'main', buildContext({ date: DATE, history }));
+
+        expect(push.progression.step).toBe('hold');
+        expect(push.target.value).toBeLessThanOrEqual(11);
+    });
+
+    it('baisse la charge à la reprise, et la dit à ajuster', () => {
+        const history: PastSession[] = [{ date: '2026-08-18', exercises: [{ exercise: 'barbell-bench-press', sets: [5, 5, 5].map((reps) => ({ reps, loadKg: 80 })) }] }];
+        const loads = [20, 30, 40, 50, 60, 70, 80, 90];
+        const context = buildContext({ date: DATE, profile: { goal: 'strength' }, equipment: [{ id: 'barbell', loads }, 'rack', 'bench'], history });
+        const bench = prescribe(library.get('barbell-bench-press'), 'main', context);
+
+        expect(bench.progression.step).toBe('comeback');
+        expect(bench.load!.kg).toBeLessThanOrEqual(80 * 0.85);
+        expect(bench.load!.estimated).toBe(true);
+        expect(comebackLoadFactor(45)).toBe(0.7);
+        expect(comebackLoadFactor(5)).toBe(1);
+    });
+
+    it('prend la charge disponible qui garde les répétitions dans l’objectif', () => {
+        // Une série de dix pèserait un peu plus de 7 kg : 6,8 kg sont voulus pour 10 répétitions et 2 en réserve.
+        const choice = estimatedLoad([4, 8, 12], 7.14, 10, 2, [8, 12], [6, 15]);
+
+        expect(choice.kg).toBe(8);
+        expect(choice.value).toBeLessThan(10);
+        expect(estimatedLoad([4, 8, 12], 7.14, 10, 2, [15, 25], [6, 25]).kg).toBe(4);
+    });
+
+    it('n’affiche aucune réserve sur l’activation, la posture ou le gainage facile', () => {
+        const context = buildContext({ date: DATE });
+
+        for (const id of ['prone-y-t-w', 'bird-dog', 'crunch']) {
+            expect(prescribe(library.get(id), 'accessory', context).rir, id).toBeUndefined();
+        }
+
+        expect(prescribe(library.get('push-up'), 'main', context).rir).toBeDefined();
+    });
+
+    it('traite les curls nordiques comme des descentes freinées', () => {
+        for (const definition of library.family('nordic-curl')) {
+            expect(definition.tags, definition.id).toContain('eccentric');
+        }
     });
 });
