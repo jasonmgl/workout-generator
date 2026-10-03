@@ -475,10 +475,10 @@ var MESSAGES_FR = {
   // Les blocs
   "block-warmup": "\xC9chauffement",
   "block-cooldown": "Retour au calme",
-  "block-main": "S\xE9ries",
+  "block-main": "Renforcement",
   "block-skill": "Figures",
-  "block-superset": "Par deux",
-  "block-triset": "Par trois",
+  "block-superset": "En alternance",
+  "block-triset": "En alternance, trois exercices",
   "block-circuit": "Circuit",
   "block-amrap": "Le plus de tours en {minutes} min",
   "block-emom": "Chaque minute, {minutes} min",
@@ -525,16 +525,24 @@ var MESSAGES_FR = {
   "nothing-feasible": "Aucun exercice faisable avec ces contraintes : all\xE9ger les douleurs d\xE9clar\xE9es ou ajouter du mat\xE9riel.",
   // La séance en texte
   "text-reps": "{n} {n|r\xE9p\xE9tition|r\xE9p\xE9titions}",
+  "text-reps-alternating": "{n} r\xE9p\xE9titions en alternant ({half} de chaque c\xF4t\xE9)",
+  "text-sets-of": "{n} s\xE9ries de {target}",
+  "text-load": "{kg} kg",
+  "text-load-guess": "\u2248 {kg} kg (\xE0 ajuster)",
+  "text-load-explained": "Charges indicatives pour une premi\xE8re fois : les ajuster pour finir chaque s\xE9rie avec la r\xE9serve indiqu\xE9e.",
+  "text-approach": "Approche : {sets}, puis {name}",
+  "text-rir-explained": "R\xE9serve : les r\xE9p\xE9titions qu\u2019on pourrait encore faire en fin de s\xE9rie. On ne va jamais jusqu\u2019\xE0 l\u2019\xE9chec.",
+  "text-rest-items": "{rest} entre les exercices",
   "text-reps-short": "{n|r\xE9p.|r\xE9p.}",
   "text-per-side": "de chaque c\xF4t\xE9",
   "text-rest": "repos {rest}",
-  "text-rest-rounds": "repos {rest} entre les tours",
+  "text-rest-rounds": "{rest} entre les tours",
   "text-rounds": "{n} {n|tour|tours}",
-  "text-intervals": "{n} {n|tour|tours} de {work} s / {rest} s",
-  "text-tempo-slow": "tempo lent",
+  "text-intervals": "{n} {n|tour|tours} de {work} s d\u2019effort / {rest} s de r\xE9cup\xE9ration",
+  "text-tempo-slow": "lentement (3 s pour descendre, 3 s pour remonter)",
   "text-tempo-normal": "tempo normal",
-  "text-tempo-fast": "tempo rapide",
-  "text-rir": "{rir} en r\xE9serve",
+  "text-tempo-fast": "vite et contr\xF4l\xE9",
+  "text-rir": "r\xE9serve : {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions}",
   // Le lecteur
   "timeline-rest": "Repos",
   "timeline-round": "Tour {n}/{total}",
@@ -19763,7 +19771,10 @@ function defaultLibrary() {
 }
 
 // src/output/text.ts
-function describeTarget(item2, locale = "fr") {
+function roughSeconds(seconds) {
+  return formatSeconds(seconds < 60 ? Math.round(seconds / 5) * 5 : Math.round(seconds / 30) * 30);
+}
+function describeTarget(item2, locale = "fr", alternating = false) {
   const { target } = item2;
   const side = target.perSide ? ` ${message("text-per-side", {}, locale)}` : "";
   if (item2.perSet && item2.perSet.length) {
@@ -19771,40 +19782,52 @@ function describeTarget(item2, locale = "fr") {
   }
   if (target.measure === "time") return `${formatSeconds(target.value)}${side}`;
   if (target.measure === "distance") return `${target.value} m${side}`;
+  if (alternating) return message("text-reps-alternating", { n: target.value, half: target.value / 2 }, locale);
   return `${message("text-reps", { n: target.value }, locale)}${side}`;
 }
-function describeItem(item2, block, locale) {
-  const parts = [describeTarget(item2, locale)];
-  if (block.format === "straight" || block.format === "ladder" || block.format === "steady") {
-    if (!item2.perSet && item2.sets > 1) parts.unshift(`${item2.sets} \xD7`);
-    if (item2.sets > 1 && item2.restSeconds > 0) parts.push(message("text-rest", { rest: formatSeconds(item2.restSeconds) }, locale));
-  }
-  if (item2.load) parts.push(`${item2.load.kg} kg`);
-  if (item2.tempo) parts.push(message(`text-tempo-${item2.tempo}`, {}, locale));
+function describeItem(item2, block, locale, alternating) {
+  const straight = block.format === "straight" || block.format === "ladder" || block.format === "steady";
+  const target = describeTarget(item2, locale, alternating.has(item2.exercise));
+  const first = straight && !item2.perSet && item2.sets > 1 ? message("text-sets-of", { n: item2.sets, target }, locale) : target;
+  const parts = [first];
+  if (straight && item2.sets > 1 && item2.restSeconds > 0) parts.push(message("text-rest", { rest: formatSeconds(item2.restSeconds) }, locale));
+  if (item2.load) parts.push(message(item2.note && item2.progression?.step === "start" ? "text-load-guess" : "text-load", { kg: item2.load.kg }, locale));
+  if (item2.tempo && item2.tempo !== "normal") parts.push(message(`text-tempo-${item2.tempo}`, {}, locale));
   if (item2.rir !== void 0 && block.role !== "warmup" && block.role !== "cooldown") parts.push(message("text-rir", { rir: item2.rir }, locale));
-  return `  \xB7 ${item2.name} \u2014 ${parts.join(", ")}`;
-}
-function describeBlock(block, locale) {
-  const header = [`${block.title}`];
-  if (block.format === "superset" || block.format === "circuit" || block.format === "flow" && block.rounds > 1) {
-    header.push(message("text-rounds", { n: block.rounds }, locale));
+  const lines = [`  \xB7 ${item2.name} \u2014 ${parts.join(" \xB7 ")}`];
+  if (item2.warmupSets?.length) {
+    lines.unshift(`  \xB7 ${message("text-approach", { sets: item2.warmupSets.map((set) => `${set.kg} kg \xD7 ${set.reps}`).join(", "), name: item2.name }, locale)}`);
   }
-  if ((block.format === "superset" || block.format === "circuit") && block.restBetweenRounds > 0) {
-    header.push(message("text-rest-rounds", { rest: formatSeconds(block.restBetweenRounds) }, locale));
+  return lines;
+}
+function describeBlock(block, locale, alternating) {
+  const header = [block.title];
+  const inRounds = block.format === "superset" || block.format === "circuit" || block.format === "flow" && block.rounds > 1;
+  if (inRounds) header.push(message("text-rounds", { n: block.rounds }, locale));
+  if ((block.format === "superset" || block.format === "circuit") && (block.restBetweenItems ?? 0) > 0) {
+    header.push(message("text-rest-items", { rest: formatSeconds(block.restBetweenItems) }, locale));
   }
   if (block.format === "tabata" || block.format === "intervals") {
     header.push(message("text-intervals", { n: block.rounds, work: block.workSeconds ?? 0, rest: block.restSeconds ?? 0 }, locale));
   }
-  return [`${header.join(" \xB7 ")} (${formatSeconds(block.estimatedSeconds)})`, ...block.items.map((item2) => describeItem(item2, block, locale))];
-}
-function sessionToText(session, locale = "fr") {
-  const lines = [session.title, session.summary, ""];
-  for (const warning of session.warnings) {
-    lines.push(`\u26A0 ${warning.text}`);
+  if (block.rounds > 1 && block.restBetweenRounds > 0 && block.format !== "straight" && block.format !== "flow") {
+    header.push(message("text-rest-rounds", { rest: formatSeconds(block.restBetweenRounds) }, locale));
   }
-  if (session.warnings.length) lines.push("");
+  return [`${header.join(" \xB7 ")} (${roughSeconds(block.estimatedSeconds)})`, ...block.items.flatMap((item2) => describeItem(item2, block, locale, alternating))];
+}
+function sessionToText(session, locale = "fr", alternating = /* @__PURE__ */ new Set()) {
+  const lines = [session.title, session.summary, ""];
+  const all = session.blocks.flatMap((block) => block.items);
+  const notes = [
+    ...session.warnings.map((warning) => `\u26A0 ${warning.text}`),
+    ...session.notes.map((note) => `\u2192 ${note.text}`),
+    // Ce que veulent dire la réserve et les charges indicatives, une seule fois en tête.
+    ...all.some((item2) => item2.rir !== void 0) ? [`\u2192 ${message("text-rir-explained", {}, locale)}`] : [],
+    ...all.some((item2) => item2.load && item2.note && item2.progression?.step === "start") ? [`\u2192 ${message("text-load-explained", {}, locale)}`] : []
+  ];
+  if (notes.length) lines.push(...notes, "");
   for (const block of session.blocks) {
-    lines.push(...describeBlock(block, locale), "");
+    lines.push(...describeBlock(block, locale, alternating), "");
   }
   return lines.join("\n").trimEnd();
 }
@@ -20026,7 +20049,7 @@ function toSessionItem(item2, block, context) {
     estimatedSeconds: Math.round(itemSeconds(item2, block))
   };
 }
-function toSessionBlock(block, context) {
+function toSessionBlock(block, context, transition = 0) {
   return {
     id: block.id,
     role: block.role,
@@ -20039,7 +20062,7 @@ function toSessionBlock(block, context) {
     ...block.restSeconds !== void 0 ? { restSeconds: block.restSeconds } : {},
     ...block.durationSeconds !== void 0 ? { durationSeconds: block.durationSeconds } : {},
     items: block.items.map((item2) => toSessionItem(item2, block, context)),
-    estimatedSeconds: Math.round(plannedBlockSeconds(block))
+    estimatedSeconds: Math.round(plannedBlockSeconds(block) + transition)
   };
 }
 function easyTarget(definition, share = 0.3) {
@@ -21641,7 +21664,8 @@ function finish(context, choice, type, blocks, extra = {}) {
     estimatedMinutes: Math.round(seconds / 60),
     focus,
     volume,
-    blocks: blocks.filter((block) => block.items.length > 0).map((block) => toSessionBlock(block, context)),
+    // Chaque bloc compte le temps pour s’y mettre : la somme des blocs fait la durée annoncée.
+    blocks: blocks.filter((block) => block.items.length > 0).map((block, index) => toSessionBlock(block, context, index > 0 ? BLOCK_TRANSITION_SECONDS : 0)),
     readiness: context.readiness,
     reasons,
     warnings: [...context.readiness.warnings, ...extra.warnings ?? []],

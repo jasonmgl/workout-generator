@@ -89,7 +89,7 @@ export function toSessionItem(item: PlannedItem, block: PlannedBlock, context: C
     };
 }
 
-export function toSessionBlock(block: PlannedBlock, context: Context): SessionBlock {
+export function toSessionBlock(block: PlannedBlock, context: Context, transition = 0): SessionBlock {
     return {
         id: block.id,
         role: block.role,
@@ -102,7 +102,7 @@ export function toSessionBlock(block: PlannedBlock, context: Context): SessionBl
         ...(block.restSeconds !== undefined ? { restSeconds: block.restSeconds } : {}),
         ...(block.durationSeconds !== undefined ? { durationSeconds: block.durationSeconds } : {}),
         items: block.items.map((item) => toSessionItem(item, block, context)),
-        estimatedSeconds: Math.round(plannedBlockSeconds(block)),
+        estimatedSeconds: Math.round(plannedBlockSeconds(block) + transition),
     };
 }
 

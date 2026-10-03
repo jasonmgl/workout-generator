@@ -88,13 +88,6 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
    progression sur les vrais chiffres, dosage selon le rôle, séries
    d'approche, échauffement et retour au calme du cardio, mobilité.
    Reste :
-   - **le texte de la séance** (`src/output/text.ts`) : « 3 séries de 9
-     répétitions · repos 1 min 30 · réserve : 2 répétitions », ne pas
-     afficher le tempo normal, expliquer le tempo lent (3 s / 3 s), afficher
-     les séries d'approche, les notes (`session.notes`), les charges « ≈ 60
-     kg (à ajuster) » et tous les repos (entre exercices d'un circuit, entre
-     tours d'intervalles) ; durées de bloc arrondies à la demi-minute, avec
-     les transitions comptées dedans pour que la somme fasse le titre ;
    - **les exercices en alternance** : un champ `alternating` existe dans
      les fiches (nombre pair prescrit) mais aucune fiche ne le porte encore
      (dead bug, bird dog, touches d'épaules, fentes alternées, rotations
@@ -237,3 +230,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   calme du cardio (format « en continu », même machine), mobilité rangée par
   position, fiches à quatre pattes qui déclarent épaules et poignets.
   `tests/coach.test.ts` vérifie chaque règle sur huit graines. 245 tests.
+  Puis le texte de la séance : séries et cible collées, tempo normal tu,
+  tempo lent expliqué, séries d'approche, charges « à ajuster », réserve
+  expliquée une fois, tous les repos, durées à la demi-minute (transitions
+  comprises), blocs « Renforcement » et « En alternance ».

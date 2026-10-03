@@ -239,7 +239,8 @@ function finish(
         estimatedMinutes: Math.round(seconds / 60),
         focus,
         volume,
-        blocks: blocks.filter((block) => block.items.length > 0).map((block) => toSessionBlock(block, context)),
+        // Chaque bloc compte le temps pour s’y mettre : la somme des blocs fait la durée annoncée.
+        blocks: blocks.filter((block) => block.items.length > 0).map((block, index) => toSessionBlock(block, context, index > 0 ? BLOCK_TRANSITION_SECONDS : 0)),
         readiness: context.readiness,
         reasons,
         warnings: [...context.readiness.warnings, ...(extra.warnings ?? [])],
