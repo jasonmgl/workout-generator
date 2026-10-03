@@ -51,6 +51,12 @@ export interface TimedItem {
     readonly restSeconds: number;
     readonly tempo?: Tempo;
     readonly perSet?: readonly number[];
+    readonly warmupSets?: readonly { readonly reps: number; readonly kg: number }[];
+}
+
+/** Les séries d'approche d'un exercice : leurs répétitions et 45 s de pause après chacune. */
+export function approachSeconds(item: TimedItem): number {
+    return (item.warmupSets ?? []).reduce((sum, entry) => sum + workSeconds(item.definition, item.target, item.tempo, entry.reps) + 45, 0);
 }
 
 /** Le temps d'un exercice en séries classiques : ses séries et les repos entre elles. */
@@ -60,7 +66,7 @@ export function straightSeconds(item: TimedItem): number {
         : item.sets * workSeconds(item.definition, item.target, item.tempo);
     const sets = item.perSet?.length ?? item.sets;
 
-    return work + Math.max(0, sets - 1) * item.restSeconds + TRANSITION_SECONDS;
+    return approachSeconds(item) + work + Math.max(0, sets - 1) * item.restSeconds + TRANSITION_SECONDS;
 }
 
 export interface TimedBlock {
@@ -82,11 +88,16 @@ export function blockSeconds(block: TimedBlock): number {
 
     switch (block.format) {
         case 'straight':
+        case 'steady':
             return block.items.reduce((sum, item) => sum + straightSeconds(item), 0);
         case 'superset':
         case 'circuit':
         case 'flow':
-            return rounds * (oneRound + between + TRANSITION_SECONDS * (block.format === 'flow' ? 0.3 : 0.5)) + (rounds - 1) * block.restBetweenRounds;
+            return (
+                block.items.reduce((sum, item) => sum + approachSeconds(item), 0) +
+                rounds * (oneRound + between + TRANSITION_SECONDS * (block.format === 'flow' ? 0.3 : 0.5)) +
+                (rounds - 1) * block.restBetweenRounds
+            );
         case 'ladder':
             return block.items.reduce((sum, item) => sum + straightSeconds(item), 0);
         case 'emom':

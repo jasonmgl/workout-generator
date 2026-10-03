@@ -55,7 +55,7 @@ function exercise(item: SessionItem, value = item.target.value, seconds?: number
 const rest = (seconds: number): TreeRest[] => (seconds > 0 ? [{ type: 'rest', seconds: Math.round(seconds) }] : []);
 
 function blockChildren(block: SessionBlock): TreeNode[] {
-    if (block.format === 'straight' || block.format === 'ladder') {
+    if (block.format === 'straight' || block.format === 'ladder' || block.format === 'steady') {
         return block.items.map((item): TreeNode => {
             if (item.perSet?.length) {
                 return { type: 'loop', repeat: 1, label: item.name, children: item.perSet.flatMap((value) => [exercise(item, value), ...rest(item.restSeconds)]) };
@@ -84,7 +84,7 @@ function blockChildren(block: SessionBlock): TreeNode[] {
 export function toTree(session: Session): TreeLoop[] {
     return session.blocks.map((block) => {
         const children = blockChildren(block);
-        const between = block.format === 'straight' || block.format === 'ladder' ? [] : rest(block.restBetweenRounds);
+        const between = block.format === 'straight' || block.format === 'ladder' || block.format === 'steady' ? [] : rest(block.restBetweenRounds);
 
         return {
             type: 'loop',

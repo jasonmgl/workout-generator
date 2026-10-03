@@ -207,9 +207,11 @@ export type BlockFormat =
     /** Une répétition, puis deux, puis trois…, et on repart d'en bas. */
     | 'ladder'
     /** Des mouvements qui s'enchaînent sans compter, pour s'échauffer ou se détendre. */
-    | 'flow';
+    | 'flow'
+    /** Un seul effort en continu, à allure régulière : vélo, course, rameur. */
+    | 'steady';
 
-export const BLOCK_FORMATS: readonly BlockFormat[] = ['straight', 'superset', 'circuit', 'emom', 'amrap', 'tabata', 'intervals', 'ladder', 'flow'];
+export const BLOCK_FORMATS: readonly BlockFormat[] = ['straight', 'superset', 'circuit', 'emom', 'amrap', 'tabata', 'intervals', 'ladder', 'flow', 'steady'];
 
 export type Intensity = 'easy' | 'moderate' | 'hard';
 
@@ -342,6 +344,8 @@ export interface SessionItem {
     readonly equipment: readonly EquipmentId[];
     readonly progression?: { readonly step: ProgressionStep; readonly text: string };
     readonly note?: string;
+    /** Les séries d'approche, avant les séries de travail d'un exercice chargé et lourd : la moitié, puis les trois quarts. */
+    readonly warmupSets?: readonly { readonly reps: number; readonly kg: number }[];
     readonly reasons: readonly Reason[];
     /** Le temps d’une série (d’un passage dans un circuit), effort seul, en secondes : de quoi lancer un chrono. */
     readonly setSeconds: number;
@@ -391,4 +395,6 @@ export interface Session {
     readonly readiness: ReadinessAssessment;
     readonly reasons: readonly Reason[];
     readonly warnings: readonly Reason[];
+    /** Des conseils, sans gravité : le matériel qui débloquerait un vrai tirage, ce que veut dire la réserve. */
+    readonly notes: readonly Reason[];
 }

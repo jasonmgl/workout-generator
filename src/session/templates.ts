@@ -9,7 +9,7 @@
  * poussée, une charnière, un tirage et du gainage : chaque grand groupe a sa
  * part, et les groupes opposés (pousser / tirer) se répondent.
  */
-import type { MuscleGroupId } from '../library/anatomy';
+import type { MuscleGroupId, MuscleId } from '../library/anatomy';
 import type { ExerciseKind, MovementPattern } from '../library/types';
 import type { SessionType } from '../types';
 
@@ -24,6 +24,8 @@ export interface Slot {
     readonly fallback?: readonly MovementPattern[];
     /** Les groupes que l’exercice doit faire travailler en principal : une place « tirage » sert le dos, pas les dentelés. */
     readonly groups?: readonly MuscleGroupId[];
+    /** Les muscles qu’elle doit faire travailler en principal, quand le catalogue le permet (sinon, tout le schéma). */
+    readonly muscles?: readonly MuscleId[];
 }
 
 const STRENGTH: readonly ExerciseKind[] = ['strength'];
@@ -54,7 +56,7 @@ export interface Template {
     readonly extras: readonly Slot[];
 }
 
-export const TEMPLATES: Readonly<Record<SessionType, Template>> = {
+const RAW_TEMPLATES: Readonly<Record<SessionType, Template>> = {
     'full-body': {
         base: [
             slot('knee', 'main', ['squat', 'lunge']),
@@ -191,8 +193,49 @@ export const TEMPLATES: Readonly<Record<SessionType, Template>> = {
     },
 };
 
+/** Une place de flexion des jambes vidée par un genou douloureux garde du travail pour les jambes : charnière, hanches, mollets. */
+const KNEE_FALLBACK: readonly MovementPattern[] = ['hinge', 'hip-abduction', 'calf-raise'];
+
+/**
+ * Les précisions de certaines places, où qu’elles soient : les muscles qu’elles doivent servir, leurs secours, les
+ * sortes d’exercices qu’elles acceptent (la charnière prend aussi le swing, explosif).
+ */
+const REFINEMENTS: Readonly<Record<string, Partial<Slot>>> = {
+    knee: { fallback: KNEE_FALLBACK },
+    'knee-2': { fallback: KNEE_FALLBACK },
+    'single-leg': { fallback: KNEE_FALLBACK },
+    hinge: { kinds: ANY_STRENGTH },
+    push: { muscles: ['pecs', 'upper-pecs'] },
+    calves: { muscles: ['gastrocnemius', 'soleus'] },
+    'focus-calves': { muscles: ['gastrocnemius', 'soleus'] },
+    hips: { muscles: ['glute-med', 'glute-max'] },
+    carry: { kinds: ['strength', 'conditioning', 'power'] },
+};
+
+const refine = (entry: Slot): Slot => {
+    const extra = REFINEMENTS[entry.key];
+
+    return extra ? { ...entry, ...extra, fallback: entry.fallback ?? extra.fallback ?? [] } : entry;
+};
+
+const refineTemplate = (template: Template): Template => ({ base: template.base.map(refine), extras: template.extras.map(refine) });
+
+export const TEMPLATES: Readonly<Record<SessionType, Template>> = {
+    'full-body': refineTemplate(RAW_TEMPLATES['full-body']),
+    upper: refineTemplate(RAW_TEMPLATES.upper),
+    lower: refineTemplate(RAW_TEMPLATES.lower),
+    push: refineTemplate(RAW_TEMPLATES.push),
+    pull: refineTemplate(RAW_TEMPLATES.pull),
+    core: refineTemplate(RAW_TEMPLATES.core),
+    cardio: refineTemplate(RAW_TEMPLATES.cardio),
+    hiit: refineTemplate(RAW_TEMPLATES.hiit),
+    mobility: refineTemplate(RAW_TEMPLATES.mobility),
+    recovery: refineTemplate(RAW_TEMPLATES.recovery),
+    skill: refineTemplate(RAW_TEMPLATES.skill),
+};
+
 /** Les places qui servent un groupe qu'on veut travailler : ajoutées avant les places en plus. */
-export const FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = {
+const RAW_FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = {
     chest: [slot('focus-chest', 'accessory', ['horizontal-push']), slot('focus-chest-2', 'accessory', ['horizontal-push', 'vertical-push'])],
     back: [slot('focus-back', 'accessory', ['horizontal-pull', 'vertical-pull']), slot('focus-back-2', 'accessory', ['vertical-pull', 'horizontal-pull'])],
     shoulders: [slot('focus-shoulders', 'accessory', ['vertical-push', 'shoulder-raise']), slot('focus-shoulders-2', 'accessory', ['shoulder-raise', 'scapular'])],
@@ -203,6 +246,10 @@ export const FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = {
     legs: [slot('focus-legs', 'accessory', ['squat', 'lunge']), slot('focus-legs-2', 'accessory', ['knee-flexion', 'hip-adduction', 'lunge'])],
     calves: [slot('focus-calves', 'accessory', ['calf-raise']), slot('focus-calves-2', 'accessory', ['calf-raise', 'jump'], ANY_STRENGTH)],
 };
+
+export const FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = Object.fromEntries(
+    Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map(refine)]),
+) as unknown as Record<MuscleGroupId, readonly Slot[]>;
 
 /** Les groupes que sert surtout chaque schéma : pour retirer une place quand on évite ces groupes. */
 export const PATTERN_GROUPS: Readonly<Partial<Record<MovementPattern, readonly MuscleGroupId[]>>> = {

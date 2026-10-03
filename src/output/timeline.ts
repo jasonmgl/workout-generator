@@ -61,7 +61,7 @@ function blockSteps(block: SessionBlock, locale: string): TimelineStep[] {
     const rounds = Math.max(1, block.rounds);
     const roundContext = (round: number): string => (rounds > 1 ? `${block.title} · ${message('timeline-round', { n: round, total: rounds }, locale)}` : block.title);
 
-    if (block.format === 'straight' || block.format === 'ladder') {
+    if (block.format === 'straight' || block.format === 'ladder' || block.format === 'steady') {
         block.items.forEach((item, index) => {
             const values = item.perSet?.length ? item.perSet : Array.from({ length: item.sets }, () => item.target.value);
 

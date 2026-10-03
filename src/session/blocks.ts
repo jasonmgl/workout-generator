@@ -24,6 +24,10 @@ export interface PlannedItem {
     reasons: Reason[];
     /** La place du gabarit qu'il remplit, pour savoir ce qu'on peut retirer en premier. */
     slotRole?: string;
+    /** Le plus de séries qu'on peut lui donner en remplissant la séance. */
+    maxSets?: number;
+    /** Les séries d'approche avant ses séries de travail. */
+    warmupSets?: readonly { readonly reps: number; readonly kg: number }[];
 }
 
 export interface PlannedBlock {
@@ -46,7 +50,7 @@ export function plannedBlockSeconds(block: PlannedBlock): number {
 
 /** Le temps d'un exercice dans son bloc, pour l'afficher à côté de lui. */
 function itemSeconds(item: PlannedItem, block: PlannedBlock): number {
-    if (block.format === 'straight' || block.format === 'ladder') {
+    if (block.format === 'straight' || block.format === 'ladder' || block.format === 'steady') {
         return straightSeconds(item);
     }
 
@@ -78,6 +82,7 @@ export function toSessionItem(item: PlannedItem, block: PlannedBlock, context: C
         equipment,
         ...(item.progression ? { progression: item.progression } : {}),
         ...(item.note ? { note: item.note } : {}),
+        ...(item.warmupSets ? { warmupSets: item.warmupSets } : {}),
         reasons: item.reasons,
         setSeconds: Math.round(block.format === 'tabata' || block.format === 'intervals' ? (block.workSeconds ?? item.target.value) : workSeconds(item.definition, item.target, item.tempo)),
         estimatedSeconds: Math.round(itemSeconds(item, block)),

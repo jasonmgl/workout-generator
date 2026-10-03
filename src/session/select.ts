@@ -33,6 +33,7 @@ export function feasible(definition: ExerciseDefinition, context: Context): bool
     if (context.exclude.has(definition.id)) return false;
     if (!satisfies(definition.equipment, context.inventory)) return false;
     if (IMPACT_ORDER[definition.impact] > IMPACT_ORDER[context.maxImpact]) return false;
+    if (context.avoidPostures.has(definition.posture)) return false;
 
     for (const [joint, tolerance] of context.jointTolerance) {
         if ((definition.joints?.[joint] ?? 0) > tolerance) return false;
@@ -56,11 +57,15 @@ export function targetDifficulty(definition: ExerciseDefinition, context: Contex
         const last = variant ? performancesOf(context.input.history ?? [], variant, context.date)[0] : undefined;
 
         if (variant && last) {
-            const [low, high] = targetRange(variant, context.settings);
+            const [, high] = targetRange(variant, context.settings);
             const values = last.sets.map((set) => valueOf(set, variant.measure));
+            const before = performancesOf(context.input.history ?? [], variant, context.date)[1];
+            // « A coincé », c’est moins bien que d’habitude ou une série à l’échec, ou sous la fourchette de la variante
+            // elle-même : six tractions sont une vraie série de tractions, même si l’objectif en voudrait huit.
+            const struggled = last.best < variant.range[0] || last.minRir === 0 || (before !== undefined && last.total < before.total * 0.85);
 
             if (Math.min(...values) >= high) base += 1;
-            else if (Math.max(...values) < low) base -= 1;
+            else if (struggled) base -= 1;
         }
     }
 
@@ -116,6 +121,13 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
 
     if (context.favorites.has(definition.id)) value *= 1.4;
 
+    // Une place principale appelle un vrai mouvement : plusieurs articulations, pas un exercice d’activation (donkey
+    // kicks, marche sur les talons), qu’on garde pour l’échauffement.
+    if (slot.role === 'main') {
+        if (definition.compound) value *= 1.3;
+        if (definition.tags?.some((tag) => tag === 'activation' || tag === 'rehab')) value *= 0.3;
+    }
+
     // L’objectif : une variante qui ne monte pas jusqu’aux répétitions de l’endurance, ou qui ne descend pas jusqu’à
     // celles de la force, sert mal ; une descente freinée et lente n’a rien à faire dans un circuit d’endurance.
     if (definition.measure === 'reps' && definition.kind === 'strength') {
@@ -141,24 +153,47 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
 export function rank(slot: Slot, context: Context, chosen: readonly ExerciseDefinition[]): { definition: ExerciseDefinition; score: number }[] {
     const taken = new Set(chosen.map((definition) => definition.id));
 
-    return context.library
+    const candidates = context.library
         .filter({ kinds: slot.kinds, patterns: slot.patterns })
         .filter((definition) => !taken.has(definition.id) && feasible(definition, context))
         .filter((definition) => !slot.groups || definition.muscles.primary.some((muscle) => slot.groups!.includes(MUSCLE_INFO[muscle].group)))
         .map((definition) => ({ definition, score: score(definition, slot, context, chosen) }))
         .sort((a, b) => b.score - a.score || a.definition.id.localeCompare(b.definition.id));
-}
 
-/** L'exercice d'une place, tiré parmi les meilleurs ; aucun si rien n'est faisable. */
-export function pick(slot: Slot, context: Context, chosen: readonly ExerciseDefinition[]): ExerciseDefinition | undefined {
-    const ranked = rank(slot, context, chosen).slice(0, DRAW_SIZE);
+    // Les muscles qu’une place doit faire travailler, quand le catalogue le permet : une place « mollets » prend des
+    // mollets, pas le jambier antérieur ; une poussée horizontale, les pectoraux plutôt que les seuls triceps.
+    if (slot.muscles) {
+        const matching = candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot.muscles!.includes(muscle)));
 
-    if (ranked.length === 0) {
-        return undefined;
+        if (matching.length) return matching;
     }
 
-    const best = ranked[0]!.score;
-    const finalists = ranked.filter((entry) => entry.score >= best * 0.35);
+    return candidates;
+}
 
-    return context.random.weighted(finalists, (entry) => entry.score * entry.score).definition;
+/** Au-delà d’une marche et demie au-dessus de la difficulté visée, un exercice est trop dur pour être proposé. */
+export const CEILING = 1.5;
+
+/**
+ * L’exercice d’une place, tiré parmi les meilleurs. Rien de plus d’une marche et demie au-dessus de ce que la
+ * personne sait faire : une place en plus (`strict`) reste alors vide, une place de base prend la variante faisable
+ * la plus facile. Aucun si rien n’est faisable.
+ */
+export function pick(slot: Slot, context: Context, chosen: readonly ExerciseDefinition[], strict = false): ExerciseDefinition | undefined {
+    const ranked = rank(slot, context, chosen);
+    const within = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
+
+    if (within.length === 0) {
+        if (strict || ranked.length === 0) return undefined;
+
+        return [...ranked].sort((a, b) => a.definition.difficulty - b.definition.difficulty || b.score - a.score)[0]!.definition;
+    }
+
+    const finalists = within.slice(0, DRAW_SIZE);
+    const best = finalists[0]!.score;
+
+    return context.random.weighted(
+        finalists.filter((entry) => entry.score >= best * 0.35),
+        (entry) => entry.score * entry.score,
+    ).definition;
 }

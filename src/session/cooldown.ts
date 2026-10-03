@@ -13,9 +13,14 @@ import { reason } from '../i18n/messages';
 import { plannedBlockSeconds, targetForSeconds, type PlannedBlock, type PlannedItem } from './blocks';
 import type { Context } from './context';
 import { feasible } from './select';
+import { byPosture } from './warmup';
 
-/** Le temps visé : 10 % de la séance, entre 3 et 8 minutes. */
+/** Le temps visé : 10 % de la séance, entre 3 et 8 minutes ; pour une séance de vingt minutes ou moins, 8 %, une minute au moins. */
 export function cooldownSeconds(context: Context): number {
+    if (context.minutes <= 20) {
+        return Math.round(Math.max(60, context.minutes * 60 * 0.08));
+    }
+
     return Math.round(Math.min(480, Math.max(180, context.minutes * 60 * 0.1)));
 }
 
@@ -52,7 +57,7 @@ const STRETCH_SECONDS = 30;
 export function buildCooldown(
     load: ReadonlyMap<MuscleId, number>,
     context: Context,
-    options: { readonly afterCardio?: boolean; readonly budget?: number } = {},
+    options: { readonly afterCardio?: boolean; readonly budget?: number; readonly continueWith?: ExerciseDefinition } = {},
 ): PlannedBlock {
     const budget = options.budget ?? cooldownSeconds(context);
     const items: PlannedItem[] = [];
@@ -76,10 +81,14 @@ export function buildCooldown(
         });
     };
 
-    if (options.afterCardio) {
+    // Après un effort cardio, on continue de bouger pendant que le pouls redescend : sur la même machine en douceur,
+    // ou en marchant.
+    if (options.continueWith) {
+        add(options.continueWith, 150, 'cooldown-easy');
+    } else if (options.afterCardio) {
         const walk = context.library
-            .filter({ kinds: ['conditioning'], maxImpact: 'none', measures: ['time'] })
-            .filter((definition) => feasible(definition, context) && definition.difficulty <= 1)
+            .filter({ kinds: ['conditioning'], maxImpact: 'low', measures: ['time'], maxDifficulty: 2 })
+            .filter((definition) => feasible(definition, context) && definition.met <= 4.5 && !definition.tags?.includes('machine') && !definition.tags?.includes('outdoor'))
             .sort((a, b) => a.met - b.met || a.id.localeCompare(b.id))[0];
 
         if (walk) {
@@ -90,7 +99,8 @@ export function buildCooldown(
     const remaining = new Map(load.size ? load : DEFAULT_LOAD);
     const stretches = context.library.filter({ kinds: ['stretch'] }).filter((definition) => feasible(definition, context));
     const used = new Set<string>();
-    const breathingTime = 90;
+    // La respiration finale : une minute et demie, moins dans un retour au calme très court.
+    const breathingTime = Math.max(30, Math.min(90, Math.round(budget * 0.4 / 15) * 15));
 
     while (plannedBlockSeconds(block) < budget - breathingTime && remaining.size) {
         const scored = stretches
@@ -119,6 +129,12 @@ export function buildCooldown(
             }
         }
     }
+
+    // Les étirements du debout vers le sol : on ne se relève pas entre deux, et on finit allongé.
+    const moving = items.filter((entry) => entry.definition.kind !== 'stretch');
+    const stretched = byPosture(items.filter((entry) => entry.definition.kind === 'stretch'));
+
+    items.splice(0, items.length, ...moving, ...stretched);
 
     const breathing = context.library.filter({ kinds: ['breathing'] }).filter((definition) => feasible(definition, context));
 

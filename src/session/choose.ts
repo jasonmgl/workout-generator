@@ -13,6 +13,7 @@
 import { GROUP_REGION, MUSCLE_GROUPS, MUSCLE_INFO, MUSCLES, type MuscleGroupId, type RegionId } from '../library/anatomy';
 import { daysBetween } from '../dates';
 import { pastSessions, trainingLoad } from '../history/load';
+import { GROUP_NAMES_WITH_ARTICLE } from '../i18n/fr/labels';
 import { reason } from '../i18n/messages';
 import type { Reason, SessionType } from '../types';
 import type { Context } from './context';
@@ -29,6 +30,16 @@ export function regionRecovery(region: RegionId, context: Context): number {
 
     return Math.min(...large.map((muscle) => context.body.muscles[muscle].recovery));
 }
+
+/** La région que charge surtout chaque type de séance prévu. */
+const PLAN_REGION: Readonly<Partial<Record<SessionType, RegionId>>> = {
+    'full-body': 'lower',
+    lower: 'lower',
+    hiit: 'lower',
+    upper: 'upper',
+    push: 'upper',
+    pull: 'upper',
+};
 
 const UPPER_PUSH: readonly MuscleGroupId[] = ['chest', 'shoulders'];
 const UPPER_PULL: readonly MuscleGroupId[] = ['back'];
@@ -74,12 +85,25 @@ export function chooseType(context: Context): TypeChoice {
         return { type: 'mobility', rest: false, reasons: [say('type-recovery')] };
     }
 
+    // Le plan se fait à l'avance : si la région qu'il charge est encore fatiguée (une sortie imprévue, une
+    // récupération plus lente), la séance du jour a le dernier mot.
+    let adapted = false;
+
     if (planned?.type) {
-        return { type: planned.type, rest: false, reasons: [say('type-plan')] };
+        const region = PLAN_REGION[planned.type];
+
+        if (!region || regionRecovery(region, context) >= FRESH_ENOUGH) {
+            return { type: planned.type, rest: false, reasons: [say('type-plan')] };
+        }
+
+        adapted = true;
     }
 
     if (context.focusGroups.length) {
-        return { type: typeForFocus(context.focusGroups), rest: false, reasons: [say('type-focus')] };
+        const groups = context.focusGroups.map((group) => GROUP_NAMES_WITH_ARTICLE[group]);
+        const named = groups.length > 1 ? `${groups.slice(0, -1).join(', ')} et ${groups[groups.length - 1]}` : groups[0]!;
+
+        return { type: typeForFocus(context.focusGroups), rest: false, reasons: [say('type-focus-groups', { groups: named })] };
     }
 
     const upper = regionRecovery('upper', context);
@@ -102,11 +126,13 @@ export function chooseType(context: Context): TypeChoice {
     }
 
     if (lowerTired) {
-        return { type: 'upper', rest: false, reasons: [say(recentActivity && !avoidsLower ? 'type-legs-tired-activity' : avoidsLower ? 'type-avoid-legs' : 'type-legs-tired')] };
+        const code = adapted ? 'type-plan-adapted-legs' : recentActivity && !avoidsLower ? 'type-legs-tired-activity' : avoidsLower ? 'type-avoid-legs' : 'type-legs-tired';
+
+        return { type: 'upper', rest: false, reasons: [say(code)] };
     }
 
     if (upperTired) {
-        return { type: 'lower', rest: false, reasons: [say(avoidsUpper ? 'type-avoid-upper' : 'type-upper-tired')] };
+        return { type: 'lower', rest: false, reasons: [say(adapted ? 'type-plan-adapted-upper' : avoidsUpper ? 'type-avoid-upper' : 'type-upper-tired')] };
     }
 
     const cardioGoal = context.goal === 'fat-loss' || context.goal === 'endurance';
@@ -135,5 +161,9 @@ export function chooseType(context: Context): TypeChoice {
             : { type: 'lower', rest: false, reasons: [say('type-split-lower')] };
     }
 
-    return { type: 'full-body', rest: false, reasons: [say('type-full-body')] };
+    // « Tout est frais » n'est une information que si l'on a vu les séances des derniers jours et que la forme du
+    // jour ne signale rien ; sinon, on dit simplement ce que fait la séance.
+    const signals = context.readiness.reasons.length > 0 || context.readiness.joints.length > 0;
+
+    return { type: 'full-body', rest: false, reasons: [say(load.sessions7 > 0 && !signals ? 'type-full-body' : 'type-full-body-default')] };
 }

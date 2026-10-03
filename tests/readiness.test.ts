@@ -65,6 +65,13 @@ describe('le pouls du matin', () => {
         expect(status.gap).toBe(13);
     });
 
+    it('affiche un écart qui se recalcule à partir des nombres affichés', () => {
+        const status = pulseStatus({ restingHeartRate: 60, heartRateHistory: mornings([52, 53, 51, 54, 52, 53]) }, DATE);
+
+        expect(status.baseline).toBe(53);
+        expect(status.gap).toBe(Math.round(((60 - 53) / 53) * 100));
+    });
+
     it('attend quatre matins avant d’avoir une base', () => {
         expect(pulseStatus({ restingHeartRate: 70, heartRateHistory: base.slice(0, 3) }, DATE).baseline).toBeUndefined();
         expect(assessReadiness({ date: DATE, readiness: { restingHeartRate: 70, heartRateHistory: base.slice(0, 3) } }).level).toBe('normal');
@@ -130,10 +137,36 @@ describe('la charge des jours passés', () => {
 
 describe('le cycle, les articulations et les courbatures', () => {
     it('adoucit les règles douloureuses et coupe les sauts', () => {
-        const assessment = assessReadiness({ date: DATE, readiness: { cycle: { phase: 'menstrual', symptoms: 3 } } });
+        const assessment = assessReadiness({ date: DATE, readiness: { cycle: { phase: 'menstrual', symptoms: 2 } } });
 
         expect(assessment.level).toBe('easy');
         expect(assessment.maxImpact).toBe('low');
+    });
+
+    it('ne propose que de la mobilité quand les règles sont très douloureuses', () => {
+        const assessment = assessReadiness({ date: DATE, readiness: { cycle: { phase: 'menstrual', symptoms: 3 } } });
+
+        expect(assessment.level).toBe('recovery');
+        expect(assessment.maxImpact).toBe('none');
+    });
+
+    it('allège nettement une journée de douleur forte, et prévient', () => {
+        const assessment = assessReadiness({ date: DATE, readiness: { pain: [{ joint: 'shoulders', severity: 3 }] } });
+
+        expect(assessment.level).toBe('easy');
+        expect(assessment.volume).toBeLessThanOrEqual(0.55);
+        expect(assessment.warnings.find((entry) => entry.code === 'joint-pain-strong')?.text).toMatch(/épaules/);
+    });
+
+    it('ne propose que de la mobilité avec un bas du dos très douloureux ou deux articulations douloureuses', () => {
+        expect(assessReadiness({ date: DATE, readiness: { pain: [{ joint: 'lower-back', severity: 3 }] } }).level).toBe('recovery');
+        expect(assessReadiness({ date: DATE, readiness: { pain: [{ joint: 'knees', severity: 2 }, { joint: 'wrists', severity: 2 }] } }).level).toBe('recovery');
+    });
+
+    it('dit ce qui fait la petite forme', () => {
+        const assessment = assessReadiness({ date: DATE, readiness: { energy: 1, stress: 5, sleepQuality: 1 } });
+
+        expect(assessment.reasons[0]?.text).toMatch(/énergie basse.*stress élevé/);
     });
 
     it('réduit un peu le volume pendant des règles sans symptôme, et en fin de cycle', () => {

@@ -8,9 +8,10 @@
  * séance très courte passe en circuit : c'est ce qui tient le mieux dans dix
  * minutes.
  */
+import { GROUP_REGION, MUSCLE_INFO } from '../library/anatomy';
 import type { MovementPattern } from '../library/types';
 import { reason } from '../i18n/messages';
-import type { BlockFormat, SessionType } from '../types';
+import type { BlockFormat, Reason, SessionType } from '../types';
 import { plannedBlockSeconds, type PlannedBlock, type PlannedItem } from './blocks';
 import type { Context } from './context';
 import { feasible } from './select';
@@ -46,10 +47,10 @@ const PARTNERS: Readonly<Partial<Record<MovementPattern, readonly MovementPatter
     'vertical-push': ['vertical-pull', 'horizontal-pull'],
     'horizontal-pull': ['horizontal-push', 'vertical-push'],
     'vertical-pull': ['vertical-push', 'horizontal-push'],
-    squat: ['hinge', 'knee-flexion'],
-    lunge: ['hinge', 'knee-flexion'],
-    hinge: ['squat', 'lunge'],
-    'knee-flexion': ['squat', 'lunge'],
+    squat: ['horizontal-pull', 'vertical-pull', 'hinge', 'knee-flexion'],
+    lunge: ['horizontal-pull', 'vertical-pull', 'hinge', 'knee-flexion'],
+    hinge: ['horizontal-push', 'vertical-push', 'squat', 'lunge'],
+    'knee-flexion': ['horizontal-push', 'vertical-push', 'squat', 'lunge'],
     'elbow-flexion': ['elbow-extension'],
     'elbow-extension': ['elbow-flexion'],
     'anti-extension': ['trunk-extension'],
@@ -64,7 +65,9 @@ export function pairUp(items: readonly PlannedItem[]): PlannedItem[][] {
     while (left.length) {
         const first = left.shift()!;
         const partners = PARTNERS[first.definition.pattern] ?? [];
-        const index = left.findIndex((other) => partners.includes(other.definition.pattern));
+        // Le partenaire le plus haut dans la liste de préférence, pas le premier venu.
+        const ranked = partners.map((pattern) => left.findIndex((other) => other.definition.pattern === pattern)).filter((found) => found >= 0);
+        const index = ranked.length ? ranked[0]! : -1;
 
         if (index >= 0) {
             pairs.push([first, left.splice(index, 1)[0]!]);
@@ -82,6 +85,24 @@ export function pairUp(items: readonly PlannedItem[]): PlannedItem[][] {
 }
 
 const title = (code: string, context: Context, params = {}): string => reason(code, params, context.locale).text;
+
+/** La région d'un exercice, d'après son premier muscle principal. */
+const regionOf = (item: PlannedItem): string => GROUP_REGION[MUSCLE_INFO[item.definition.muscles.primary[0]!].group];
+
+/** Ranger un circuit pour ne pas enchaîner deux exercices de la même région quand on peut l'éviter. */
+function alternateRegions(items: readonly PlannedItem[]): PlannedItem[] {
+    const left = [...items];
+    const result: PlannedItem[] = [];
+
+    while (left.length) {
+        const previous = result[result.length - 1];
+        const index = previous ? left.findIndex((item) => regionOf(item) !== regionOf(previous)) : 0;
+
+        result.push(left.splice(index >= 0 ? index : 0, 1)[0]!);
+    }
+
+    return result;
+}
 
 /** Une copie d'exercice faite pour un bloc en tours : une série par tour. */
 const perRound = (item: PlannedItem): PlannedItem => ({ ...item, sets: 1, reasons: [...item.reasons] });
@@ -138,18 +159,17 @@ export function buildMainBlocks(items: readonly PlannedItem[], format: BlockForm
     }
 
     if (format === 'circuit') {
-        const rounds = Math.max(1, Math.round(items.reduce((sum, item) => sum + item.sets, 0) / items.length));
-        const groups = items.length >= 7 ? [items.slice(0, Math.ceil(items.length / 2)), items.slice(Math.ceil(items.length / 2))] : [items];
+        const groups = items.length >= 7 ? [items.filter((_, index) => index % 2 === 0), items.filter((_, index) => index % 2 === 1)] : [items];
 
         return groups.map((group, index) => ({
             id: `main-${index + 1}`,
             role: 'main',
             format: 'circuit',
             title: title('block-circuit', context),
-            rounds,
+            rounds: Math.max(2, Math.round(group.reduce((sum, item) => sum + item.sets, 0) / group.length)),
             restBetweenRounds: settings.circuit.betweenRounds,
             restBetweenItems: settings.circuit.betweenItems,
-            items: group.map(perRound),
+            items: alternateRegions(group).map(perRound),
         }));
     }
 
@@ -204,7 +224,7 @@ export function buildMainBlocks(items: readonly PlannedItem[], format: BlockForm
 }
 
 /** La phrase qui explique un format. */
-export function formatReason(blocks: readonly PlannedBlock[], context: Context): string | undefined {
+export function formatReason(blocks: readonly PlannedBlock[], context: Context): Reason | undefined {
     const main = blocks.find((block) => block.role === 'main' || block.role === 'finisher');
 
     if (!main) {
@@ -217,7 +237,10 @@ export function formatReason(blocks: readonly PlannedBlock[], context: Context):
         rest: main.restSeconds ?? 0,
     };
 
-    return reason(`format-${main.format}`, params, context.locale).text;
+    // Un circuit d'un seul tour n'est pas « on recommence ».
+    const code = main.format === 'circuit' && main.rounds <= 1 ? 'format-circuit-once' : `format-${main.format}`;
+
+    return reason(code, params, context.locale);
 }
 
 /**
@@ -266,27 +289,74 @@ export function buildIntervals(
 }
 
 /** Les exercices de cardio faisables, du plus adapté au niveau au moins adapté. */
+/** La difficulté visée pour le cardio : celle du niveau, un cran plus bas un jour de petite forme. */
+const CARDIO_TARGET: Readonly<Record<string, number>> = { beginner: 2.5, intermediate: 4, advanced: 5.5, expert: 6.5 };
+
+function cardioTarget(context: Context): number {
+    const base = CARDIO_TARGET[context.level] ?? 3;
+
+    return base - (context.readiness.intensity < 0.85 ? 2 : context.readiness.intensity < 1 ? 1 : 0);
+}
+
+/**
+ * Les exercices de cardio faisables, du plus proche du niveau au plus lointain. Ce qui se fait avec le matériel
+ * déclaré (une corde à sauter, un sac de frappe) passe devant : c'est souvent ce que la personne préfère.
+ */
 export function cardioCandidates(context: Context, exclude: ReadonlySet<string> = new Set()): PlannedItem['definition'][] {
-    const ceiling = context.level === 'beginner' ? 4 : context.level === 'intermediate' ? 6 : 8;
+    const target = cardioTarget(context);
+    const declared = new Set((context.input.equipment ?? []).map((entry) => (typeof entry === 'string' ? entry : entry.id)));
 
     return context.library
         .filter({ kinds: ['conditioning', 'power'], patterns: ['full-body', 'jump', 'cardio', 'locomotion'] })
-        .filter((definition) => feasible(definition, context) && !exclude.has(definition.id) && definition.difficulty <= ceiling && definition.measure !== 'distance')
+        .filter((definition) => feasible(definition, context) && !exclude.has(definition.id) && definition.measure !== 'distance')
         .filter((definition) => !definition.tags?.includes('machine') && !definition.tags?.includes('outdoor'))
-        .sort((a, b) => b.difficulty - a.difficulty || a.id.localeCompare(b.id));
+        .map((definition) => ({
+            definition,
+            distance: Math.abs(definition.difficulty - target) - ((definition.equipment ?? []).flat().some((id) => declared.has(id)) ? 1.5 : 0),
+        }))
+        .sort((a, b) => a.distance - b.distance || a.definition.id.localeCompare(b.definition.id))
+        .map((entry) => entry.definition);
 }
 
-/** Le cardio de fin de séance : quatre à six minutes d'intervalles. */
-export function buildFinisher(context: Context, seconds: number, used: ReadonlySet<string>): PlannedBlock | undefined {
-    const candidates = cardioCandidates(context, used);
+/**
+ * Des exercices d'intervalles : variés (une famille et un schéma chacun), au plus un exercice à fort impact pour un
+ * débutant, aucun quand les jambes ont déjà beaucoup travaillé. Un coach commence par des pas chassés et des
+ * montées de genoux, pas par des sauts en longueur.
+ */
+export function pickIntervalExercises(
+    context: Context,
+    count: number,
+    exclude: ReadonlySet<string> = new Set(),
+    options: { readonly legsLoaded?: boolean } = {},
+): PlannedItem['definition'][] {
+    const pool = cardioCandidates(context, exclude).slice(0, Math.max(count * 3, 9));
+    const order = context.random.shuffle(pool.slice(0, Math.max(count * 2, 6))).concat(pool.slice(Math.max(count * 2, 6)));
+    const picked: PlannedItem['definition'][] = [];
+    const families = new Set<string>();
+    const maxHigh = options.legsLoaded ? 0 : context.level === 'beginner' ? 1 : count;
 
-    if (candidates.length === 0) {
+    for (const definition of order) {
+        if (picked.length >= count) break;
+        if (families.has(definition.family)) continue;
+        if (definition.impact === 'high' && picked.filter((entry) => entry.impact === 'high').length >= maxHigh) continue;
+        if (picked.length && picked[picked.length - 1]!.pattern === definition.pattern && order.some((other) => !families.has(other.family) && other.pattern !== definition.pattern)) continue;
+
+        families.add(definition.family);
+        picked.push(definition);
+    }
+
+    return picked;
+}
+
+/** Le cardio de fin de séance : quatre à six minutes d'intervalles, sans sauts sur des jambes déjà bien chargées. */
+export function buildFinisher(context: Context, seconds: number, used: ReadonlySet<string>, legsLoaded = false): PlannedBlock | undefined {
+    const picked = pickIntervalExercises(context, 2, used, { legsLoaded });
+
+    if (picked.length === 0) {
         return undefined;
     }
 
-    const count = Math.min(2, candidates.length);
-    const picked = context.random.shuffle(candidates.slice(0, 6)).slice(0, count);
-    const tabata = context.maxImpact === 'high' && context.level !== 'beginner' && context.random.next() < 0.5;
+    const tabata = context.maxImpact === 'high' && context.level !== 'beginner' && !legsLoaded && context.random.next() < 0.5;
 
     return buildIntervals('finisher', 'finisher', picked, seconds, context, tabata);
 }

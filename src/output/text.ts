@@ -24,7 +24,7 @@ export function describeTarget(item: SessionItem, locale = 'fr'): string {
 function describeItem(item: SessionItem, block: SessionBlock, locale: string): string {
     const parts = [describeTarget(item, locale)];
 
-    if (block.format === 'straight' || block.format === 'ladder') {
+    if (block.format === 'straight' || block.format === 'ladder' || block.format === 'steady') {
         if (!item.perSet && item.sets > 1) parts.unshift(`${item.sets} ×`);
         if (item.sets > 1 && item.restSeconds > 0) parts.push(message('text-rest', { rest: formatSeconds(item.restSeconds) }, locale));
     }

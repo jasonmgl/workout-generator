@@ -405,7 +405,7 @@ export const ARMS: readonly ExerciseDefinition[] = [
         impact: 'none',
         posture: 'support',
         space: 'mat',
-        joints: { elbows: 2, wrists: 2, knees: 1 },
+        joints: { wrists: 2, elbows: 2, shoulders: 1, knees: 1 },
         met: 3.5,
         secondsPerRep: 3,
         range: [6, 15],

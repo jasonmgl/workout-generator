@@ -52,6 +52,19 @@ export const GROUP_NAMES: Readonly<Record<MuscleGroupId, string>> = {
     calves: 'Mollets',
 };
 
+/** Les groupes avec leur article, pour les phrases : « Séance centrée sur le dos ». */
+export const GROUP_NAMES_WITH_ARTICLE: Readonly<Record<MuscleGroupId, string>> = {
+    chest: 'les pectoraux',
+    back: 'le dos',
+    shoulders: 'les épaules',
+    arms: 'les bras',
+    core: 'les abdominaux',
+    'lower-back': 'les lombaires',
+    glutes: 'les fessiers',
+    legs: 'les cuisses',
+    calves: 'les mollets',
+};
+
 export const REGION_NAMES: Readonly<Record<RegionId, string>> = {
     upper: 'Haut du corps',
     trunk: 'Tronc',
@@ -84,7 +97,7 @@ export const EQUIPMENT_NAMES: Readonly<Record<EquipmentId, string>> = {
     chair: 'Une chaise solide',
     'two-chairs': 'Deux chaises solides',
     table: 'Une table solide',
-    step: 'Une marche ou un step',
+    step: 'Une marche (ou un step)',
     door: 'Une porte',
     towel: 'Une serviette',
     broomstick: 'Un bâton ou un manche à balai',

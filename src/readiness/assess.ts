@@ -71,8 +71,10 @@ export function pulseStatus(readiness: ReadinessInput, date: string): PulseStatu
         .filter((reading) => daysBetween(reading.date, today) > 0 && reading.bpm > 0)
         .sort((a, b) => daysBetween(a.date, b.date))
         .slice(0, PULSE_BASELINE_WINDOW);
-    const baseline =
+    // La base est arrondie avant tout calcul : l’écart affiché se recalcule à partir des deux nombres affichés.
+    const exact =
         readiness.restingHeartRateBaseline ?? (previous.length >= PULSE_BASELINE_MINIMUM ? median(previous.map((reading) => reading.bpm)) : undefined);
+    const baseline = exact !== undefined ? Math.round(exact) : undefined;
     const gapOf = (bpm: number): number | undefined => (baseline ? Math.round(((bpm - baseline) / baseline) * 100) : undefined);
     const recentAlert = previous.slice(0, 2).some((reading) => (gapOf(reading.bpm) ?? 0) >= PULSE_ALERT_PERCENT);
     const bpm = readiness.restingHeartRate;
@@ -80,7 +82,7 @@ export function pulseStatus(readiness: ReadinessInput, date: string): PulseStatu
 
     return {
         ...(bpm !== undefined ? { today: bpm } : {}),
-        ...(baseline !== undefined ? { baseline: Math.round(baseline) } : {}),
+        ...(baseline !== undefined ? { baseline } : {}),
         ...(gap !== undefined ? { gap } : {}),
         recentAlert,
     };
@@ -151,13 +153,24 @@ export function assessReadiness(input: AssessInput): ReadinessAssessment {
     const weightSum = signals.reduce((sum, [, weight]) => sum + weight, 0);
     const score = weightSum > 0 ? signals.reduce((sum, [value, weight]) => sum + value * weight, 0) / weightSum : 0.65;
 
+    // Ce qui a fait baisser la note, pour le dire : « énergie basse, stress élevé ».
+    const low = [
+        ...(readiness.energy !== undefined && readiness.energy <= 2 ? ['signal-energy'] : []),
+        ...(readiness.sleepQuality !== undefined && readiness.sleepQuality <= 2 ? ['signal-sleep'] : []),
+        ...(readiness.sleepHours !== undefined && readiness.sleepHours < 6 ? ['signal-sleep-short'] : []),
+        ...(readiness.stress !== undefined && readiness.stress >= 4 ? ['signal-stress'] : []),
+        ...(readiness.soreness !== undefined && readiness.soreness >= 4 ? ['signal-soreness'] : []),
+        ...(readiness.motivation !== undefined && readiness.motivation <= 2 ? ['signal-motivation'] : []),
+    ].map((code) => reason(code, {}, locale).text);
+    const signalsText = low.length ? low.join(', ') : reason('signal-general', {}, locale).text;
+
     if (weightSum > 0) {
         if (score < 0.25) {
             level = 'recovery';
-            say('feeling-low');
+            say('feeling-low', { signals: signalsText });
         } else if (score < 0.45) {
             level = 'easy';
-            say('feeling-tired');
+            say('feeling-tired', { signals: signalsText });
         } else if (score >= 0.8 && (readiness.energy ?? 5) >= 4 && (readiness.soreness ?? 1) <= 2) {
             level = 'push';
             say('feeling-great');
@@ -214,7 +227,11 @@ export function assessReadiness(input: AssessInput): ReadinessAssessment {
     const cycle = readiness.cycle;
 
     if (cycle?.phase === 'menstrual') {
-        if ((cycle.symptoms ?? 0) >= 2) {
+        if ((cycle.symptoms ?? 0) >= 3) {
+            level = lowest(level, 'recovery');
+            maxImpact = 'none';
+            say('cycle-period-strong');
+        } else if ((cycle.symptoms ?? 0) >= 2) {
             level = lowest(level, 'easy');
             maxImpact = lowestImpact(maxImpact, 'low');
             say('cycle-period');
@@ -241,6 +258,20 @@ export function assessReadiness(input: AssessInput): ReadinessAssessment {
 
     if (joints.some((entry) => ['knees', 'ankles', 'hips', 'lower-back'].includes(entry.joint) && entry.severity >= 2)) {
         maxImpact = lowestImpact(maxImpact, 'low');
+    }
+
+    // Une douleur forte n’est pas une gêne : journée légère et moins de travail, ou mobilité seulement quand c’est
+    // le bas du dos ou plusieurs articulations à la fois.
+    const strong = (readiness.pain ?? []).filter((entry) => entry.severity >= 3);
+    const painful = (readiness.pain ?? []).filter((entry) => entry.severity >= 2);
+
+    if (strong.some((entry) => entry.joint === 'lower-back') || painful.length >= 2) {
+        level = lowest(level, 'recovery');
+        warn('joint-pain-strong', { joints: (strong.length ? strong : painful).map((entry) => JOINT_NAMES[entry.joint].toLowerCase()).join(', ') });
+    } else if (strong.length) {
+        level = lowest(level, 'easy');
+        volume *= 0.7;
+        warn('joint-pain-strong', { joints: strong.map((entry) => JOINT_NAMES[entry.joint].toLowerCase()).join(', ') });
     }
 
     if (readiness.sore?.length) {

@@ -152,6 +152,8 @@ export interface ExerciseDefinition {
     readonly measure: Measure;
     /** Se fait un côté après l'autre : le volume prescrit vaut pour chaque côté. */
     readonly unilateral?: boolean;
+    /** Se fait en alternant les côtés (dead bug, fentes alternées) : le volume prescrit compte les deux côtés, en nombre pair. */
+    readonly alternating?: boolean;
     /** Plusieurs articulations à la fois (squat, traction) plutôt qu'une seule (curl). */
     readonly compound: boolean;
     readonly impact: Impact;

@@ -246,6 +246,17 @@ var GROUP_NAMES = {
   legs: "Cuisses",
   calves: "Mollets"
 };
+var GROUP_NAMES_WITH_ARTICLE = {
+  chest: "les pectoraux",
+  back: "le dos",
+  shoulders: "les \xE9paules",
+  arms: "les bras",
+  core: "les abdominaux",
+  "lower-back": "les lombaires",
+  glutes: "les fessiers",
+  legs: "les cuisses",
+  calves: "les mollets"
+};
 var REGION_NAMES = {
   upper: "Haut du corps",
   trunk: "Tronc",
@@ -273,7 +284,7 @@ var EQUIPMENT_NAMES = {
   chair: "Une chaise solide",
   "two-chairs": "Deux chaises solides",
   table: "Une table solide",
-  step: "Une marche ou un step",
+  step: "Une marche (ou un step)",
   door: "Une porte",
   towel: "Une serviette",
   broomstick: "Un b\xE2ton ou un manche \xE0 balai",
@@ -376,17 +387,25 @@ var MESSAGES_FR = {
   // La forme du jour
   "declared-rest": "Jour de repos d\xE9clar\xE9 : un repos actif tout au plus, si l\u2019envie est l\xE0.",
   ill: "Malade : le corps a mieux \xE0 faire. Repos, et reprise une fois gu\xE9ri.",
-  "pulse-high": "Pouls du matin \xE0 +{gap} % de la base ({bpm} contre {baseline}) : repos aujourd\u2019hui.",
+  "pulse-high": "Pouls du matin \xE0 +{gap} % de l\u2019habitude ({bpm} contre {baseline}) : repos conseill\xE9.",
   "pulse-raised": "Pouls du matin un peu haut (+{gap} %) : s\xE9ance all\xE9g\xE9e.",
   "pulse-recovering": "Pouls revenu \xE0 la normale, mais on attend deux matins de suite avant de recharger : s\xE9ance l\xE9g\xE8re.",
   "no-rest-streak": "{days} jours d\u2019affil\xE9e sans repos : aujourd\u2019hui, on r\xE9cup\xE8re.",
-  "feeling-low": "Petite forme aujourd\u2019hui : s\xE9ance de r\xE9cup\xE9ration.",
-  "feeling-tired": "Forme moyenne : s\xE9ance all\xE9g\xE9e.",
+  "feeling-low": "Petite forme ({signals}) : mobilit\xE9 et \xE9tirements, sans charge.",
+  "feeling-tired": "Forme moyenne ({signals}) : s\xE9ance all\xE9g\xE9e.",
+  "signal-energy": "\xE9nergie basse",
+  "signal-sleep": "mauvaise nuit",
+  "signal-sleep-short": "nuit courte",
+  "signal-stress": "stress \xE9lev\xE9",
+  "signal-soreness": "courbatures",
+  "signal-motivation": "peu d\u2019envie",
+  "signal-general": "signaux bas",
   "feeling-great": "Grande forme : on peut pousser un peu.",
   "short-sleep": "Nuit courte ({hours} h) : pas d\u2019intensit\xE9 maximale aujourd\u2019hui.",
   "last-hard": "La derni\xE8re s\xE9ance a paru trop dure : celle-ci est all\xE9g\xE9e.",
   "last-easy": "La derni\xE8re s\xE9ance a paru facile : on monte d\u2019un cran.",
-  "cycle-period": "R\xE8gles avec des sympt\xF4mes : s\xE9ance douce, sans sauts.",
+  "cycle-period-strong": "R\xE8gles tr\xE8s douloureuses : mobilit\xE9 douce et respiration, rien de plus.",
+  "cycle-period": "R\xE8gles avec des sympt\xF4mes : s\xE9ance douce, sans sauts, \xE0 arr\xEAter au moindre inconfort.",
   "cycle-period-light": "Pendant les r\xE8gles : volume un peu r\xE9duit, \xE0 adapter au ressenti.",
   "cycle-luteal": "Fin de cycle : volume un peu plus doux.",
   "cycle-follicular": "D\xE9but de cycle : bon moment pour charger.",
@@ -394,7 +413,8 @@ var MESSAGES_FR = {
   "load-spike": "Charge de la semaine bien au-dessus de l\u2019habitude (\xD7{ratio}) : on l\xE8ve le pied pour \xE9viter la blessure.",
   "load-rising": "Charge de la semaine en hausse (\xD7{ratio}) : \xE0 surveiller.",
   comeback: "Reprise apr\xE8s {days} jours sans s\xE9ance : on repart une marche en dessous.",
-  "joint-pain": "\xC0 m\xE9nager : {joints}. Les exercices qui les chargent sont \xE9cart\xE9s.",
+  "joint-pain": "\xC0 m\xE9nager ({joints}) : les exercices qui chargent ces articulations sont \xE9cart\xE9s.",
+  "joint-pain-strong": "Douleur forte ({joints}) : arr\xEAter si elle augmente pendant la s\xE9ance, et demander un avis si elle dure.",
   sore: "Courbatures ({targets}) : on les laisse r\xE9cup\xE9rer.",
   "readiness-ignored": "S\xE9ance faite malgr\xE9 la forme du jour : \xE0 l\u2019\xE9coute de son corps, et on s\u2019arr\xEAte au moindre signal.",
   // La progression, exercice par exercice
@@ -403,10 +423,11 @@ var MESSAGES_FR = {
   "progress-easier": "Variante plus facile que d\u2019habitude : de la marge aujourd\u2019hui.",
   "progress-more": "{from} \u2192 {to}{unit} : un cran de plus que la derni\xE8re fois.",
   "progress-hold": "M\xEAme cible que la derni\xE8re fois : on la valide avant de monter.",
+  "progress-build": "Sous la fourchette vis\xE9e : des s\xE9ries de {value}{unit}, une de plus, pour monter.",
   "progress-add-set": "Haut de la fourchette atteint : une s\xE9rie de plus.",
   "progress-add-load": "Haut de la fourchette atteint : la charge au-dessus.",
   "progress-load-up": "Haut de la fourchette atteint : {from} \u2192 {to} kg, et on repart du bas.",
-  "progress-vary": "Plateau ({sessions} s\xE9ances sans progr\xE8s) : rythme lent pour relancer.",
+  "progress-vary": "Plateau ({sessions} s\xE9ances sans progr\xE8s) : plus lent, un peu moins de r\xE9p\xE9titions et une s\xE9rie de plus, pour relancer.",
   "progress-comeback": "Reprise : un cran en dessous de la derni\xE8re fois.",
   "load-guess": "Charge indicative : l\u2019ajuster pour garder {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions} en r\xE9serve.",
   "load-choose": "Choisir une charge qui laisse {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions} en r\xE9serve.",
@@ -432,6 +453,10 @@ var MESSAGES_FR = {
   "type-split-upper": "Le haut du corps est le plus en retard cette semaine.",
   "type-split-lower": "Le bas du corps est le plus en retard cette semaine.",
   "type-full-body": "Tout est frais : corps entier.",
+  "type-full-body-default": "Corps entier : chaque grand groupe a sa part.",
+  "type-plan-adapted-legs": "Plan adapt\xE9 : jambes encore charg\xE9es, haut du corps aujourd\u2019hui.",
+  "type-plan-adapted-upper": "Plan adapt\xE9 : haut du corps encore charg\xE9, bas du corps aujourd\u2019hui.",
+  "type-focus-groups": "S\xE9ance centr\xE9e sur {groups}, comme demand\xE9.",
   // Les noms des séances
   title: "{type} \xB7 {minutes} min",
   "title-rest": "Repos actif \xB7 {minutes} min",
@@ -468,25 +493,35 @@ var MESSAGES_FR = {
   "format-straight": "S\xE9ries classiques : toutes les s\xE9ries d\u2019un exercice, puis le suivant.",
   "format-superset": "Exercices par deux, en alternance : plus de travail dans le m\xEAme temps.",
   "format-circuit": "En circuit : un tour de tous les exercices, et on recommence.",
+  "format-circuit-once": "Les exercices s\u2019encha\xEEnent, en un seul passage.",
   "format-amrap": "Le plus de tours possible en {minutes} min, sans rien l\xE2cher sur la technique.",
   "format-emom": "Une s\xE9rie au d\xE9but de chaque minute, le reste de la minute pour souffler.",
   "format-ladder": "En \xE9chelle : 1, 2, 3 r\xE9p\xE9titions\u2026, et on repart d\u2019en bas.",
   "format-intervals": "{work} s d\u2019effort, {rest} s de r\xE9cup\xE9ration.",
   "format-tabata": "Tabata : huit fois 20 s d\u2019effort et 10 s de repos.",
   "format-flow": "Les mouvements s\u2019encha\xEEnent, sans compter.",
+  "format-steady": "En continu, \xE0 une allure o\xF9 l\u2019on peut encore parler.",
   finisher: "Un peu de cardio pour finir.",
   "cardio-steady": "En continu, \xE0 une allure o\xF9 l\u2019on peut encore parler.",
   // Les exercices
-  "item-focus": "Pour les {group}, comme demand\xE9.",
+  "item-focus": "Pour {group}, comme demand\xE9.",
   "item-favorite": "Un exercice favori.",
   "item-need": "{group} : en retard cette semaine.",
   "warmup-pulse": "Pour faire monter le pouls doucement.",
   "warmup-ramp": "Version facile du premier exercice, pour pr\xE9parer le geste.",
+  "warmup-ramp-light": "Le premier exercice avec une charge l\xE9g\xE8re (environ la moiti\xE9), pour pr\xE9parer le geste.",
+  "warmup-intervals": "Les exercices du jour \xE0 mi-vitesse, pour pr\xE9parer les articulations.",
+  "warmup-steady": "Sur la m\xEAme machine, tr\xE8s facile, pour monter en temp\xE9rature.",
+  "cooldown-easy": "On continue, tr\xE8s facile, pendant que le pouls redescend.",
   "cooldown-walk": "On continue de bouger pendant que le pouls redescend.",
   "cooldown-breathing": "Respiration lente, pour finir au calme.",
   // Ce qui manque
   "slot-empty": "Rien de faisable pour \xAB {pattern} \xBB aujourd\u2019hui.",
   "slot-empty-equipment": "Rien pour \xAB {pattern} \xBB avec ce mat\xE9riel : {equipment} suffirait.",
+  "slot-empty-joint": "Rien pour \xAB {pattern} \xBB qui m\xE9nage aujourd\u2019hui : {joints}.",
+  "slot-fallback-equipment": "Pas de quoi faire un vrai \xAB {pattern} \xBB : le haut du dos travaille au sol. {equipment} suffirait.",
+  "session-lighter": "S\xE9ance all\xE9g\xE9e : moins de travail que d\u2019habitude, le reste du temps pour r\xE9cup\xE9rer.",
+  "list-or": "ou",
   "nothing-feasible": "Aucun exercice faisable avec ces contraintes : all\xE9ger les douleurs d\xE9clar\xE9es ou ajouter du mat\xE9riel.",
   // La séance en texte
   "text-reps": "{n} {n|r\xE9p\xE9tition|r\xE9p\xE9titions}",
@@ -570,14 +605,15 @@ var sleepHoursScore = (hours) => Math.min(1, Math.max(0, (hours - 5) / 3));
 function pulseStatus(readiness, date) {
   const today = dayOf(date);
   const previous = [...readiness.heartRateHistory ?? []].filter((reading) => daysBetween(reading.date, today) > 0 && reading.bpm > 0).sort((a, b) => daysBetween(a.date, b.date)).slice(0, PULSE_BASELINE_WINDOW);
-  const baseline = readiness.restingHeartRateBaseline ?? (previous.length >= PULSE_BASELINE_MINIMUM ? median(previous.map((reading) => reading.bpm)) : void 0);
+  const exact = readiness.restingHeartRateBaseline ?? (previous.length >= PULSE_BASELINE_MINIMUM ? median(previous.map((reading) => reading.bpm)) : void 0);
+  const baseline = exact !== void 0 ? Math.round(exact) : void 0;
   const gapOf = (bpm2) => baseline ? Math.round((bpm2 - baseline) / baseline * 100) : void 0;
   const recentAlert = previous.slice(0, 2).some((reading) => (gapOf(reading.bpm) ?? 0) >= PULSE_ALERT_PERCENT);
   const bpm = readiness.restingHeartRate;
   const gap = bpm !== void 0 ? gapOf(bpm) : void 0;
   return {
     ...bpm !== void 0 ? { today: bpm } : {},
-    ...baseline !== void 0 ? { baseline: Math.round(baseline) } : {},
+    ...baseline !== void 0 ? { baseline } : {},
     ...gap !== void 0 ? { gap } : {},
     recentAlert
   };
@@ -620,13 +656,22 @@ function assessReadiness(input) {
   const known = signals.length > 0 || pulse.today !== void 0 || readiness.ill !== void 0 || readiness.cycle !== void 0 || (readiness.sore?.length ?? 0) > 0 || (readiness.pain?.length ?? 0) > 0;
   const weightSum = signals.reduce((sum, [, weight]) => sum + weight, 0);
   const score2 = weightSum > 0 ? signals.reduce((sum, [value, weight]) => sum + value * weight, 0) / weightSum : 0.65;
+  const low = [
+    ...readiness.energy !== void 0 && readiness.energy <= 2 ? ["signal-energy"] : [],
+    ...readiness.sleepQuality !== void 0 && readiness.sleepQuality <= 2 ? ["signal-sleep"] : [],
+    ...readiness.sleepHours !== void 0 && readiness.sleepHours < 6 ? ["signal-sleep-short"] : [],
+    ...readiness.stress !== void 0 && readiness.stress >= 4 ? ["signal-stress"] : [],
+    ...readiness.soreness !== void 0 && readiness.soreness >= 4 ? ["signal-soreness"] : [],
+    ...readiness.motivation !== void 0 && readiness.motivation <= 2 ? ["signal-motivation"] : []
+  ].map((code) => reason(code, {}, locale).text);
+  const signalsText = low.length ? low.join(", ") : reason("signal-general", {}, locale).text;
   if (weightSum > 0) {
     if (score2 < 0.25) {
       level = "recovery";
-      say("feeling-low");
+      say("feeling-low", { signals: signalsText });
     } else if (score2 < 0.45) {
       level = "easy";
-      say("feeling-tired");
+      say("feeling-tired", { signals: signalsText });
     } else if (score2 >= 0.8 && (readiness.energy ?? 5) >= 4 && (readiness.soreness ?? 1) <= 2) {
       level = "push";
       say("feeling-great");
@@ -672,7 +717,11 @@ function assessReadiness(input) {
   }
   const cycle = readiness.cycle;
   if (cycle?.phase === "menstrual") {
-    if ((cycle.symptoms ?? 0) >= 2) {
+    if ((cycle.symptoms ?? 0) >= 3) {
+      level = lowest(level, "recovery");
+      maxImpact = "none";
+      say("cycle-period-strong");
+    } else if ((cycle.symptoms ?? 0) >= 2) {
       level = lowest(level, "easy");
       maxImpact = lowestImpact(maxImpact, "low");
       say("cycle-period");
@@ -695,6 +744,16 @@ function assessReadiness(input) {
   }
   if (joints.some((entry) => ["knees", "ankles", "hips", "lower-back"].includes(entry.joint) && entry.severity >= 2)) {
     maxImpact = lowestImpact(maxImpact, "low");
+  }
+  const strong = (readiness.pain ?? []).filter((entry) => entry.severity >= 3);
+  const painful = (readiness.pain ?? []).filter((entry) => entry.severity >= 2);
+  if (strong.some((entry) => entry.joint === "lower-back") || painful.length >= 2) {
+    level = lowest(level, "recovery");
+    warn("joint-pain-strong", { joints: (strong.length ? strong : painful).map((entry) => JOINT_NAMES[entry.joint].toLowerCase()).join(", ") });
+  } else if (strong.length) {
+    level = lowest(level, "easy");
+    volume *= 0.7;
+    warn("joint-pain-strong", { joints: strong.map((entry) => JOINT_NAMES[entry.joint].toLowerCase()).join(", ") });
   }
   if (readiness.sore?.length) {
     const targets = [...new Set(readiness.sore.map((entry) => entry.target))];
@@ -3811,7 +3870,7 @@ var ARMS = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { elbows: 2, wrists: 2, knees: 1 },
+    joints: { wrists: 2, elbows: 2, shoulders: 1, knees: 1 },
     met: 3.5,
     secondsPerRep: 3,
     range: [6, 15],
@@ -5375,7 +5434,7 @@ var HINGE = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 1, knees: 1 },
+    joints: { wrists: 1, shoulders: 1, knees: 1 },
     met: 3,
     secondsPerRep: 2,
     range: [12, 25],
@@ -5604,7 +5663,7 @@ var HINGE = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 1, knees: 1 },
+    joints: { wrists: 1, shoulders: 1, knees: 1 },
     met: 3,
     secondsPerRep: 2,
     range: [10, 20],
@@ -5726,7 +5785,7 @@ var HINGE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 2, knees: 2, hips: 1 },
+    joints: { shoulders: 2, hips: 1, knees: 2 },
     met: 3.8,
     range: [10, 30],
     tags: ["isometric"]
@@ -5902,7 +5961,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 1, elbows: 1 },
+    joints: { elbows: 1, shoulders: 1 },
     met: 3.5,
     range: [20, 60],
     warmupFor: ["anti-extension"],
@@ -5939,7 +5998,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 2, elbows: 1, "lower-back": 1 },
+    joints: { elbows: 1, shoulders: 2, "lower-back": 1 },
     met: 3.8,
     range: [15, 40],
     harder: ["ab-wheel-rollout-kneeling"],
@@ -5975,7 +6034,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 2, elbows: 1 },
+    joints: { elbows: 1, shoulders: 2 },
     met: 3.8,
     secondsPerRep: 3,
     range: [8, 20]
@@ -6009,7 +6068,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 1, elbows: 1 },
+    joints: { elbows: 1, shoulders: 1 },
     met: 4,
     range: [10, 30],
     tags: ["isometric"]
@@ -6027,7 +6086,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 2, elbows: 1, "lower-back": 1 },
+    joints: { elbows: 1, shoulders: 2, "lower-back": 1 },
     met: 4,
     secondsPerRep: 3,
     range: [6, 15]
@@ -6045,7 +6104,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 2, elbows: 1, "lower-back": 1 },
+    joints: { elbows: 1, shoulders: 2, "lower-back": 1 },
     met: 4,
     secondsPerRep: 3,
     range: [6, 16]
@@ -6063,7 +6122,7 @@ var CORE = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 1 },
+    joints: { wrists: 1, shoulders: 1 },
     met: 3,
     secondsPerRep: 4,
     range: [8, 16],
@@ -6197,7 +6256,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 2, elbows: 1 },
+    joints: { elbows: 1, shoulders: 2 },
     met: 3.5,
     range: [15, 45],
     tags: ["isometric"]
@@ -6215,7 +6274,7 @@ var CORE = [
     impact: "none",
     posture: "support",
     space: "mat",
-    joints: { shoulders: 2, elbows: 1 },
+    joints: { elbows: 1, shoulders: 2 },
     met: 3.8,
     secondsPerRep: 2.5,
     range: [8, 15]
@@ -8192,7 +8251,7 @@ var MOBILITY = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 1 },
+    joints: { wrists: 1, shoulders: 1 },
     met: 2.5,
     secondsPerRep: 3,
     range: [6, 10],
@@ -8228,7 +8287,7 @@ var MOBILITY = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 1 },
+    joints: { wrists: 1, shoulders: 1 },
     met: 2.3,
     secondsPerRep: 4,
     range: [6, 12],
@@ -8265,7 +8324,7 @@ var MOBILITY = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 1 },
+    joints: { wrists: 1, shoulders: 1 },
     met: 2,
     range: [45, 120],
     warmupFor: ["horizontal-push", "vertical-push", "anti-extension", "full-body", "grip"]
@@ -8405,7 +8464,7 @@ var MOBILITY = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { hips: 2, knees: 2 },
+    joints: { wrists: 1, shoulders: 1, hips: 2, knees: 2 },
     met: 2.5,
     secondsPerRep: 3,
     range: [8, 15],
@@ -9038,7 +9097,7 @@ var STRETCH = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { hips: 2, knees: 2 },
+    joints: { wrists: 1, shoulders: 1, hips: 2, knees: 2 },
     met: 2.5,
     range: [30, 90]
   },
@@ -9104,7 +9163,7 @@ var STRETCH = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { hips: 2, knees: 2 },
+    joints: { wrists: 1, shoulders: 1, hips: 2, knees: 2 },
     met: 2.5,
     range: [30, 90]
   },
@@ -9342,7 +9401,7 @@ var STRETCH = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { shoulders: 2 },
+    joints: { wrists: 1, shoulders: 2 },
     met: 2.3,
     range: [30, 60],
     easier: ["child-pose"]
@@ -9519,7 +9578,7 @@ var STRETCH = [
     impact: "none",
     posture: "floor",
     space: "mat",
-    joints: { wrists: 2 },
+    joints: { wrists: 2, shoulders: 1 },
     met: 2,
     range: [20, 45]
   },
@@ -19716,7 +19775,7 @@ function describeTarget(item2, locale = "fr") {
 }
 function describeItem(item2, block, locale) {
   const parts = [describeTarget(item2, locale)];
-  if (block.format === "straight" || block.format === "ladder") {
+  if (block.format === "straight" || block.format === "ladder" || block.format === "steady") {
     if (!item2.perSet && item2.sets > 1) parts.unshift(`${item2.sets} \xD7`);
     if (item2.sets > 1 && item2.restSeconds > 0) parts.push(message("text-rest", { rest: formatSeconds(item2.restSeconds) }, locale));
   }
@@ -19776,7 +19835,7 @@ function blockSteps(block, locale) {
   const steps = [];
   const rounds = Math.max(1, block.rounds);
   const roundContext = (round) => rounds > 1 ? `${block.title} \xB7 ${message("timeline-round", { n: round, total: rounds }, locale)}` : block.title;
-  if (block.format === "straight" || block.format === "ladder") {
+  if (block.format === "straight" || block.format === "ladder" || block.format === "steady") {
     block.items.forEach((item2, index) => {
       const values = item2.perSet?.length ? item2.perSet : Array.from({ length: item2.sets }, () => item2.target.value);
       values.forEach((value, set) => {
@@ -19848,7 +19907,7 @@ function exercise(item2, value = item2.target.value, seconds) {
 }
 var rest = (seconds) => seconds > 0 ? [{ type: "rest", seconds: Math.round(seconds) }] : [];
 function blockChildren(block) {
-  if (block.format === "straight" || block.format === "ladder") {
+  if (block.format === "straight" || block.format === "ladder" || block.format === "steady") {
     return block.items.map((item2) => {
       if (item2.perSet?.length) {
         return { type: "loop", repeat: 1, label: item2.name, children: item2.perSet.flatMap((value) => [exercise(item2, value), ...rest(item2.restSeconds)]) };
@@ -19870,7 +19929,7 @@ function blockChildren(block) {
 function toTree(session) {
   return session.blocks.map((block) => {
     const children = blockChildren(block);
-    const between = block.format === "straight" || block.format === "ladder" ? [] : rest(block.restBetweenRounds);
+    const between = block.format === "straight" || block.format === "ladder" || block.format === "steady" ? [] : rest(block.restBetweenRounds);
     return {
       type: "loop",
       repeat: Math.max(1, block.rounds),
@@ -19899,10 +19958,13 @@ function workSeconds(definition, target, tempo, value = target.value) {
   }
   return value * (tempo ? repSeconds(tempo) : definition.secondsPerRep ?? 3) * sides;
 }
+function approachSeconds(item2) {
+  return (item2.warmupSets ?? []).reduce((sum, entry) => sum + workSeconds(item2.definition, item2.target, item2.tempo, entry.reps) + 45, 0);
+}
 function straightSeconds(item2) {
   const work = item2.perSet ? item2.perSet.reduce((sum, value) => sum + workSeconds(item2.definition, item2.target, item2.tempo, value), 0) : item2.sets * workSeconds(item2.definition, item2.target, item2.tempo);
   const sets = item2.perSet?.length ?? item2.sets;
-  return work + Math.max(0, sets - 1) * item2.restSeconds + TRANSITION_SECONDS;
+  return approachSeconds(item2) + work + Math.max(0, sets - 1) * item2.restSeconds + TRANSITION_SECONDS;
 }
 function blockSeconds(block) {
   const rounds = Math.max(1, block.rounds);
@@ -19910,11 +19972,12 @@ function blockSeconds(block) {
   const between = (block.restBetweenItems ?? 0) * Math.max(0, block.items.length - 1);
   switch (block.format) {
     case "straight":
+    case "steady":
       return block.items.reduce((sum, item2) => sum + straightSeconds(item2), 0);
     case "superset":
     case "circuit":
     case "flow":
-      return rounds * (oneRound + between + TRANSITION_SECONDS * (block.format === "flow" ? 0.3 : 0.5)) + (rounds - 1) * block.restBetweenRounds;
+      return block.items.reduce((sum, item2) => sum + approachSeconds(item2), 0) + rounds * (oneRound + between + TRANSITION_SECONDS * (block.format === "flow" ? 0.3 : 0.5)) + (rounds - 1) * block.restBetweenRounds;
     case "ladder":
       return block.items.reduce((sum, item2) => sum + straightSeconds(item2), 0);
     case "emom":
@@ -19931,7 +19994,7 @@ function plannedBlockSeconds(block) {
   return blockSeconds(block);
 }
 function itemSeconds(item2, block) {
-  if (block.format === "straight" || block.format === "ladder") {
+  if (block.format === "straight" || block.format === "ladder" || block.format === "steady") {
     return straightSeconds(item2);
   }
   if (block.format === "tabata" || block.format === "intervals") {
@@ -19957,6 +20020,7 @@ function toSessionItem(item2, block, context) {
     equipment,
     ...item2.progression ? { progression: item2.progression } : {},
     ...item2.note ? { note: item2.note } : {},
+    ...item2.warmupSets ? { warmupSets: item2.warmupSets } : {},
     reasons: item2.reasons,
     setSeconds: Math.round(block.format === "tabata" || block.format === "intervals" ? block.workSeconds ?? item2.target.value : workSeconds(item2.definition, item2.target, item2.tempo)),
     estimatedSeconds: Math.round(itemSeconds(item2, block))
@@ -19999,6 +20063,14 @@ function regionRecovery(region, context) {
   const large = MUSCLES.filter((muscle) => MUSCLE_INFO[muscle].size === "large" && GROUP_REGION[MUSCLE_INFO[muscle].group] === region);
   return Math.min(...large.map((muscle) => context.body.muscles[muscle].recovery));
 }
+var PLAN_REGION = {
+  "full-body": "lower",
+  lower: "lower",
+  hiit: "lower",
+  upper: "upper",
+  push: "upper",
+  pull: "upper"
+};
 var UPPER_PUSH = ["chest", "shoulders"];
 var UPPER_PULL = ["back"];
 function typeForFocus(groups) {
@@ -20026,11 +20098,18 @@ function chooseType(context) {
   if (readiness.level === "recovery" && !request.ignoreReadiness) {
     return { type: "mobility", rest: false, reasons: [say("type-recovery")] };
   }
+  let adapted = false;
   if (planned?.type) {
-    return { type: planned.type, rest: false, reasons: [say("type-plan")] };
+    const region = PLAN_REGION[planned.type];
+    if (!region || regionRecovery(region, context) >= FRESH_ENOUGH) {
+      return { type: planned.type, rest: false, reasons: [say("type-plan")] };
+    }
+    adapted = true;
   }
   if (context.focusGroups.length) {
-    return { type: typeForFocus(context.focusGroups), rest: false, reasons: [say("type-focus")] };
+    const groups = context.focusGroups.map((group) => GROUP_NAMES_WITH_ARTICLE[group]);
+    const named = groups.length > 1 ? `${groups.slice(0, -1).join(", ")} et ${groups[groups.length - 1]}` : groups[0];
+    return { type: typeForFocus(context.focusGroups), rest: false, reasons: [say("type-focus-groups", { groups: named })] };
   }
   const upper = regionRecovery("upper", context);
   const lower = regionRecovery("lower", context);
@@ -20049,10 +20128,11 @@ function chooseType(context) {
     return { type: "mobility", rest: false, reasons: [say("type-all-tired")] };
   }
   if (lowerTired) {
-    return { type: "upper", rest: false, reasons: [say(recentActivity && !avoidsLower ? "type-legs-tired-activity" : avoidsLower ? "type-avoid-legs" : "type-legs-tired")] };
+    const code = adapted ? "type-plan-adapted-legs" : recentActivity && !avoidsLower ? "type-legs-tired-activity" : avoidsLower ? "type-avoid-legs" : "type-legs-tired";
+    return { type: "upper", rest: false, reasons: [say(code)] };
   }
   if (upperTired) {
-    return { type: "lower", rest: false, reasons: [say(avoidsUpper ? "type-avoid-upper" : "type-upper-tired")] };
+    return { type: "lower", rest: false, reasons: [say(adapted ? "type-plan-adapted-upper" : avoidsUpper ? "type-avoid-upper" : "type-upper-tired")] };
   }
   const cardioGoal = context.goal === "fat-loss" || context.goal === "endurance";
   const conditioningThisWeek = pastSessions(context.input.history ?? [], context.date).filter((session) => daysBetween(session.date, context.date) <= 6).some(
@@ -20068,7 +20148,8 @@ function chooseType(context) {
     };
     return behind("upper") >= behind("lower") ? { type: "upper", rest: false, reasons: [say("type-split-upper")] } : { type: "lower", rest: false, reasons: [say("type-split-lower")] };
   }
-  return { type: "full-body", rest: false, reasons: [say("type-full-body")] };
+  const signals = context.readiness.reasons.length > 0 || context.readiness.joints.length > 0;
+  return { type: "full-body", rest: false, reasons: [say(load.sessions7 > 0 && !signals ? "type-full-body" : "type-full-body-default")] };
 }
 
 // src/history/progress.ts
@@ -20311,6 +20392,8 @@ var DEFAULT_MINUTES = 30;
 var MIN_MINUTES = 5;
 var MAX_MINUTES = 120;
 var IMPACT_ORDER3 = ["none", "low", "high"];
+var UPPER_GROUPS = ["chest", "back", "shoulders", "arms"];
+var LOWER_GROUPS = ["glutes", "legs", "calves"];
 function groupsOf(muscles) {
   return MUSCLE_GROUPS.filter((group) => [...muscles].some((muscle) => MUSCLE_INFO[muscle].group === group));
 }
@@ -20339,6 +20422,19 @@ function buildContext(input) {
   const quietImpact = request.quiet ? "low" : "high";
   const maxImpact = IMPACT_ORDER3[Math.min(IMPACT_ORDER3.indexOf(readiness.maxImpact), IMPACT_ORDER3.indexOf(quietImpact))];
   const jointTolerance = new Map(readiness.joints.map((entry) => [entry.joint, 3 - entry.severity]));
+  const avoidGroups = MUSCLE_GROUPS.filter((group) => musclesOfGroup(group).every((muscle) => avoidMuscles.has(muscle)));
+  const avoidPostures = /* @__PURE__ */ new Set();
+  const spare = (joints) => {
+    for (const joint of joints) jointTolerance.set(joint, Math.min(jointTolerance.get(joint) ?? 3, 1));
+  };
+  if (UPPER_GROUPS.every((group) => avoidGroups.includes(group))) {
+    spare(["shoulders", "elbows", "wrists"]);
+    avoidPostures.add("support");
+    avoidPostures.add("hanging");
+  }
+  if (LOWER_GROUPS.every((group) => avoidGroups.includes(group))) {
+    spare(["knees", "hips", "ankles"]);
+  }
   const exerciseRecency = /* @__PURE__ */ new Map();
   const familyRecency = /* @__PURE__ */ new Map();
   for (const session of pastSessions(history, input.date)) {
@@ -20383,12 +20479,13 @@ function buildContext(input) {
     minutes,
     focusGroups: groupsOf(focusMuscles),
     focusMuscles,
-    avoidGroups: MUSCLE_GROUPS.filter((group) => musclesOfGroup(group).every((muscle) => avoidMuscles.has(muscle))),
+    avoidGroups,
     avoidMuscles,
     exclude: /* @__PURE__ */ new Set([...request.exclude ?? [], ...profile.dislikes ?? []]),
     favorites: new Set(profile.favorites ?? []),
     maxImpact,
     jointTolerance,
+    avoidPostures,
     exerciseRecency,
     familyRecency,
     needs
@@ -20408,7 +20505,7 @@ function within(wanted, allowed, span) {
   }
   return [low, high];
 }
-function targetRange(definition, settings) {
+function targetRange(definition, settings, role = "main") {
   const span = MIN_SPAN[definition.measure];
   if (definition.measure === "distance") {
     return [definition.range[0], definition.range[1]];
@@ -20419,13 +20516,16 @@ function targetRange(definition, settings) {
     if (definition.kind === "mobility" || definition.kind === "stretch" || definition.kind === "breathing") {
       return [definition.range[0], definition.range[1]];
     }
-    return within(settings.reps, definition.range, span);
+    const [low, high] = settings.reps;
+    const wanted = role === "accessory" ? [Math.max(low, 8), Math.max(high, 12)] : role === "core" ? [Math.max(low, 8), Math.max(high, 15)] : settings.reps;
+    return within(wanted, definition.range, span);
   }
   if (definition.kind === "conditioning" || definition.kind === "power") {
     return within([settings.intervals.work, settings.intervals.work + 15], definition.range, span);
   }
   if (definition.kind === "strength" || definition.kind === "skill") {
-    return within(settings.hold, definition.range, span);
+    const [low, high] = settings.hold;
+    return within(role === "core" ? [Math.max(low, 20), Math.max(high, 45)] : settings.hold, definition.range, span);
   }
   return [definition.range[0], definition.range[1]];
 }
@@ -20444,11 +20544,18 @@ var LOAD_RATIO = {
   "calf-raise": { dumbbells: 0.15, kettlebell: 0.2 },
   "full-body": { dumbbells: 0.1, kettlebell: 0.2, "medicine-ball": 0.08, sandbag: 0.2 }
 };
-var LEVEL_LOAD = { beginner: 0.6, intermediate: 1, advanced: 1.3, expert: 1.5 };
-function nearestLoad(loads, wanted) {
+var LEVEL_LOAD = { beginner: 0.7, intermediate: 1, advanced: 1.35, expert: 1.6 };
+function closestLoad(loads, wanted) {
   const lighter = loads.filter((load) => load <= wanted);
-  return lighter.length ? lighter[lighter.length - 1] : loads[0];
+  const heavier = loads.filter((load) => load > wanted);
+  const below = lighter[lighter.length - 1];
+  const above = heavier[0];
+  if (above !== void 0 && (below === void 0 || above - wanted <= wanted - below && above <= wanted * 1.15)) {
+    return above;
+  }
+  return below ?? loads[0];
 }
+var repsFactor = (reps, rir) => (1 + 10 / 30) / (1 + (reps + rir) / 30);
 function onPlateau(performances) {
   if (performances.length < PLATEAU_SESSIONS) {
     return false;
@@ -20457,24 +20564,43 @@ function onPlateau(performances) {
   const oldest = totals[PLATEAU_SESSIONS - 1];
   return totals.slice(0, PLATEAU_SESSIONS - 1).every((total) => total <= oldest);
 }
+function previousInFamily(definition, context) {
+  let found;
+  for (const member of context.library.family(definition.family)) {
+    if (member.difficulty >= definition.difficulty || member.measure !== definition.measure) continue;
+    const performance = performancesOf(context.input.history ?? [], member, context.date)[0];
+    if (performance && (!found || performance.date > found.performance.date)) {
+      found = { definition: member, performance };
+    }
+  }
+  return found;
+}
+var even = (value) => Math.max(2, Math.ceil(value / 2) * 2);
 function prescribe(definition, role, context) {
   const { settings, readiness, locale } = context;
-  const range = targetRange(definition, settings);
+  const range = targetRange(definition, settings, role);
   const [low, high] = range;
   const performances = performancesOf(context.input.history ?? [], definition, context.date);
   const familyCapacity = context.capacity.families[definition.family];
   const unit = definition.measure === "time" ? " s" : definition.measure === "distance" ? " m" : "";
   const increment = definition.measure === "reps" ? 1 : definition.measure === "time" ? 5 : 50;
+  const [fewest, most] = settings.sets[context.level];
   const reasons = [];
   let step;
   let value;
   let tempo;
   let progressionText;
+  let floor = low;
+  let extraSets = 0;
+  let firstExposure = false;
   const last = performances[0];
   if (!last) {
+    const before = familyCapacity !== void 0 && definition.difficulty > familyCapacity ? previousInFamily(definition, context) : void 0;
     if (familyCapacity !== void 0 && definition.difficulty > familyCapacity) {
       step = "harder";
-      value = low;
+      firstExposure = true;
+      value = before ? Math.round(before.performance.best * Math.max(0.4, 1 - 0.25 * (definition.difficulty - before.definition.difficulty))) : low;
+      floor = Math.min(low, Math.max(definition.range[0], value));
       progressionText = reason("progress-harder", {}, locale).text;
     } else if (familyCapacity !== void 0 && definition.difficulty < familyCapacity) {
       step = "easier";
@@ -20482,8 +20608,13 @@ function prescribe(definition, role, context) {
       progressionText = reason("progress-easier", {}, locale).text;
     } else {
       step = "start";
+      firstExposure = true;
       value = Math.round(low + (high - low) * 0.25);
       progressionText = reason("progress-start", {}, locale).text;
+    }
+    if (definition.tags?.includes("eccentric")) {
+      value = Math.min(value, definition.range[0] + 1);
+      floor = Math.min(floor, value);
     }
   } else {
     const values = last.sets.map((set) => valueOf(set, definition.measure));
@@ -20491,13 +20622,16 @@ function prescribe(definition, role, context) {
     const average = values.reduce((sum, entry) => sum + entry, 0) / values.length;
     if (onPlateau(performances)) {
       step = "vary";
-      value = Math.min(high, Math.max(low, Math.round(average)));
-      tempo = "slow";
+      value = Math.max(1, Math.round(average * 0.8));
+      floor = Math.min(low, value);
+      extraSets = 1;
+      tempo = definition.measure === "reps" ? "slow" : void 0;
       progressionText = reason("progress-vary", { sessions: PLATEAU_SESSIONS }, locale).text;
     } else if (lowest2 >= high) {
       const loadable = LOADABLE_EQUIPMENT.some((id) => context.inventory.loadsOf(id).length > 0 && definition.equipment?.some((group) => group.includes(id)));
       step = loadable ? "add-load" : "add-set";
       value = high;
+      extraSets = loadable ? 0 : 1;
       progressionText = reason(loadable ? "progress-add-load" : "progress-add-set", {}, locale).text;
     } else if (lowest2 >= low) {
       step = "more";
@@ -20505,24 +20639,33 @@ function prescribe(definition, role, context) {
       progressionText = reason("progress-more", { from: Math.round(average), to: value, unit }, locale).text;
     } else {
       step = "hold";
-      value = Math.max(low, Math.min(high, Math.round(average)));
-      progressionText = reason("progress-hold", {}, locale).text;
+      value = Math.max(1, Math.round(average));
+      floor = Math.min(low, value);
+      extraSets = value < low ? 1 : 0;
+      progressionText = reason(value < low ? "progress-build" : "progress-hold", { value, unit }, locale).text;
     }
   }
   if (readiness.reasons.some((entry) => entry.code === "comeback")) {
     step = "comeback";
-    value = Math.max(low, Math.round(value * 0.85));
+    firstExposure = true;
+    value = Math.max(1, Math.round(value * 0.85));
+    floor = Math.min(floor, value);
     progressionText = reason("progress-comeback", {}, locale).text;
   }
   if (readiness.level === "easy" || readiness.level === "recovery") {
-    value = Math.max(low, Math.round(value * 0.9));
+    value = Math.max(1, Math.round(value * 0.9));
+    floor = Math.min(floor, value);
   }
-  const [fewest, most] = settings.sets[context.level];
+  const volume = Math.min(1, readiness.volume);
   let sets = role === "main" || role === "skill" ? most : fewest;
-  if (step === "start" || step === "harder") sets = fewest;
-  if (step === "add-set") sets = Math.min(most + 1, sets + 1);
-  sets = Math.max(1, Math.round(sets * readiness.volume));
-  let restSeconds = definition.compound ? settings.rest.compound : settings.rest.isolation;
+  if (firstExposure) sets = fewest;
+  if (firstExposure && definition.tags?.includes("eccentric")) sets = Math.min(sets, 2);
+  sets = Math.max(1, Math.round((sets + extraSets) * readiness.volume));
+  const usual = role === "core" ? fewest + 1 : role === "accessory" ? most : most + 1;
+  const ceiling = firstExposure && definition.tags?.includes("eccentric") ? sets : step === "harder" || step === "comeback" ? Math.min(usual, fewest + 1) : step === "start" ? Math.min(usual, most) : usual;
+  const maxSets = Math.max(sets, Math.round(Math.max(sets, ceiling + extraSets) * volume));
+  let restSeconds = role === "main" && definition.compound ? settings.rest.compound : settings.rest.isolation;
+  if (role === "core") restSeconds = Math.min(restSeconds, 45);
   if (definition.kind === "power") restSeconds = Math.max(restSeconds, 60);
   if (definition.kind === "skill") restSeconds = Math.max(restSeconds, 90);
   if (readiness.level === "easy" || readiness.level === "recovery") restSeconds += 15;
@@ -20539,12 +20682,13 @@ function prescribe(definition, role, context) {
   const loadEquipment = used.find((id) => LOADABLE_EQUIPMENT.includes(id));
   let load;
   let note;
+  let warmupSets;
   if (loadEquipment) {
     const loads = context.inventory.loadsOf(loadEquipment);
     if (loads.length) {
       const lastLoad = last?.loadKg;
       if (lastLoad !== void 0) {
-        const current = nearestLoad(loads, lastLoad);
+        const current = closestLoad(loads, lastLoad);
         const heavier = loads.find((entry) => entry > current);
         load = { kg: step === "add-load" && heavier !== void 0 ? heavier : current, equipment: loadEquipment };
         if (step === "add-load" && heavier !== void 0) {
@@ -20558,17 +20702,28 @@ function prescribe(definition, role, context) {
       } else {
         const bodyweight = context.input.profile?.bodyweightKg ?? 70;
         const ratio = LOAD_RATIO[definition.pattern]?.[loadEquipment] ?? 0.1;
-        load = { kg: nearestLoad(loads, bodyweight * ratio * LEVEL_LOAD[context.level]), equipment: loadEquipment };
+        const wanted = bodyweight * ratio * LEVEL_LOAD[context.level] * repsFactor(value, rir);
+        load = { kg: closestLoad(loads, wanted), equipment: loadEquipment };
         note = reason("load-guess", { rir }, locale).text;
+      }
+      const heavy = context.goal === "strength" || value <= 6 || load.kg >= (context.input.profile?.bodyweightKg ?? 70) * 0.4;
+      if (role === "main" && definition.compound && heavy) {
+        const steps = [
+          { share: 0.5, reps: 5 },
+          { share: 0.75, reps: 3 }
+        ].map((entry) => ({ reps: entry.reps, kg: closestLoad(loads, load.kg * entry.share) })).filter((entry, index, list) => entry.kg < load.kg && list.findIndex((other) => other.kg === entry.kg) === index);
+        if (steps.length) warmupSets = steps;
       }
     } else {
       note = reason("load-choose", { rir }, locale).text;
     }
   }
   const rounded = definition.measure === "time" ? Math.max(5, Math.round(value / 5) * 5) : Math.max(1, Math.round(value));
+  const shaped = definition.alternating && definition.measure === "reps" ? even(rounded) : rounded;
+  const finalValue = Math.min(definition.alternating ? Math.max(high, even(high)) : high, Math.max(Math.min(floor, shaped), shaped));
   return {
     sets,
-    target: { measure: definition.measure, value: Math.min(high, Math.max(low, rounded)), range, perSide: Boolean(definition.unilateral) },
+    target: { measure: definition.measure, value: finalValue, range: [Math.min(floor, finalValue), Math.max(high, finalValue)], perSide: Boolean(definition.unilateral) },
     restSeconds,
     ...counted ? { rir } : {},
     ...tempo ? { tempo } : {},
@@ -20576,7 +20731,9 @@ function prescribe(definition, role, context) {
     equipment: used,
     progression: { step, text: progressionText },
     ...note ? { note } : {},
-    reasons
+    reasons,
+    maxSets: Math.max(sets, maxSets),
+    ...warmupSets ? { warmupSets } : {}
   };
 }
 
@@ -20587,6 +20744,7 @@ function feasible(definition, context) {
   if (context.exclude.has(definition.id)) return false;
   if (!satisfies(definition.equipment, context.inventory)) return false;
   if (IMPACT_ORDER4[definition.impact] > IMPACT_ORDER4[context.maxImpact]) return false;
+  if (context.avoidPostures.has(definition.posture)) return false;
   for (const [joint, tolerance] of context.jointTolerance) {
     if ((definition.joints?.[joint] ?? 0) > tolerance) return false;
   }
@@ -20600,10 +20758,12 @@ function targetDifficulty(definition, context) {
     const variant = context.library.family(definition.family).find((member) => member.difficulty === known && performancesOf(context.input.history ?? [], member, context.date).length > 0);
     const last = variant ? performancesOf(context.input.history ?? [], variant, context.date)[0] : void 0;
     if (variant && last) {
-      const [low, high] = targetRange(variant, context.settings);
+      const [, high] = targetRange(variant, context.settings);
       const values = last.sets.map((set) => valueOf(set, variant.measure));
+      const before = performancesOf(context.input.history ?? [], variant, context.date)[1];
+      const struggled = last.best < variant.range[0] || last.minRir === 0 || before !== void 0 && last.total < before.total * 0.85;
       if (Math.min(...values) >= high) base += 1;
-      else if (Math.max(...values) < low) base -= 1;
+      else if (struggled) base -= 1;
     }
   }
   if (definition.kind === "strength" || definition.kind === "skill") {
@@ -20640,6 +20800,10 @@ function score(definition, slot2, context, chosen) {
   if (slot2.role === "main" && family && family.days <= 14) value *= 1.25;
   if (seen && seen.count >= 10) value *= 0.7;
   if (context.favorites.has(definition.id)) value *= 1.4;
+  if (slot2.role === "main") {
+    if (definition.compound) value *= 1.3;
+    if (definition.tags?.some((tag) => tag === "activation" || tag === "rehab")) value *= 0.3;
+  }
   if (definition.measure === "reps" && definition.kind === "strength") {
     const [low, high] = context.settings.reps;
     if (definition.range[1] < low) value *= 0.5;
@@ -20653,20 +20817,146 @@ function score(definition, slot2, context, chosen) {
 }
 function rank(slot2, context, chosen) {
   const taken = new Set(chosen.map((definition) => definition.id));
-  return context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns }).filter((definition) => !taken.has(definition.id) && feasible(definition, context)).filter((definition) => !slot2.groups || definition.muscles.primary.some((muscle) => slot2.groups.includes(MUSCLE_INFO[muscle].group))).map((definition) => ({ definition, score: score(definition, slot2, context, chosen) })).sort((a, b) => b.score - a.score || a.definition.id.localeCompare(b.definition.id));
-}
-function pick(slot2, context, chosen) {
-  const ranked = rank(slot2, context, chosen).slice(0, DRAW_SIZE);
-  if (ranked.length === 0) {
-    return void 0;
+  const candidates = context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns }).filter((definition) => !taken.has(definition.id) && feasible(definition, context)).filter((definition) => !slot2.groups || definition.muscles.primary.some((muscle) => slot2.groups.includes(MUSCLE_INFO[muscle].group))).map((definition) => ({ definition, score: score(definition, slot2, context, chosen) })).sort((a, b) => b.score - a.score || a.definition.id.localeCompare(b.definition.id));
+  if (slot2.muscles) {
+    const matching = candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot2.muscles.includes(muscle)));
+    if (matching.length) return matching;
   }
-  const best = ranked[0].score;
-  const finalists = ranked.filter((entry) => entry.score >= best * 0.35);
-  return context.random.weighted(finalists, (entry) => entry.score * entry.score).definition;
+  return candidates;
+}
+var CEILING = 1.5;
+function pick(slot2, context, chosen, strict = false) {
+  const ranked = rank(slot2, context, chosen);
+  const within2 = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
+  if (within2.length === 0) {
+    if (strict || ranked.length === 0) return void 0;
+    return [...ranked].sort((a, b) => a.definition.difficulty - b.definition.difficulty || b.score - a.score)[0].definition;
+  }
+  const finalists = within2.slice(0, DRAW_SIZE);
+  const best = finalists[0].score;
+  return context.random.weighted(
+    finalists.filter((entry) => entry.score >= best * 0.35),
+    (entry) => entry.score * entry.score
+  ).definition;
+}
+
+// src/session/warmup.ts
+function warmupSeconds(context, intense = false) {
+  const total = context.minutes * 60;
+  if (context.minutes <= 20) {
+    return Math.round(Math.max(intense ? 120 : 90, total * (intense ? 0.15 : 0.12)));
+  }
+  const share = total * 0.12 * (context.readiness.longWarmup ? 1.4 : 1) + (context.goal === "strength" ? 60 : 0);
+  return Math.round(Math.min(600, Math.max(intense ? Math.max(300, total * 0.15) : 180, share)));
+}
+function gentleCeiling(context) {
+  if (context.readiness.level === "easy" || context.readiness.level === "recovery" || context.readiness.level === "rest") return 2;
+  if (context.level === "beginner") return 2;
+  if (context.level === "intermediate") return 3;
+  return 4;
+}
+var POSTURE_ORDER = ["standing", "hanging", "support", "kneeling", "seated", "floor"];
+function byPosture(items) {
+  return [...items].sort((a, b) => POSTURE_ORDER.indexOf(a.definition.posture) - POSTURE_ORDER.indexOf(b.definition.posture));
+}
+var PULSE_SECONDS = 75;
+var MOBILITY_SECONDS = 35;
+var item = (definition, seconds, context, reasonCode) => ({
+  definition,
+  sets: 1,
+  target: targetForSeconds(definition, seconds),
+  restSeconds: 0,
+  equipment: [],
+  reasons: reasonCode ? [reason(reasonCode, {}, context.locale)] : []
+});
+function jointsOf(definitions) {
+  const load = /* @__PURE__ */ new Map();
+  for (const definition of definitions) {
+    for (const [joint, stress] of Object.entries(definition.joints ?? {})) {
+      load.set(joint, (load.get(joint) ?? 0) + stress);
+    }
+  }
+  return [...load.entries()].sort((a, b) => b[1] - a[1]).map(([joint]) => joint);
+}
+function buildWarmup(main2, context, budget = warmupSeconds(context), options = {}) {
+  const patterns = new Set(main2.map((definition) => definition.pattern));
+  const joints = jointsOf(main2);
+  const ceiling = gentleCeiling(context);
+  const items = [];
+  const used = /* @__PURE__ */ new Set();
+  const block = {
+    id: "warmup",
+    role: "warmup",
+    format: "flow",
+    title: reason("block-warmup", {}, context.locale).text,
+    rounds: 1,
+    restBetweenRounds: 0,
+    items
+  };
+  const add = (definition, seconds, code) => {
+    if (definition && !used.has(definition.id)) {
+      used.add(definition.id);
+      items.push(item(definition, seconds, context, code));
+    }
+  };
+  const pulse = context.library.filter({ kinds: ["conditioning"], maxImpact: context.maxImpact === "high" && context.level !== "beginner" ? "high" : "low" }).filter((definition) => feasible(definition, context) && definition.difficulty <= Math.min(3, ceiling + 1) && definition.warmupFor?.length).sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
+  add(pulse.length ? context.random.pick(pulse.slice(0, 3)) : void 0, PULSE_SECONDS, "warmup-pulse");
+  const mobility = context.library.filter({ kinds: ["mobility"], maxDifficulty: ceiling }).filter((definition) => feasible(definition, context) && !definition.tags?.includes("self-massage")).map((definition) => {
+    const prepares = (definition.warmupFor ?? []).filter((pattern) => patterns.has(pattern)).length;
+    const reaches = joints.slice(0, 3).filter((joint) => (definition.joints?.[joint] ?? 0) > 0).length;
+    return { definition, score: prepares * 2 + reaches + context.random.next() * 0.5 };
+  }).filter((entry) => entry.score >= 1).sort((a, b) => b.score - a.score);
+  const families = /* @__PURE__ */ new Set();
+  const reserve = options.intervals?.length ? 0.55 : 0.75;
+  const middle = [];
+  for (const entry of mobility) {
+    if (plannedBlockSeconds(block) + middle.reduce((sum, chosen) => sum + chosen.target.value, 0) >= budget * reserve || middle.length >= 4) break;
+    if (families.has(entry.definition.family) || used.has(entry.definition.id)) continue;
+    families.add(entry.definition.family);
+    used.add(entry.definition.id);
+    middle.push(item(entry.definition, MOBILITY_SECONDS, context));
+  }
+  items.push(...byPosture(middle));
+  for (const definition of (options.intervals ?? []).slice(0, 3)) {
+    if (plannedBlockSeconds(block) >= budget) break;
+    const softer = definition.impact === "high" && (context.level === "beginner" || context.maxImpact !== "high") ? context.library.family(definition.family).find((member) => member.impact !== "high" && feasible(member, context)) : definition;
+    if (softer && !used.has(softer.id)) {
+      used.add(softer.id);
+      items.push({ ...item(softer, 20, context, "warmup-intervals"), target: { measure: "time", value: 20, range: [20, 20], perSide: false } });
+    }
+  }
+  const first = main2.find((definition) => definition.compound && definition.kind === "strength");
+  if (first && !options.intervals?.length && plannedBlockSeconds(block) < budget) {
+    const easier = context.library.family(first.family).filter((definition) => definition.difficulty <= first.difficulty - 2 && feasible(definition, context)).pop();
+    const ramp = easier ?? first;
+    const loaded = Boolean(ramp.tags?.includes("loaded"));
+    if (!used.has(ramp.id)) {
+      used.add(ramp.id);
+      items.push({
+        ...item(ramp, 20, context, loaded ? "warmup-ramp-light" : "warmup-ramp"),
+        target: (() => {
+          const base = easyTarget(ramp, 0);
+          const value = Math.max(3, Math.round(base.value * (easier ? 1 : 0.5)));
+          return { ...base, value, range: [Math.min(base.range[0], value), base.range[1]] };
+        })()
+      });
+    }
+  }
+  while (plannedBlockSeconds(block) > budget * 1.25 && items.length > 2) {
+    items.splice(items.length - 2, 1);
+  }
+  if (plannedBlockSeconds(block) < budget * 0.6 && items.length > 0) {
+    block.rounds = 2;
+    block.restBetweenRounds = 15;
+  }
+  return block;
 }
 
 // src/session/cooldown.ts
 function cooldownSeconds(context) {
+  if (context.minutes <= 20) {
+    return Math.round(Math.max(60, context.minutes * 60 * 0.08));
+  }
   return Math.round(Math.min(480, Math.max(180, context.minutes * 60 * 0.1)));
 }
 function muscleLoad(blocks) {
@@ -20712,8 +21002,10 @@ function buildCooldown(load, context, options = {}) {
       reasons: code ? [reason(code, {}, context.locale)] : []
     });
   };
-  if (options.afterCardio) {
-    const walk = context.library.filter({ kinds: ["conditioning"], maxImpact: "none", measures: ["time"] }).filter((definition) => feasible(definition, context) && definition.difficulty <= 1).sort((a, b) => a.met - b.met || a.id.localeCompare(b.id))[0];
+  if (options.continueWith) {
+    add(options.continueWith, 150, "cooldown-easy");
+  } else if (options.afterCardio) {
+    const walk = context.library.filter({ kinds: ["conditioning"], maxImpact: "low", measures: ["time"], maxDifficulty: 2 }).filter((definition) => feasible(definition, context) && definition.met <= 4.5 && !definition.tags?.includes("machine") && !definition.tags?.includes("outdoor")).sort((a, b) => a.met - b.met || a.id.localeCompare(b.id))[0];
     if (walk) {
       add(walk, 90, "cooldown-walk");
     }
@@ -20721,7 +21013,7 @@ function buildCooldown(load, context, options = {}) {
   const remaining = new Map(load.size ? load : DEFAULT_LOAD);
   const stretches = context.library.filter({ kinds: ["stretch"] }).filter((definition) => feasible(definition, context));
   const used = /* @__PURE__ */ new Set();
-  const breathingTime = 90;
+  const breathingTime = Math.max(30, Math.min(90, Math.round(budget * 0.4 / 15) * 15));
   while (plannedBlockSeconds(block) < budget - breathingTime && remaining.size) {
     const scored = stretches.filter((definition) => !used.has(definition.id)).map((definition) => ({
       definition,
@@ -20739,6 +21031,9 @@ function buildCooldown(load, context, options = {}) {
       }
     }
   }
+  const moving = items.filter((entry) => entry.definition.kind !== "stretch");
+  const stretched = byPosture(items.filter((entry) => entry.definition.kind === "stretch"));
+  items.splice(0, items.length, ...moving, ...stretched);
   const breathing = context.library.filter({ kinds: ["breathing"] }).filter((definition) => feasible(definition, context));
   if (breathing.length) {
     add(breathing.find((definition) => definition.id === "diaphragmatic-breathing") ?? breathing[0], breathingTime, "cooldown-breathing");
@@ -20767,10 +21062,10 @@ var PARTNERS = {
   "vertical-push": ["vertical-pull", "horizontal-pull"],
   "horizontal-pull": ["horizontal-push", "vertical-push"],
   "vertical-pull": ["vertical-push", "horizontal-push"],
-  squat: ["hinge", "knee-flexion"],
-  lunge: ["hinge", "knee-flexion"],
-  hinge: ["squat", "lunge"],
-  "knee-flexion": ["squat", "lunge"],
+  squat: ["horizontal-pull", "vertical-pull", "hinge", "knee-flexion"],
+  lunge: ["horizontal-pull", "vertical-pull", "hinge", "knee-flexion"],
+  hinge: ["horizontal-push", "vertical-push", "squat", "lunge"],
+  "knee-flexion": ["horizontal-push", "vertical-push", "squat", "lunge"],
   "elbow-flexion": ["elbow-extension"],
   "elbow-extension": ["elbow-flexion"],
   "anti-extension": ["trunk-extension"],
@@ -20782,7 +21077,8 @@ function pairUp(items) {
   while (left.length) {
     const first = left.shift();
     const partners = PARTNERS[first.definition.pattern] ?? [];
-    const index = left.findIndex((other) => partners.includes(other.definition.pattern));
+    const ranked = partners.map((pattern) => left.findIndex((other) => other.definition.pattern === pattern)).filter((found) => found >= 0);
+    const index = ranked.length ? ranked[0] : -1;
     if (index >= 0) {
       pairs.push([first, left.splice(index, 1)[0]]);
     } else if (left.length) {
@@ -20796,6 +21092,17 @@ function pairUp(items) {
   return pairs;
 }
 var title = (code, context, params = {}) => reason(code, params, context.locale).text;
+var regionOf2 = (item2) => GROUP_REGION[MUSCLE_INFO[item2.definition.muscles.primary[0]].group];
+function alternateRegions(items) {
+  const left = [...items];
+  const result = [];
+  while (left.length) {
+    const previous = result[result.length - 1];
+    const index = previous ? left.findIndex((item2) => regionOf2(item2) !== regionOf2(previous)) : 0;
+    result.push(left.splice(index >= 0 ? index : 0, 1)[0]);
+  }
+  return result;
+}
 var perRound = (item2) => ({ ...item2, sets: 1, reasons: [...item2.reasons] });
 function buildMainBlocks(items, format2, context, mainSeconds) {
   if (items.length === 0) {
@@ -20839,17 +21146,16 @@ function buildMainBlocks(items, format2, context, mainSeconds) {
     });
   }
   if (format2 === "circuit") {
-    const rounds = Math.max(1, Math.round(items.reduce((sum, item2) => sum + item2.sets, 0) / items.length));
-    const groups = items.length >= 7 ? [items.slice(0, Math.ceil(items.length / 2)), items.slice(Math.ceil(items.length / 2))] : [items];
+    const groups = items.length >= 7 ? [items.filter((_, index) => index % 2 === 0), items.filter((_, index) => index % 2 === 1)] : [items];
     return groups.map((group, index) => ({
       id: `main-${index + 1}`,
       role: "main",
       format: "circuit",
       title: title("block-circuit", context),
-      rounds,
+      rounds: Math.max(2, Math.round(group.reduce((sum, item2) => sum + item2.sets, 0) / group.length)),
       restBetweenRounds: settings.circuit.betweenRounds,
       restBetweenItems: settings.circuit.betweenItems,
-      items: group.map(perRound)
+      items: alternateRegions(group).map(perRound)
     }));
   }
   if (format2 === "amrap") {
@@ -20903,7 +21209,8 @@ function formatReason(blocks, context) {
     work: main2.workSeconds ?? 0,
     rest: main2.restSeconds ?? 0
   };
-  return reason(`format-${main2.format}`, params, context.locale).text;
+  const code = main2.format === "circuit" && main2.rounds <= 1 ? "format-circuit-once" : `format-${main2.format}`;
+  return reason(code, params, context.locale);
 }
 function buildIntervals(id, role, exercises, seconds, context, tabata = false) {
   if (exercises.length === 0) {
@@ -20934,18 +21241,41 @@ function buildIntervals(id, role, exercises, seconds, context, tabata = false) {
     }))
   };
 }
-function cardioCandidates(context, exclude = /* @__PURE__ */ new Set()) {
-  const ceiling = context.level === "beginner" ? 4 : context.level === "intermediate" ? 6 : 8;
-  return context.library.filter({ kinds: ["conditioning", "power"], patterns: ["full-body", "jump", "cardio", "locomotion"] }).filter((definition) => feasible(definition, context) && !exclude.has(definition.id) && definition.difficulty <= ceiling && definition.measure !== "distance").filter((definition) => !definition.tags?.includes("machine") && !definition.tags?.includes("outdoor")).sort((a, b) => b.difficulty - a.difficulty || a.id.localeCompare(b.id));
+var CARDIO_TARGET = { beginner: 2.5, intermediate: 4, advanced: 5.5, expert: 6.5 };
+function cardioTarget(context) {
+  const base = CARDIO_TARGET[context.level] ?? 3;
+  return base - (context.readiness.intensity < 0.85 ? 2 : context.readiness.intensity < 1 ? 1 : 0);
 }
-function buildFinisher(context, seconds, used) {
-  const candidates = cardioCandidates(context, used);
-  if (candidates.length === 0) {
+function cardioCandidates(context, exclude = /* @__PURE__ */ new Set()) {
+  const target = cardioTarget(context);
+  const declared = new Set((context.input.equipment ?? []).map((entry) => typeof entry === "string" ? entry : entry.id));
+  return context.library.filter({ kinds: ["conditioning", "power"], patterns: ["full-body", "jump", "cardio", "locomotion"] }).filter((definition) => feasible(definition, context) && !exclude.has(definition.id) && definition.measure !== "distance").filter((definition) => !definition.tags?.includes("machine") && !definition.tags?.includes("outdoor")).map((definition) => ({
+    definition,
+    distance: Math.abs(definition.difficulty - target) - ((definition.equipment ?? []).flat().some((id) => declared.has(id)) ? 1.5 : 0)
+  })).sort((a, b) => a.distance - b.distance || a.definition.id.localeCompare(b.definition.id)).map((entry) => entry.definition);
+}
+function pickIntervalExercises(context, count, exclude = /* @__PURE__ */ new Set(), options = {}) {
+  const pool = cardioCandidates(context, exclude).slice(0, Math.max(count * 3, 9));
+  const order2 = context.random.shuffle(pool.slice(0, Math.max(count * 2, 6))).concat(pool.slice(Math.max(count * 2, 6)));
+  const picked = [];
+  const families = /* @__PURE__ */ new Set();
+  const maxHigh = options.legsLoaded ? 0 : context.level === "beginner" ? 1 : count;
+  for (const definition of order2) {
+    if (picked.length >= count) break;
+    if (families.has(definition.family)) continue;
+    if (definition.impact === "high" && picked.filter((entry) => entry.impact === "high").length >= maxHigh) continue;
+    if (picked.length && picked[picked.length - 1].pattern === definition.pattern && order2.some((other) => !families.has(other.family) && other.pattern !== definition.pattern)) continue;
+    families.add(definition.family);
+    picked.push(definition);
+  }
+  return picked;
+}
+function buildFinisher(context, seconds, used, legsLoaded = false) {
+  const picked = pickIntervalExercises(context, 2, used, { legsLoaded });
+  if (picked.length === 0) {
     return void 0;
   }
-  const count = Math.min(2, candidates.length);
-  const picked = context.random.shuffle(candidates.slice(0, 6)).slice(0, count);
-  const tabata = context.maxImpact === "high" && context.level !== "beginner" && context.random.next() < 0.5;
+  const tabata = context.maxImpact === "high" && context.level !== "beginner" && !legsLoaded && context.random.next() < 0.5;
   return buildIntervals("finisher", "finisher", picked, seconds, context, tabata);
 }
 
@@ -20963,7 +21293,7 @@ var slot = (key, role, patterns, kinds = STRENGTH, fallback) => ({
   ...fallback ? { fallback } : {},
   ...fallback === PULL_FALLBACK ? { groups: ["back"] } : {}
 });
-var TEMPLATES = {
+var RAW_TEMPLATES = {
   "full-body": {
     base: [
       slot("knee", "main", ["squat", "lunge"]),
@@ -21099,7 +21429,37 @@ var TEMPLATES = {
     ]
   }
 };
-var FOCUS_SLOTS = {
+var KNEE_FALLBACK = ["hinge", "hip-abduction", "calf-raise"];
+var REFINEMENTS = {
+  knee: { fallback: KNEE_FALLBACK },
+  "knee-2": { fallback: KNEE_FALLBACK },
+  "single-leg": { fallback: KNEE_FALLBACK },
+  hinge: { kinds: ANY_STRENGTH },
+  push: { muscles: ["pecs", "upper-pecs"] },
+  calves: { muscles: ["gastrocnemius", "soleus"] },
+  "focus-calves": { muscles: ["gastrocnemius", "soleus"] },
+  hips: { muscles: ["glute-med", "glute-max"] },
+  carry: { kinds: ["strength", "conditioning", "power"] }
+};
+var refine = (entry) => {
+  const extra = REFINEMENTS[entry.key];
+  return extra ? { ...entry, ...extra, fallback: entry.fallback ?? extra.fallback ?? [] } : entry;
+};
+var refineTemplate = (template) => ({ base: template.base.map(refine), extras: template.extras.map(refine) });
+var TEMPLATES = {
+  "full-body": refineTemplate(RAW_TEMPLATES["full-body"]),
+  upper: refineTemplate(RAW_TEMPLATES.upper),
+  lower: refineTemplate(RAW_TEMPLATES.lower),
+  push: refineTemplate(RAW_TEMPLATES.push),
+  pull: refineTemplate(RAW_TEMPLATES.pull),
+  core: refineTemplate(RAW_TEMPLATES.core),
+  cardio: refineTemplate(RAW_TEMPLATES.cardio),
+  hiit: refineTemplate(RAW_TEMPLATES.hiit),
+  mobility: refineTemplate(RAW_TEMPLATES.mobility),
+  recovery: refineTemplate(RAW_TEMPLATES.recovery),
+  skill: refineTemplate(RAW_TEMPLATES.skill)
+};
+var RAW_FOCUS_SLOTS = {
   chest: [slot("focus-chest", "accessory", ["horizontal-push"]), slot("focus-chest-2", "accessory", ["horizontal-push", "vertical-push"])],
   back: [slot("focus-back", "accessory", ["horizontal-pull", "vertical-pull"]), slot("focus-back-2", "accessory", ["vertical-pull", "horizontal-pull"])],
   shoulders: [slot("focus-shoulders", "accessory", ["vertical-push", "shoulder-raise"]), slot("focus-shoulders-2", "accessory", ["shoulder-raise", "scapular"])],
@@ -21110,6 +21470,9 @@ var FOCUS_SLOTS = {
   legs: [slot("focus-legs", "accessory", ["squat", "lunge"]), slot("focus-legs-2", "accessory", ["knee-flexion", "hip-adduction", "lunge"])],
   calves: [slot("focus-calves", "accessory", ["calf-raise"]), slot("focus-calves-2", "accessory", ["calf-raise", "jump"], ANY_STRENGTH)]
 };
+var FOCUS_SLOTS = Object.fromEntries(
+  Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map(refine)])
+);
 var PATTERN_GROUPS = {
   squat: ["legs", "glutes"],
   lunge: ["legs", "glutes"],
@@ -21136,93 +21499,12 @@ var PATTERN_GROUPS = {
   jump: ["legs", "calves"]
 };
 
-// src/session/warmup.ts
-function warmupSeconds(context) {
-  const share = context.minutes * 60 * 0.12 * (context.readiness.longWarmup ? 1.4 : 1) + (context.goal === "strength" ? 60 : 0);
-  return Math.round(Math.min(600, Math.max(180, share)));
-}
-var PULSE_SECONDS = 75;
-var MOBILITY_SECONDS = 35;
-var item = (definition, seconds, context, reasonCode) => ({
-  definition,
-  sets: 1,
-  target: targetForSeconds(definition, seconds),
-  restSeconds: 0,
-  equipment: [],
-  reasons: reasonCode ? [reason(reasonCode, {}, context.locale)] : []
-});
-function jointsOf(definitions) {
-  const load = /* @__PURE__ */ new Map();
-  for (const definition of definitions) {
-    for (const [joint, stress] of Object.entries(definition.joints ?? {})) {
-      load.set(joint, (load.get(joint) ?? 0) + stress);
-    }
-  }
-  return [...load.entries()].sort((a, b) => b[1] - a[1]).map(([joint]) => joint);
-}
-function buildWarmup(main2, context, budget = warmupSeconds(context)) {
-  const patterns = new Set(main2.map((definition) => definition.pattern));
-  const joints = jointsOf(main2);
-  const items = [];
-  const used = /* @__PURE__ */ new Set();
-  const block = {
-    id: "warmup",
-    role: "warmup",
-    format: "flow",
-    title: reason("block-warmup", {}, context.locale).text,
-    rounds: 1,
-    restBetweenRounds: 0,
-    items
-  };
-  const add = (definition, seconds, code) => {
-    if (definition && !used.has(definition.id)) {
-      used.add(definition.id);
-      items.push(item(definition, seconds, context, code));
-    }
-  };
-  const pulse = context.library.filter({ kinds: ["conditioning"], maxImpact: context.maxImpact === "high" ? "high" : "low" }).filter((definition) => feasible(definition, context) && definition.difficulty <= 3 && definition.warmupFor?.length).sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id));
-  add(pulse.length ? context.random.pick(pulse.slice(0, 3)) : void 0, PULSE_SECONDS, "warmup-pulse");
-  const mobility = context.library.filter({ kinds: ["mobility"] }).filter((definition) => feasible(definition, context) && !definition.tags?.includes("self-massage")).map((definition) => {
-    const prepares = (definition.warmupFor ?? []).filter((pattern) => patterns.has(pattern)).length;
-    const reaches = joints.slice(0, 3).filter((joint) => (definition.joints?.[joint] ?? 0) > 0).length;
-    return { definition, score: prepares * 2 + reaches + context.random.next() * 0.5 };
-  }).filter((entry) => entry.score >= 1).sort((a, b) => b.score - a.score);
-  const families = /* @__PURE__ */ new Set();
-  for (const entry of mobility) {
-    if (plannedBlockSeconds(block) >= budget * 0.75 || items.length >= 5) break;
-    if (families.has(entry.definition.family)) continue;
-    families.add(entry.definition.family);
-    add(entry.definition, MOBILITY_SECONDS);
-  }
-  const first = main2.find((definition) => definition.compound && definition.kind === "strength");
-  if (first && plannedBlockSeconds(block) < budget) {
-    const easier = context.library.family(first.family).filter((definition) => definition.difficulty <= first.difficulty - 1 && feasible(definition, context)).pop();
-    const ramp = easier ?? first;
-    if (!used.has(ramp.id)) {
-      used.add(ramp.id);
-      items.push({
-        ...item(ramp, 20, context, "warmup-ramp"),
-        target: (() => {
-          const base = easyTarget(ramp, 0);
-          const value = Math.max(3, Math.round(base.value * (easier ? 1 : 0.5)));
-          return { ...base, value, range: [Math.min(base.range[0], value), base.range[1]] };
-        })()
-      });
-    }
-  }
-  while (plannedBlockSeconds(block) > budget * 1.25 && items.length > 2) {
-    items.splice(items.length - 2, 1);
-  }
-  if (plannedBlockSeconds(block) < budget * 0.6 && items.length > 0) {
-    block.rounds = 2;
-    block.restBetweenRounds = 15;
-  }
-  return block;
-}
-
 // src/session/generate.ts
 function withIntensity(context) {
-  const asked = context.request.intensity && context.request.intensity !== "auto" ? context.request.intensity : context.input.plan?.intensity;
+  const requested = context.request.intensity && context.request.intensity !== "auto" ? context.request.intensity : void 0;
+  const planned = context.input.plan?.intensity;
+  const tired = context.readiness.intensity < 1;
+  const asked = requested ?? (planned === "hard" && tired ? void 0 : planned);
   if (!asked || asked === "moderate") {
     return context;
   }
@@ -21242,22 +21524,40 @@ function slotsFor(type, context) {
   const focus = context.focusGroups.flatMap((group) => FOCUS_SLOTS[group]);
   return [...template.base.filter((slot2) => !avoided(slot2)), ...focus, ...template.extras.filter((slot2) => !avoided(slot2))];
 }
+var PUSHES = ["horizontal-push", "vertical-push"];
+var PULLS = ["horizontal-pull", "vertical-pull"];
 function missingEquipment(slot2, context) {
   const counts = /* @__PURE__ */ new Map();
   const candidates = context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns });
   for (const definition of candidates) {
     if (satisfies(definition.equipment, context.inventory)) continue;
-    for (const group of definition.equipment ?? []) {
-      if (group.some((id) => context.inventory.has(id))) continue;
-      for (const id of group) counts.set(id, (counts.get(id) ?? 0) + 1);
+    const pieces = new Set((definition.equipment ?? []).flat().filter((id) => !context.inventory.has(id)));
+    for (const id of pieces) {
+      const extended = inventory([...context.inventory.ids, id], []);
+      if (satisfies(definition.equipment, extended) && feasible(definition, { ...context, inventory: extended })) {
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      }
     }
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || EQUIPMENT.indexOf(a[0]) - EQUIPMENT.indexOf(b[0])).slice(0, 2).map(([id]) => id);
 }
+function blockedByBody(slot2, context) {
+  return context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns }).some((definition) => satisfies(definition.equipment, context.inventory) && !feasible(definition, context));
+}
+function sparedJoints(context) {
+  return listOf(
+    [...context.jointTolerance.keys()].map((joint) => JOINT_NAMES[joint].toLowerCase()),
+    context
+  );
+}
+function listOf(items, context) {
+  if (items.length <= 1) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} ${reason("list-or", {}, context.locale).text} ${items[items.length - 1]}`;
+}
 function itemReasons(definition, context) {
   const groups = [...new Set(definition.muscles.primary.map((muscle) => MUSCLE_INFO[muscle].group))];
   const focused = groups.find((group) => context.focusGroups.includes(group));
-  if (focused) return [reason("item-focus", { group: GROUP_NAMES[focused].toLowerCase() }, context.locale)];
+  if (focused) return [reason("item-focus", { group: GROUP_NAMES_WITH_ARTICLE[focused] }, context.locale)];
   if (context.favorites.has(definition.id)) return [reason("item-favorite", {}, context.locale)];
   const behind = groups.find((group) => context.needs[group] >= 0.9 && context.body.groups[group].weeklySets > 0);
   if (behind) return [reason("item-need", { group: GROUP_NAMES[behind] }, context.locale)];
@@ -21277,7 +21577,9 @@ function plan(definition, slot2, context) {
     progression: prescription.progression,
     ...prescription.note ? { note: prescription.note } : {},
     reasons: [...itemReasons(definition, context), ...prescription.reasons],
-    slotRole: slot2.role
+    slotRole: slot2.role,
+    maxSets: prescription.maxSets,
+    ...prescription.warmupSets ? { warmupSets: prescription.warmupSets } : {}
   };
 }
 var RANK_OF_ROLE = { skill: -1, main: 0, accessory: 1, core: 2, conditioning: 1 };
@@ -21295,7 +21597,8 @@ function plannedVolume(blocks) {
     if (block.role === "warmup" || block.role === "cooldown") continue;
     for (const item2 of block.items) {
       if (!["strength", "power", "skill"].includes(item2.definition.kind)) continue;
-      const sets = item2.sets * Math.max(1, block.rounds);
+      const light = item2.definition.tags?.some((tag) => tag === "activation" || tag === "posture" || tag === "rehab") ? 0.5 : 1;
+      const sets = item2.sets * Math.max(1, block.rounds) * light;
       const primary = new Set(item2.definition.muscles.primary.map((muscle) => MUSCLE_INFO[muscle].group));
       const helpers = new Set((item2.definition.muscles.secondary ?? []).map((muscle) => MUSCLE_INFO[muscle].group));
       for (const group of MUSCLE_GROUPS) {
@@ -21307,7 +21610,9 @@ function plannedVolume(blocks) {
   return volume;
 }
 function intensityOf(context) {
-  const asked = context.request.intensity && context.request.intensity !== "auto" ? context.request.intensity : context.input.plan?.intensity;
+  const requested = context.request.intensity && context.request.intensity !== "auto" ? context.request.intensity : void 0;
+  const planned = context.input.plan?.intensity;
+  const asked = requested ?? (planned === "hard" && context.readiness.intensity < 1 ? "easy" : planned);
   if (asked) return asked;
   if (context.readiness.intensity < 1) return "easy";
   if (context.readiness.level === "push" || context.goal === "strength") return "hard";
@@ -21317,10 +21622,10 @@ function finish(context, choice, type, blocks, extra = {}) {
   const volume = plannedVolume(blocks);
   const focus = context.focusGroups.length ? [...context.focusGroups] : Object.entries(volume).filter(([, sets]) => sets >= 2).sort((a, b) => b[1] - a[1]).map(([group]) => group);
   const seconds = totalSeconds(blocks);
-  const reasons = [...choice.reasons, ...extra.reasons ?? [], ...context.readiness.reasons];
+  const reasons = [...context.readiness.reasons, ...choice.reasons, ...extra.reasons ?? []];
   const typeName = reason(`session-${type}`, {}, context.locale).text;
   const rest2 = choice.rest;
-  const summary = [rest2 ? reason("rest-session", {}, context.locale).text : void 0, ...reasons.slice(0, 2).map((entry) => entry.text)].filter((text) => Boolean(text)).join(" ");
+  const summary = summarize(context, choice, extra.reasons ?? []);
   return {
     version: 1,
     date: context.date,
@@ -21339,18 +21644,61 @@ function finish(context, choice, type, blocks, extra = {}) {
     blocks: blocks.filter((block) => block.items.length > 0).map((block) => toSessionBlock(block, context)),
     readiness: context.readiness,
     reasons,
-    warnings: [...context.readiness.warnings, ...extra.warnings ?? []]
+    warnings: [...context.readiness.warnings, ...extra.warnings ?? []],
+    notes: extra.notes ?? []
   };
+}
+var READINESS_PRIORITY = [
+  "declared-rest",
+  "ill",
+  "pulse-high",
+  "cycle-period-strong",
+  "pulse-recovering",
+  "pulse-raised",
+  "no-rest-streak",
+  "joint-pain",
+  "cycle-period",
+  "short-sleep",
+  "feeling-low",
+  "feeling-tired",
+  "comeback",
+  "last-hard",
+  "cycle-period-light",
+  "sore",
+  "last-easy",
+  "feeling-great",
+  "cycle-luteal",
+  "cycle-ovulation",
+  "cycle-follicular"
+];
+var SILENT_TYPE_REASONS = ["type-asked", "type-recovery"];
+function summarize(context, choice, extra) {
+  const readiness = [...context.readiness.reasons].sort((a, b) => {
+    const rank2 = (entry) => READINESS_PRIORITY.includes(entry.code) ? READINESS_PRIORITY.indexOf(entry.code) : READINESS_PRIORITY.length;
+    return rank2(a) - rank2(b);
+  });
+  const typeReasons = choice.reasons.filter((entry) => !SILENT_TYPE_REASONS.includes(entry.code));
+  const parts = [
+    ...choice.rest ? [reason("rest-session", {}, context.locale)] : [],
+    ...readiness.slice(0, choice.rest ? 1 : 1),
+    ...choice.rest ? [] : typeReasons.slice(0, 1),
+    ...choice.rest ? [] : extra.filter((entry) => entry.code.startsWith("format-") || entry.code === "session-lighter").slice(0, 2)
+  ];
+  return parts.map((entry) => entry.text).join(" ");
 }
 function strengthSession(context, choice, type) {
   const warmBudget = context.request.warmup === false ? 0 : warmupSeconds(context);
   const coolBudget = context.request.cooldown === false ? 0 : cooldownSeconds(context);
   const total = context.minutes * 60;
-  const canFinish = type !== "skill" && type !== "core" && context.readiness.level !== "easy" && context.minutes >= 25 && context.random.next() < context.settings.finisher;
+  const canFinish = type !== "skill" && type !== "core" && context.readiness.level !== "easy" && context.minutes >= 25 && context.random.next() < context.settings.finisher && cardioCandidates(context).length > 0;
   const finisherBudget = canFinish ? context.minutes >= 45 ? 360 : 240 : 0;
-  const mainBudget = Math.max(150, total - warmBudget - coolBudget - finisherBudget - 3 * BLOCK_TRANSITION_SECONDS);
+  const transitions = [warmBudget > 0, coolBudget > 0, canFinish, type === "skill"].filter(Boolean).length * BLOCK_TRANSITION_SECONDS;
+  const available = Math.max(120, total - warmBudget - coolBudget - finisherBudget - transitions);
+  const lighter = context.readiness.volume < 0.95;
+  const mainBudget = Math.round(available * Math.min(1, context.readiness.volume));
   const format2 = chooseFormat(context, type, mainBudget);
   const warnings = [];
+  const notes = [];
   const skillItems = [];
   let items = [];
   const chosen = () => [...skillItems, ...items].map((item2) => item2.definition);
@@ -21367,39 +21715,79 @@ function strengthSession(context, choice, type) {
   const slots = slotsFor(type, context);
   const baseKeys = new Set(TEMPLATES[type].base.map((slot2) => slot2.key));
   const minutesPerItem = format2 === "circuit" ? 2.5 : format2 === "amrap" || format2 === "emom" ? 3 : format2 === "superset" ? 3.5 : 5;
-  const maxItems = Math.min(9, Math.max(3, Math.round(mainBudget / 60 / minutesPerItem)));
+  const maxItems = Math.min(9, Math.max(3, Math.round(available / 60 / minutesPerItem * Math.min(1, context.readiness.volume))));
   const [, most] = context.settings.sets[context.level];
   const fits = (list) => mainSeconds(list) <= mainBudget * 1.08;
+  const regionOf3 = (item2) => GROUP_REGION[MUSCLE_INFO[item2.definition.muscles.primary[0]].group];
   const grow = (ceiling) => {
     if (format2 === "amrap" || format2 === "emom") return;
-    for (let guard = 0; guard < 40 && mainSeconds(items) < mainBudget * 0.9; guard++) {
-      const item2 = order(items).filter((entry) => entry.sets < ceiling(entry)).sort((a, b) => a.sets - b.sets)[0];
+    const blocked = /* @__PURE__ */ new Set();
+    for (let guard = 0; guard < 60 && mainSeconds(items) < mainBudget * 0.9; guard++) {
+      const regionSets = (region) => items.filter((entry) => regionOf3(entry) === region).reduce((sum, entry) => sum + entry.sets, 0);
+      const item2 = order(items).filter((entry) => !blocked.has(entry) && entry.sets < Math.min(ceiling(entry), entry.maxSets ?? Infinity)).sort((a, b) => a.sets - b.sets || regionSets(regionOf3(a)) - regionSets(regionOf3(b)))[0];
       if (!item2) return;
       item2.sets += 1;
       if (!fits(items)) {
         item2.sets -= 1;
-        return;
+        blocked.add(item2);
+      }
+    }
+  };
+  const lengthen = () => {
+    const blocked = /* @__PURE__ */ new Set();
+    for (let guard = 0; guard < 80 && mainSeconds(items) < mainBudget * 0.9; guard++) {
+      const roomFor = (entry) => entry.target.range[0] + (entry.target.range[1] - entry.target.range[0]) * 0.6;
+      const item2 = order(items).find(
+        (entry) => !blocked.has(entry) && entry.target.measure !== "distance" && entry.slotRole !== "skill" && (entry.progression?.step === "start" || entry.progression?.step === "easier") && entry.target.value < roomFor(entry)
+      );
+      if (!item2) return;
+      const stepSize = item2.target.measure === "time" ? 5 : item2.definition.alternating ? 2 : 1;
+      const previous = item2.target;
+      item2.target = { ...previous, value: Math.min(previous.range[1], previous.value + stepSize) };
+      if (!fits(items)) {
+        item2.target = previous;
+        blocked.add(item2);
       }
     }
   };
   const place = (slot2, optional = false) => {
-    const definition = pick(slot2, context, chosen()) ?? (slot2.fallback ?? []).reduce(
-      (found, pattern) => found ?? pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, context, chosen()),
+    const pushes = items.filter((entry) => PUSHES.includes(entry.definition.pattern)).length;
+    const pulls = items.filter((entry) => PULLS.includes(entry.definition.pattern)).length;
+    if (optional && slot2.patterns.every((pattern) => PUSHES.includes(pattern)) && pushes >= pulls) {
+      return;
+    }
+    const direct = pick(slot2, context, chosen(), optional);
+    const definition = direct ?? (slot2.fallback ?? []).reduce(
+      (found, pattern) => found ?? pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, context, chosen(), optional),
       void 0
     );
-    if (!definition) {
-      if (baseKeys.has(slot2.key)) {
-        const missing = missingEquipment(slot2, context);
-        warnings.push(
+    if (definition && !direct && baseKeys.has(slot2.key)) {
+      const missing = missingEquipment(slot2, context);
+      if (missing.length) {
+        notes.push(
           reason(
-            missing.length ? "slot-empty-equipment" : "slot-empty",
-            {
-              pattern: PATTERN_NAMES[slot2.patterns[0]].toLowerCase(),
-              equipment: missing.map((id) => EQUIPMENT_NAMES[id].toLowerCase()).join(" ou ")
-            },
+            "slot-fallback-equipment",
+            { pattern: PATTERN_NAMES[slot2.patterns[0]].toLowerCase(), equipment: listOf(missing.map((id) => EQUIPMENT_NAMES[id].toLowerCase()), context) },
             context.locale
           )
         );
+      }
+    }
+    if (!definition) {
+      if (baseKeys.has(slot2.key)) {
+        const missing = missingEquipment(slot2, context);
+        const pattern = PATTERN_NAMES[slot2.patterns[0]].toLowerCase();
+        if (blockedByBody(slot2, context)) {
+          warnings.push(reason("slot-empty-joint", { pattern, joints: sparedJoints(context) }, context.locale));
+        } else {
+          warnings.push(
+            reason(
+              missing.length ? "slot-empty-equipment" : "slot-empty",
+              { pattern, equipment: listOf(missing.map((id) => EQUIPMENT_NAMES[id].toLowerCase()), context) },
+              context.locale
+            )
+          );
+        }
       }
       return;
     }
@@ -21422,6 +21810,7 @@ function strengthSession(context, choice, type) {
     place(slot2, true);
   }
   grow(() => most + 1);
+  lengthen();
   for (let guard = 0; guard < 40 && mainSeconds(items) > mainBudget * 1.1; guard++) {
     const shrinkable = [...order(items)].reverse().find((item2) => item2.sets > 1);
     if (shrinkable) {
@@ -21442,10 +21831,13 @@ function strengthSession(context, choice, type) {
   }
   blocks.push(...main2);
   const used = new Set(mainDefinitions.map((definition) => definition.id));
-  const finisher = canFinish ? buildFinisher(context, finisherBudget, used) : void 0;
+  const loadSoFar = muscleLoad(blocks);
+  const legsLoaded = Math.max(loadSoFar.get("quads") ?? 0, loadSoFar.get("glute-max") ?? 0) >= 6;
+  const finisher = canFinish ? buildFinisher(context, finisherBudget, used, legsLoaded) : void 0;
   const extraReasons = [];
   const explained = formatReason(main2, context);
-  if (explained) extraReasons.push({ code: `format-${format2}`, text: explained });
+  if (explained) extraReasons.push(explained);
+  if (lighter) extraReasons.push(reason("session-lighter", {}, context.locale));
   if (finisher) {
     blocks.push(finisher);
     extraReasons.push(reason("finisher", {}, context.locale));
@@ -21456,56 +21848,89 @@ function strengthSession(context, choice, type) {
   if (orderedItems.length === 0 && skillItems.length === 0) {
     warnings.push(reason("nothing-feasible", {}, context.locale));
   }
-  return finish(context, choice, type, blocks, { reasons: extraReasons, warnings });
+  return finish(context, choice, type, blocks, { reasons: extraReasons, warnings, notes });
 }
 function cardioSession(context, choice, type) {
-  const warmBudget = context.request.warmup === false ? 0 : warmupSeconds(context);
+  const warmBudget = context.request.warmup === false ? 0 : warmupSeconds(context, true);
   const coolBudget = context.request.cooldown === false ? 0 : cooldownSeconds(context);
-  const mainBudget = Math.max(180, context.minutes * 60 - warmBudget - coolBudget - 2 * BLOCK_TRANSITION_SECONDS);
+  const transitions = [warmBudget > 0, coolBudget > 0].filter(Boolean).length * BLOCK_TRANSITION_SECONDS;
+  const available = Math.max(180, context.minutes * 60 - warmBudget - coolBudget - transitions);
+  const mainBudget = Math.round(available * Math.min(1, context.readiness.volume));
   const blocks = [];
   const reasons = [];
   let main2;
+  let steadyDefinition;
   if (type === "cardio" && mainBudget >= 15 * 60) {
     const steady = context.library.filter({ kinds: ["conditioning"], patterns: ["cardio", "locomotion"], measures: ["time"] }).filter((definition) => feasible(definition, context) && definition.range[1] >= 900).sort((a, b) => b.met - a.met || a.id.localeCompare(b.id));
-    const choiceOf = steady.find((definition) => definition.met <= (context.readiness.intensity < 1 ? 6 : 10)) ?? steady[0];
-    if (choiceOf) {
-      const value = Math.min(choiceOf.range[1], Math.max(choiceOf.range[0], Math.round(mainBudget / 60) * 60));
+    steadyDefinition = steady.find((definition) => definition.met <= (context.readiness.intensity < 1 ? 6 : 10)) ?? steady[0];
+    if (steadyDefinition) {
+      const value = Math.min(steadyDefinition.range[1], Math.max(steadyDefinition.range[0], Math.round(mainBudget / 60) * 60));
       main2 = {
         id: "main-1",
         role: "main",
-        format: "straight",
+        format: "steady",
         title: reason("block-cardio", {}, context.locale).text,
         rounds: 1,
         restBetweenRounds: 0,
-        items: [{ definition: choiceOf, sets: 1, target: { ...easyTarget(choiceOf), value }, restSeconds: 0, equipment: [], reasons: [reason("cardio-steady", {}, context.locale)] }]
+        items: [
+          {
+            definition: steadyDefinition,
+            sets: 1,
+            target: { ...easyTarget(steadyDefinition), value },
+            restSeconds: 0,
+            equipment: [],
+            reasons: [reason("cardio-steady", {}, context.locale)]
+          }
+        ]
       };
     }
   }
   if (!main2) {
-    const candidates = cardioCandidates(context);
-    const count = Math.min(candidates.length, mainBudget >= 20 * 60 ? 6 : 4);
-    const picked = context.random.shuffle(candidates.slice(0, Math.max(count, 8))).slice(0, count);
-    main2 = buildIntervals("main-1", "main", picked, mainBudget, context, mainBudget <= 8 * 60 && context.maxImpact === "high");
+    const picked = pickIntervalExercises(context, mainBudget >= 20 * 60 ? 6 : 4);
+    main2 = buildIntervals("main-1", "main", picked, mainBudget, context, mainBudget <= 8 * 60 && context.maxImpact === "high" && context.level !== "beginner");
   }
   if (main2) {
-    if (warmBudget > 0) blocks.push(buildWarmup(main2.items.map((item2) => item2.definition), context, warmBudget));
+    if (warmBudget > 0) {
+      const warmup = buildWarmup(
+        main2.items.map((item2) => item2.definition),
+        context,
+        warmBudget,
+        steadyDefinition ? {} : { intervals: main2.items.map((item2) => item2.definition) }
+      );
+      if (steadyDefinition) {
+        warmup.items[0] = {
+          definition: steadyDefinition,
+          sets: 1,
+          target: { ...easyTarget(steadyDefinition), value: Math.min(300, Math.round(warmBudget * 0.6 / 30) * 30) },
+          restSeconds: 0,
+          equipment: [],
+          reasons: [reason("warmup-steady", {}, context.locale)]
+        };
+      }
+      blocks.push(warmup);
+    }
     blocks.push(main2);
     const explained = formatReason([main2], context);
-    if (explained) reasons.push({ code: `format-${main2.format}`, text: explained });
+    if (explained) reasons.push(explained);
+    if (context.readiness.volume < 0.95) reasons.push(reason("session-lighter", {}, context.locale));
   }
-  if (coolBudget > 0) blocks.push(buildCooldown(muscleLoad(blocks), context, { afterCardio: true, budget: coolBudget }));
+  if (coolBudget > 0) {
+    blocks.push(buildCooldown(muscleLoad(blocks), context, { afterCardio: true, budget: coolBudget, ...steadyDefinition ? { continueWith: steadyDefinition } : {} }));
+  }
   return finish(context, choice, type, blocks, { reasons, ...main2 ? {} : { warnings: [reason("nothing-feasible", {}, context.locale)] } });
 }
 function mobilitySession(context, choice, type) {
   const gentle = type === "recovery";
   const minutes = gentle ? Math.min(context.minutes, 15) : context.minutes;
   const budget = minutes * 60;
+  const ceiling = gentle ? 2 : gentleCeiling(context);
   const used = /* @__PURE__ */ new Set();
   const blocks = [];
+  const breathingSeconds = gentle ? 180 : 120;
   const fill = (id, role, code, kinds, seconds) => {
     const block = { id, role, format: "flow", title: reason(code, {}, context.locale).text, rounds: 1, restBetweenRounds: 0, items: [] };
     const options = context.random.shuffle(
-      context.library.filter({ kinds, maxDifficulty: gentle ? 2 : 4 }).filter((definition) => feasible(definition, context) && !used.has(definition.id) && !definition.tags?.includes("self-massage"))
+      context.library.filter({ kinds, maxDifficulty: ceiling }).filter((definition) => feasible(definition, context) && !used.has(definition.id) && !definition.tags?.includes("self-massage"))
     );
     const focus = context.focusMuscles;
     const sorted = focus.size ? [...options].sort((a, b) => Number(b.muscles.primary.some((muscle) => focus.has(muscle))) - Number(a.muscles.primary.some((muscle) => focus.has(muscle)))) : options;
@@ -21517,17 +21942,21 @@ function mobilitySession(context, choice, type) {
       used.add(definition.id);
       block.items.push({ definition, sets: 1, target: easyTarget(definition, 0.5), restSeconds: 0, equipment: [], reasons: [] });
     }
+    if (block.items.length && plannedBlockSeconds(block) < seconds * 0.7) {
+      block.rounds = 2;
+    }
+    block.items = byPosture(block.items);
     blocks.push(block);
   };
-  fill("main-1", "main", "block-mobility", ["mobility"], budget * 0.45);
-  fill("cooldown", "cooldown", "block-stretch", ["stretch"], budget * 0.3);
+  fill("main-1", "main", "block-mobility", ["mobility"], budget * 0.55);
+  fill("cooldown", "cooldown", "block-stretch", ["stretch"], Math.max(60, budget - plannedBlockSeconds(blocks[0]) - breathingSeconds - BLOCK_TRANSITION_SECONDS));
   const breathing = context.library.filter({ kinds: ["breathing"] }).filter((definition) => feasible(definition, context));
   if (breathing.length) {
     const definition = breathing.find((entry) => entry.id === "diaphragmatic-breathing") ?? breathing[0];
-    const value = Math.min(definition.range[1], Math.max(definition.range[0], gentle ? 180 : 120));
+    const value = Math.min(definition.range[1], Math.max(definition.range[0], breathingSeconds));
     blocks[blocks.length - 1].items.push({ definition, sets: 1, target: { ...easyTarget(definition), value }, restSeconds: 0, equipment: [], reasons: [reason("cooldown-breathing", {}, context.locale)] });
   }
-  return finish({ ...context, minutes }, choice, type, blocks);
+  return finish({ ...context, minutes }, choice, type, blocks, { reasons: [reason("format-flow", {}, context.locale)] });
 }
 function generateSession(input) {
   const context = withIntensity(buildContext(input));
@@ -21541,6 +21970,8 @@ function generateSession(input) {
     case "cardio":
     case "hiit":
       return cardioSession(withWarning, choice, choice.type);
+    case "skill":
+      return strengthSession({ ...withWarning, settings: GOAL_SETTINGS.strength }, choice, choice.type);
     default:
       return strengthSession(withWarning, choice, choice.type);
   }

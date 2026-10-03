@@ -49,7 +49,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## État au 2 octobre 2026 (soir)
 
-- **Première version utilisable poussée.** 203 tests au vert, types propres.
+- **Version utilisable sur `master`.** 245 tests au vert, types propres.
 - `src/library/` : anatomie (30 muscles → 9 groupes → 3 régions,
   articulations), matériel (38 pièces, `inventory`, charges en kg), format des
   fiches (`types.ts`), règles (`validate.ts`), bibliothèque (`library.ts` :
@@ -80,16 +80,34 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## Reste à faire
 
-2. **Relire des séances comme un coach**, en grand nombre : un workflow qui
-   génère des séances pour des profils variés et les fait critiquer
-   (équilibre pousser / tirer, volume, ordre, charge, cohérence de
-   l'échauffement), puis corriger le moteur. Points déjà vus et pas encore
-   traités :
-   - un exercice seul reste parfois en séries classiques après des
-     supersets ;
-   - le bloc de travail d'un débutant d'endurance de 60 min est un peu court ;
-   - la charge de départ est une estimation grossière (part du poids du
-     corps).
+1. **Finir les constats des coachs du 03/10** (relecture de 28 séances ; la
+   liste complète et ses causes sont dans le journal de cette date). Faits :
+   forme du jour sur le volume, plan qui cède à la fatigue, séances courtes,
+   choix des exercices (activation, plafond, muscles des places, équilibre
+   poussée / tirage, genou douloureux, région évitée), cardio d'un débutant,
+   progression sur les vrais chiffres, dosage selon le rôle, séries
+   d'approche, échauffement et retour au calme du cardio, mobilité.
+   Reste :
+   - **le texte de la séance** (`src/output/text.ts`) : « 3 séries de 9
+     répétitions · repos 1 min 30 · réserve : 2 répétitions », ne pas
+     afficher le tempo normal, expliquer le tempo lent (3 s / 3 s), afficher
+     les séries d'approche, les notes (`session.notes`), les charges « ≈ 60
+     kg (à ajuster) » et tous les repos (entre exercices d'un circuit, entre
+     tours d'intervalles) ; durées de bloc arrondies à la demi-minute, avec
+     les transitions comptées dedans pour que la somme fasse le titre ;
+   - **les exercices en alternance** : un champ `alternating` existe dans
+     les fiches (nombre pair prescrit) mais aucune fiche ne le porte encore
+     (dead bug, bird dog, touches d'épaules, fentes alternées, rotations
+     russes…) ; afficher « 12 en alternant (6 de chaque côté) » ;
+   - **le plan de la semaine** : un fractionné n'est jamais « léger » ; une
+     activité dure compte comme la séance dure de la région qu'elle charge ;
+     phrase de découpage écrite à partir des types réellement placés ; une
+     phrase par activité, avec sa date lisible (« jeudi 8 octobre ») et son
+     nom (noms français des activités à ajouter) ;
+   - les noms anglais qui ont un équivalent français courant (Russian
+     twists…), « Étirement du canapé » ; la typographie (espaces insécables
+     avant « : » et « % », entre nombre et unité) ;
+   - ranger aussi les circuits par position, à rôle égal.
 3. **Le contrat avec DidIt** : c'est la session DidIt qui branche, sur une
    branche à part. Lui donner ce qu'elle demande (API stable, exemples
    d'entrée tirés de ses tables : `session_entries`, `body_logs`,
@@ -136,7 +154,29 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   frais).
 - Les étirements du retour au calme se choisissent **muscle par muscle**,
   pour couvrir le travail réellement fait.
-- AMRAP et EMOM limités à 20 minutes ; au-delà, un circuit.
+- AMRAP et EMOM limités à 20 minutes ; au-delà, un circuit. Un circuit a
+  au moins deux tours, et chaque circuit a son propre nombre de tours.
+- **La forme du jour réduit le travail** (03/10, relecture des coachs) : le
+  temps de travail est multiplié par le volume du jour, avec moins
+  d'exercices et un plafond de séries ; la séance est annoncée allégée et
+  plus courte, le temps libéré n'est pas rempli.
+- **Le plan de la semaine est une préférence** : si la région qu'il charge
+  est fatiguée, la séance du jour change de type (« plan adapté ») ; une
+  séance prévue dure ne l'est pas un jour de petite forme.
+- **Une place principale prend un vrai mouvement** (bonus aux
+  polyarticulaires, pénalité aux fiches d'activation) ; **rien de plus d'une
+  marche et demie au-dessus** de ce que la personne sait faire (une place en
+  plus reste vide, une place de base prend la variante la plus facile) ;
+  **une poussée en plus n'entre qu'avec autant de vrais tirages**.
+- **La progression part des vrais chiffres** : « a coincé » veut dire moins
+  bien que d'habitude, une série à l'échec, ou sous la fourchette de la
+  variante elle-même ; sous la fourchette de l'objectif, on garde ce que la
+  personne réussit, en séries plus nombreuses ; au plateau, on garde
+  l'exercice, plus lent, un peu moins de répétitions, une série de plus ;
+  une variante plus dure repart d'une part de la dernière performance.
+- **Le dosage dépend du rôle** : seuls les gros mouvements suivent la
+  fourchette de l'objectif ; un exercice d'appoint se fait à 8-12 au moins,
+  le gainage à 8-15 ou en tenue, avec moins de repos.
 
 ## Pièges connus
 
@@ -158,6 +198,15 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   `(?<![\p{L}])…(?![\p{L}])` avec le drapeau `u`.
 - Dans un circuit ou un superset, `item.sets` vaut 1 et `block.rounds` dit
   combien de fois : le total d'un exercice est `sets × rounds`.
+- Pour modifier plusieurs passages d'un fichier, écrire un petit script
+  `.mjs` de remplacements dans le dossier de travail (avec l'outil Write)
+  plutôt qu'un `node -e` : les accents graves y sont interprétés par Bash et
+  des morceaux de commentaires disparaissent.
+- Comparer le travail de deux séances par le nombre de séries trompe (un
+  circuit est plus dense qu'un superset) : comparer séries × répétitions.
+- La session DidIt a mis le branchement en pause (03/10, branche
+  `generateur-seances` figée sur `2bf6f55`) : inutile de la prévenir à
+  chaque push, elle prendra la dernière version à la reprise.
 
 ## Journal
 
@@ -181,3 +230,10 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   focus prioritaire, exercices chargés non pénalisés, finisher en plusieurs
   tours, plus d'exercice seul après des supersets (trio), tirage de secours
   par les omoplates, nom selon le matériel, choix selon l'objectif. 213 tests.
+  Puis les constats des coachs, les plus graves d'abord (voir Décisions et
+  Reste à faire) : forme du jour sur le volume, douleur forte, plan qui cède
+  à la fatigue, séances courtes, choix des exercices, cardio d'un débutant,
+  progression, dosage par rôle, séries d'approche, échauffement et retour au
+  calme du cardio (format « en continu », même machine), mobilité rangée par
+  position, fiches à quatre pattes qui déclarent épaules et poignets.
+  `tests/coach.test.ts` vérifie chaque règle sur huit graines. 245 tests.
