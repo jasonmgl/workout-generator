@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { defaultLibrary } from '../src/library';
 import { MUSCLE_INFO } from '../src/library/anatomy';
 import { generateSession } from '../src/session/generate';
+import { alternateRegions } from '../src/session/formats';
+import type { PlannedItem } from '../src/session/blocks';
 import { POSTURE_ORDER } from '../src/session/warmup';
 import type { GenerateInput, PastSession, Session, SessionItem } from '../src/types';
 
@@ -285,5 +287,23 @@ describe('la mobilité', () => {
         for (const session of many({ date: DATE, request: { type: 'mobility', minutes: 20 } })) {
             for (const item of items(session, ['main'])) expect(library.get(item.exercise).difficulty, item.exercise).toBeLessThanOrEqual(2);
         }
+    });
+});
+
+describe('l’ordre d’un circuit', () => {
+    const planned = (ids: readonly string[]): PlannedItem[] => ids.map((id) => ({ definition: library.get(id) }) as PlannedItem);
+
+    it('évite de se relever et de se recoucher, sans enchaîner deux exercices de la même région', () => {
+        const order = alternateRegions(planned(['air-squat', 'crunch', 'push-up', 'reverse-lunge'])).map((item) => item.definition.id);
+
+        // Debout, appui sur les mains, debout, puis le sol pour finir ; le plus important reste en tête.
+        expect(order).toEqual(['air-squat', 'push-up', 'reverse-lunge', 'crunch']);
+    });
+
+    it('ne colle pas deux exercices de la même région pour gagner une position', () => {
+        const order = alternateRegions(planned(['push-up', 'air-squat', 'glute-bridge', 'crunch'])).map((item) => item.definition.id);
+
+        expect(order.indexOf('glute-bridge') - order.indexOf('air-squat')).not.toBe(1);
+        expect(order.indexOf('air-squat') - order.indexOf('glute-bridge')).not.toBe(1);
     });
 });

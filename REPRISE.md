@@ -32,7 +32,8 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
   par chemin absolu, lancé par `npx vite-node script.ts`, affiche des
   séances en texte. C'est en les relisant comme un coach qu'on a trouvé les
   vrais défauts (trop d'exercices à deux séries, trois pompes dans une
-  séance, des étirements à côté).
+  séance, des étirements à côté). `npx vite-node scripts/scenarios.ts` sort
+  les 28 séances et 3 semaines des relectures.
 - Tout est en français : commentaires, tests, README, textes. Identifiants du
   code en anglais. Textes des fiches à l'infinitif. Commits en français, sans
   accents dans le corps, auteur `Camille <c.dumont@xefi.fr>` (config locale
@@ -100,15 +101,38 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 relecture des coachs, puis préparer le branchement DidIt (point 3), puis les
 cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
 
-1. **Finir les constats des coachs du 03/10** (relecture de 28 séances ; la
-   liste complète et ses causes sont dans le journal de cette date). Faits :
-   forme du jour sur le volume, plan qui cède à la fatigue, séances courtes,
-   choix des exercices (activation, plafond, muscles des places, équilibre
-   poussée / tirage, genou douloureux, région évitée), cardio d'un débutant,
-   progression sur les vrais chiffres, dosage selon le rôle, séries
-   d'approche, échauffement et retour au calme du cardio, mobilité.
-   Reste :
-   - ranger aussi les circuits par position, à rôle égal.
+1. **Les constats de la deuxième relecture des coachs** (03/10, soir) :
+   35 constats, avec cause et correctif, dans
+   `docs/relectures/2026-10-03-coachs-2.md` (identifiants
+   `programmation-N`, `securite-N`, `clarte-N`). Les séances relues
+   sortent de `scripts/scenarios.ts`. Par lots, les plus graves d'abord :
+   - [ ] première fois et échec : cible + réserve dans la fiche, plafond de
+     séries tenu en circuit, nordiques en descente freinée, variante sœur
+     dosée sur la famille, plateau qui garde l'exercice, échec qui tient la
+     cible, charge de reprise, charge la plus proche (programmation-1, -4 ;
+     securite-3, -4, -5, -6, -10) ;
+   - [ ] forme du jour : hasard tiré dans un ordre fixe, ni AMRAP ni EMOM un
+     jour léger, travail plafonné ; récupération qui passe avant le type
+     demandé (securite-1, -2) ;
+   - [ ] poussée / tirage : pompes sphinx comptées en poussée, places de
+     base par paires en commençant par le tirage ; focus servi d'abord ;
+     développé chargé en salle ; pas d'extensions lombaires après une
+     charnière ; doublons de mouvement (programmation-2, -6, -7, -11 ;
+     clarte-12) ;
+   - [ ] cardio en continu : retour au calme de 2 à 3 min, échauffement en
+     un tour, durée tenue ; « très facile » écrit ; machine et corde
+     utilisées (programmation-3, -9 ; securite-9 ; clarte-3, -4, -10) ;
+   - [ ] notes : un message par secours (tirage, articulation), porte +
+     serviette et table d'abord, majuscules (clarte-1, -2 ; programmation-10 ;
+     securite-11) ;
+   - [ ] tempo : négatives « descendre en 4 s, remonter sans forcer », pas
+     de tempo lent au gainage, pas de réserve sur l'activation
+     (programmation-12 ; securite-7 ; clarte-5) ;
+   - [ ] le reste : résumé sans redites (clarte-6), mobilité « sans
+     compter » (clarte-7), séances courtes remplies ou annoncées
+     (programmation-8 ; clarte-8), charges lisibles (clarte-9), échauffements
+     préparant les figures (securite-8), plan de la semaine région par
+     région (programmation-5 ; clarte-11).
 3. **Le contrat avec DidIt** : DidIt a branché lui-même, en PHP (voir
    État). Garder `tests/didit.test.ts` au vert ; ne rien renommer de ce que
    `movementsOf` lit (`title`, `summary`, `estimatedMinutes`, `type`,
@@ -275,3 +299,9 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   (`tests/didit.test.ts` : 75 séances de DidIt, chaque champ relu). L’exemple
   de conversion en TypeScript commencé est abandonné : DidIt a son pont, et
   `toTree` donne déjà l’arbre de ses programmes. 266 tests.
+  Circuits rangés par position (le meilleur ordre parmi tous : jamais deux
+  exercices de la même région d’affilée quand on peut l’éviter, puis le
+  moins de montées et descentes du sol ; 12 % de grands changements de
+  position en moins). Deuxième relecture des coachs reçue : 35 constats,
+  rangés dans `docs/relectures/`, et le script des séances relues versé
+  dans `scripts/scenarios.ts`. 268 tests.

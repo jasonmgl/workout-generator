@@ -21481,15 +21481,36 @@ function pairUp(items) {
 }
 var title = (code, context, params = {}) => reason(code, params, context.locale).text;
 var regionOf2 = (item2) => GROUP_REGION[MUSCLE_INFO[item2.definition.muscles.primary[0]].group];
-function alternateRegions(items) {
-  const left = [...items];
-  const result = [];
-  while (left.length) {
-    const previous = result[result.length - 1];
-    const index = previous ? left.findIndex((item2) => regionOf2(item2) !== regionOf2(previous)) : 0;
-    result.push(left.splice(index >= 0 ? index : 0, 1)[0]);
+var postureGap = (a, b) => Math.abs(POSTURE_ORDER.indexOf(a.definition.posture) - POSTURE_ORDER.indexOf(b.definition.posture));
+function orderCost(order2, original) {
+  let cost = 0;
+  for (let index = 1; index < order2.length; index++) {
+    cost += (regionOf2(order2[index]) === regionOf2(order2[index - 1]) ? 12 : 0) + postureGap(order2[index], order2[index - 1]);
   }
-  return result;
+  return cost + order2.reduce((sum, item2, index) => sum + Math.abs(original.indexOf(item2) - index), 0) / 100;
+}
+function permutations(items) {
+  if (items.length <= 1) {
+    return [[...items]];
+  }
+  return items.flatMap((item2, index) => permutations([...items.slice(0, index), ...items.slice(index + 1)]).map((rest2) => [item2, ...rest2]));
+}
+function alternateRegions(items) {
+  if (items.length <= 2 || items.length > 7) {
+    return [...items];
+  }
+  const [first, ...others] = items;
+  let best = [...items];
+  let bestCost = orderCost(best, items);
+  for (const order2 of permutations(others)) {
+    const candidate = [first, ...order2];
+    const cost = orderCost(candidate, items);
+    if (cost < bestCost) {
+      best = candidate;
+      bestCost = cost;
+    }
+  }
+  return best;
 }
 var perRound = (item2) => ({ ...item2, sets: 1, reasons: [...item2.reasons] });
 function buildMainBlocks(items, format2, context, mainSeconds) {

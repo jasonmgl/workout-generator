@@ -16,6 +16,7 @@ import { plannedBlockSeconds, type PlannedBlock, type PlannedItem } from './bloc
 import type { Context } from './context';
 import { feasible } from './select';
 import { repSeconds, workSeconds } from './timing';
+import { POSTURE_ORDER } from './warmup';
 
 /** Les formats que sait faire un bloc principal de renforcement. */
 const MAIN_FORMATS: readonly BlockFormat[] = ['straight', 'superset', 'circuit', 'amrap', 'emom', 'ladder'];
@@ -89,19 +90,55 @@ const title = (code: string, context: Context, params = {}): string => reason(co
 /** La région d'un exercice, d'après son premier muscle principal. */
 const regionOf = (item: PlannedItem): string => GROUP_REGION[MUSCLE_INFO[item.definition.muscles.primary[0]!].group];
 
-/** Ranger un circuit pour ne pas enchaîner deux exercices de la même région quand on peut l'éviter. */
-function alternateRegions(items: readonly PlannedItem[]): PlannedItem[] {
-    const left = [...items];
-    const result: PlannedItem[] = [];
+/** L'écart entre deux positions : se relever du sol pour un exercice debout coûte, enchaîner deux exercices au sol non. */
+const postureGap = (a: PlannedItem, b: PlannedItem): number => Math.abs(POSTURE_ORDER.indexOf(a.definition.posture) - POSTURE_ORDER.indexOf(b.definition.posture));
 
-    while (left.length) {
-        const previous = result[result.length - 1];
-        const index = previous ? left.findIndex((item) => regionOf(item) !== regionOf(previous)) : 0;
+/** Ce que coûte un ordre : deux exercices de la même région d'affilée pèsent plus que deux allers-retours au sol. */
+function orderCost(order: readonly PlannedItem[], original: readonly PlannedItem[]): number {
+    let cost = 0;
 
-        result.push(left.splice(index >= 0 ? index : 0, 1)[0]!);
+    for (let index = 1; index < order.length; index++) {
+        cost += (regionOf(order[index]!) === regionOf(order[index - 1]!) ? 12 : 0) + postureGap(order[index]!, order[index - 1]!);
     }
 
-    return result;
+    // À coût égal, l'ordre le plus proche de l'ordre d'importance.
+    return cost + order.reduce((sum, item, index) => sum + Math.abs(original.indexOf(item) - index), 0) / 100;
+}
+
+function permutations<T>(items: readonly T[]): T[][] {
+    if (items.length <= 1) {
+        return [[...items]];
+    }
+
+    return items.flatMap((item, index) => permutations([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [item, ...rest]));
+}
+
+/**
+ * Ranger un circuit : ne pas enchaîner deux exercices de la même région
+ * quand on peut l'éviter, et ne pas se relever et se recoucher à chaque
+ * exercice. Le premier, le plus important, reste en tête ; les autres
+ * prennent le meilleur ordre (un circuit en a six au plus, 120 ordres).
+ */
+export function alternateRegions(items: readonly PlannedItem[]): PlannedItem[] {
+    if (items.length <= 2 || items.length > 7) {
+        return [...items];
+    }
+
+    const [first, ...others] = items;
+    let best: PlannedItem[] = [...items];
+    let bestCost = orderCost(best, items);
+
+    for (const order of permutations(others)) {
+        const candidate = [first!, ...order];
+        const cost = orderCost(candidate, items);
+
+        if (cost < bestCost) {
+            best = candidate;
+            bestCost = cost;
+        }
+    }
+
+    return best;
 }
 
 /** Une copie d'exercice faite pour un bloc en tours : une série par tour. */
