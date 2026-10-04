@@ -194,17 +194,23 @@ const RAW_TEMPLATES: Readonly<Record<SessionType, Template>> = {
     },
 };
 
-/** Une place de flexion des jambes vidée par un genou douloureux garde du travail pour les jambes : charnière, hanches, mollets. */
+/**
+ * Une place de flexion des jambes vidée par un genou douloureux garde du travail pour les jambes : charnière, hanches,
+ * mollets. Un squat toléré (sur une chaise, assisté, genoux 1) passe avant, quand le matériel le permet : il est dans
+ * les schémas de la place elle-même. Et la place vise les quadriceps : sa charnière de secours est celle qui les fait
+ * travailler (le soulevé de terre sumo), quand elle est faisable.
+ */
 const KNEE_FALLBACK: readonly MovementPattern[] = ['hinge', 'hip-abduction', 'calf-raise'];
+const KNEE: Partial<Slot> = { fallback: KNEE_FALLBACK, muscles: ['quads'] };
 
 /**
  * Les précisions de certaines places, où qu’elles soient : les muscles qu’elles doivent servir, leurs secours, les
  * sortes d’exercices qu’elles acceptent (la charnière prend aussi le swing, explosif).
  */
 const REFINEMENTS: Readonly<Record<string, Partial<Slot>>> = {
-    knee: { fallback: KNEE_FALLBACK },
-    'knee-2': { fallback: KNEE_FALLBACK },
-    'single-leg': { fallback: KNEE_FALLBACK },
+    knee: KNEE,
+    'knee-2': KNEE,
+    'single-leg': KNEE,
     hinge: { kinds: ANY_STRENGTH },
     push: { muscles: ['pecs', 'upper-pecs'] },
     calves: { muscles: ['gastrocnemius', 'soleus'] },
@@ -251,6 +257,9 @@ const RAW_FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = {
 export const FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = Object.fromEntries(
     Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map(refine)]),
 ) as unknown as Record<MuscleGroupId, readonly Slot[]>;
+
+/** Une place du focus : ce que la personne a demandé de travailler. */
+export const isFocusSlot = (entry: Slot): boolean => entry.key.startsWith('focus-');
 
 /** Les groupes que sert surtout chaque schéma : pour retirer une place quand on évite ces groupes. */
 export const PATTERN_GROUPS: Readonly<Partial<Record<MovementPattern, readonly MuscleGroupId[]>>> = {

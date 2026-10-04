@@ -16,17 +16,30 @@
  * séances de suite ne sont pas identiques, la même graine redonne la même.
  */
 import { MUSCLE_INFO, type MuscleId } from '../library/anatomy';
-import { satisfies } from '../library/equipment';
+import { LOADABLE_EQUIPMENT, satisfies } from '../library/equipment';
 import type { ExerciseDefinition, Impact } from '../library/types';
 import { performancesOf, struggledOn, valueOf, LEVEL_DIFFICULTY } from '../history/progress';
 import type { Context } from './context';
 import { onPlateau, targetRange } from './prescribe';
-import type { Slot } from './templates';
+import { isFocusSlot, type Slot } from './templates';
 
 const IMPACT_ORDER: Readonly<Record<Impact, number>> = { none: 0, low: 1, high: 2 };
 
-/** Combien de candidats entrent au tirage final. */
+/** Combien de mouvements différents entrent au tirage final, et de variantes d’un même mouvement. */
 const DRAW_SIZE = 4;
+
+/**
+ * Le mouvement d’un exercice : sa famille, sans distinguer la version chargée de celle au poids du corps. Des fentes
+ * statiques et des fentes statiques avec haltères sont le même mouvement : jamais les deux dans une séance.
+ */
+export const movementKey = (definition: ExerciseDefinition): string => definition.family.replace(/^loaded-/, '');
+
+/** Les érecteurs du rachis travaillent-ils, en principal ou en aide (une charnière, des extensions lombaires) ? */
+export const loadsErectors = (definition: ExerciseDefinition): boolean =>
+    definition.muscles.primary.includes('erectors') || Boolean(definition.muscles.secondary?.includes('erectors'));
+
+/** Un exercice d’activation ou de rééducation (donkey kicks, clamshells) : sa place est l’échauffement. */
+const warmupOnly = (definition: ExerciseDefinition): boolean => Boolean(definition.tags?.some((tag) => tag === 'activation' || tag === 'rehab'));
 
 /** Ce qui rend un exercice impossible aujourd'hui. */
 export function feasible(definition: ExerciseDefinition, context: Context): boolean {
@@ -132,8 +145,12 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
 
     // Sur une place principale, l’exercice exact fait ces deux dernières semaines passe devant ses variantes sœurs :
     // on progresse sur ce qu’on refait, et au plateau on le garde pour en changer le rythme (prescribe), pas l’exercice.
+    // Au haut de sa fourchette, un exercice qui ne se charge pas a fini son escalier : place à la variante plus dure.
     if (slot.role === 'main' && seen && seen.days <= 14) {
-        value *= onPlateau(performancesOf(context.input.history ?? [], definition, context.date)) ? 3 : 2;
+        const own = performancesOf(context.input.history ?? [], definition, context.date);
+        const topped = !definition.tags?.includes('loaded') && own[0] !== undefined && Math.min(...own[0].sets.map((set) => valueOf(set, definition.measure))) >= targetRange(definition, context.settings)[1];
+
+        if (!topped) value *= onPlateau(own) ? 3 : 2;
     }
 
     // Une famille au plateau ne passe pas à plus dur : on débloque d’abord le plateau.
@@ -141,12 +158,11 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
 
     if (context.favorites.has(definition.id)) value *= 1.4;
 
-    // Une place principale appelle un vrai mouvement : plusieurs articulations, pas un exercice d’activation (donkey
-    // kicks, marche sur les talons), qu’on garde pour l’échauffement.
-    if (slot.role === 'main') {
-        if (definition.compound) value *= 1.3;
-        if (definition.tags?.some((tag) => tag === 'activation' || tag === 'rehab')) value *= 0.3;
-    }
+    // Une place principale appelle un vrai mouvement : plusieurs articulations. Aucune place ne prend volontiers un
+    // exercice d’activation (donkey kicks, marche sur les talons), qu’on garde pour l’échauffement : il ne sort que
+    // s’il n’y a rien d’autre (une articulation ménagée, par exemple).
+    if (slot.role === 'main' && definition.compound) value *= 1.3;
+    if (warmupOnly(definition)) value *= 0.3;
 
     // L’objectif : une variante qui ne monte pas jusqu’aux répétitions de l’endurance, ou qui ne descend pas jusqu’à
     // celles de la force, sert mal ; une descente freinée et lente n’a rien à faire dans un circuit d’endurance.
@@ -162,12 +178,19 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
     // Avec des charges à disposition, la force et le volume progressent mieux sur un exercice chargé.
     if ((context.goal === 'strength' || context.goal === 'hypertrophy') && definition.tags?.includes('loaded')) value *= 1.2;
 
-    // Deux exercices de la même famille dans une séance : seulement s'il n'y a rien d'autre.
-    if (chosen.some((other) => other.family === definition.family)) value *= 0.15;
+    // Deux exercices du même mouvement dans une séance (même famille, chargée ou non) : seulement s'il n'y a rien d'autre.
+    if (chosen.some((other) => movementKey(other) === movementKey(definition))) value *= 0.15;
     if (chosen.some((other) => other.pattern === definition.pattern)) value *= 0.4;
+    // Deux charnières qui chargent les érecteurs (un soulevé de terre sumo, puis un roumain) : le bas du dos paie deux
+    // fois. Un leg curl ou un pont fait mieux la deuxième place.
+    if (loadsErectors(definition) && chosen.some((other) => other.pattern === definition.pattern && loadsErectors(other))) value *= 0.4;
 
     return value;
 }
+
+/** Du meilleur au moins bon ; à égalité, par identifiant, pour que la même graine redonne la même séance. */
+const byScore = (a: { definition: ExerciseDefinition; score: number }, b: { definition: ExerciseDefinition; score: number }): number =>
+    b.score - a.score || a.definition.id.localeCompare(b.definition.id);
 
 /** Les candidats faisables d'une place, notés, du meilleur au moins bon. */
 export function rank(slot: Slot, context: Context, chosen: readonly ExerciseDefinition[]): { definition: ExerciseDefinition; score: number }[] {
@@ -178,17 +201,23 @@ export function rank(slot: Slot, context: Context, chosen: readonly ExerciseDefi
         .filter((definition) => !taken.has(definition.id) && feasible(definition, context))
         .filter((definition) => !slot.groups || definition.muscles.primary.some((muscle) => slot.groups!.includes(MUSCLE_INFO[muscle].group)))
         .map((definition) => ({ definition, score: score(definition, slot, context, chosen) }))
-        .sort((a, b) => b.score - a.score || a.definition.id.localeCompare(b.definition.id));
+        .sort(byScore);
 
     // Les muscles qu’une place doit faire travailler, quand le catalogue le permet : une place « mollets » prend des
     // mollets, pas le jambier antérieur ; une poussée horizontale, les pectoraux plutôt que les seuls triceps.
-    if (slot.muscles) {
-        const matching = candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot.muscles!.includes(muscle)));
+    const matching = slot.muscles ? candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot.muscles!.includes(muscle))) : [];
+    const pool = matching.length ? matching : candidates;
 
-        if (matching.length) return matching;
-    }
+    // En force et en prise de muscle, un gros mouvement progresse sur des charges qu’on note : quand un mouvement
+    // polyarticulaire qui se charge est faisable, les variantes au poids du corps, et l’isolation, passent derrière,
+    // comme un exercice d’activation (un développé couché plutôt que des pompes sur un bras à quatre répétitions, ou
+    // que des écartés) : elles ne sortent que si les charges ne conviennent pas.
+    const loadable = (definition: ExerciseDefinition): boolean =>
+        Boolean(definition.tags?.includes('loaded')) || Boolean(definition.equipment?.flat().some((id) => LOADABLE_EQUIPMENT.includes(id) && context.inventory.loadsOf(id).length > 0));
+    const strong = (definition: ExerciseDefinition): boolean => definition.compound && loadable(definition);
+    const loadedFirst = (context.goal === 'strength' || context.goal === 'hypertrophy') && slot.role === 'main' && pool.some((entry) => strong(entry.definition));
 
-    return candidates;
+    return loadedFirst ? pool.map((entry) => (strong(entry.definition) ? entry : { ...entry, score: entry.score * 0.3 })).sort(byScore) : pool;
 }
 
 /** Au-delà d’une marche et demie au-dessus de la difficulté visée, un exercice est trop dur pour être proposé. */
@@ -201,7 +230,14 @@ export const CEILING = 1.5;
  */
 export function pick(slot: Slot, context: Context, chosen: readonly ExerciseDefinition[], strict = false): ExerciseDefinition | undefined {
     const ranked = rank(slot, context, chosen);
-    const within = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
+    const reachable = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
+    // Qui demande « fessiers » attend du travail pour les fessiers : une place du focus ne prend un exercice
+    // d’activation, ou une descente freinée jamais faite (deux séries au plus la première fois), que s’il n’y a rien
+    // d’autre de faisable.
+    const firstDescent = (definition: ExerciseDefinition): boolean =>
+        Boolean(definition.tags?.includes('eccentric')) && performancesOf(context.input.history ?? [], definition, context.date).length === 0;
+    const working = isFocusSlot(slot) ? reachable.filter((entry) => !warmupOnly(entry.definition) && !firstDescent(entry.definition)) : [];
+    const within = working.length ? working : reachable;
 
     if (within.length === 0) {
         if (strict || ranked.length === 0) return undefined;
@@ -209,11 +245,27 @@ export function pick(slot: Slot, context: Context, chosen: readonly ExerciseDefi
         return [...ranked].sort((a, b) => a.definition.difficulty - b.definition.difficulty || b.score - a.score)[0]!.definition;
     }
 
-    const finalists = within.slice(0, DRAW_SIZE);
-    const best = finalists[0]!.score;
+    // Le tirage se fait en deux temps : d’abord le mouvement, chacun avec la note de sa meilleure variante (quatre
+    // pompes contre un développé ne laisseraient sortir le développé qu’une fois sur quatre), puis la variante, parmi
+    // celles qui valent presque la meilleure. Toujours deux tirages : le hasard garde le même ordre.
+    const movements: (typeof within)[] = [];
+
+    for (const entry of within) {
+        const group = movements.find((members) => movementKey(members[0]!.definition) === movementKey(entry.definition));
+
+        if (group) group.push(entry);
+        else if (movements.length < DRAW_SIZE) movements.push([entry]);
+    }
+
+    const best = movements[0]![0]!.score;
+    const movement = context.random.weighted(
+        movements.filter((members) => members[0]!.score >= best * 0.35),
+        (members) => members[0]!.score * members[0]!.score,
+    );
+    const top = movement[0]!.score;
 
     return context.random.weighted(
-        finalists.filter((entry) => entry.score >= best * 0.35),
+        movement.filter((entry) => entry.score >= top * 0.75).slice(0, DRAW_SIZE),
         (entry) => entry.score * entry.score,
     ).definition;
 }

@@ -251,7 +251,11 @@ function siblingPerformances(definition: ExerciseDefinition, context: Context): 
 /** Un nombre pair, pour un exercice qui alterne les côtés : autant de chaque côté. */
 const even = (value: number): number => Math.max(2, Math.ceil(value / 2) * 2);
 
-export function prescribe(definition: ExerciseDefinition, role: SlotRole, context: Context): Prescription {
+/**
+ * Doser un exercice pour sa place. Une place du focus (`focus`) garde la fourchette de son rôle (un curl reste à 8-12),
+ * mais a les séries d’une place principale : c’est le groupe que la personne a demandé de travailler.
+ */
+export function prescribe(definition: ExerciseDefinition, role: SlotRole, context: Context, options: { readonly focus?: boolean } = {}): Prescription {
     const { settings, readiness, locale } = context;
     const range = targetRange(definition, settings, role);
     const [low, high] = range;
@@ -377,9 +381,11 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
         }
     }
 
-    // Les séries : le haut de la fourchette pour un exercice principal, le bas pour le reste ; moins la première fois.
+    // Les séries : le haut de la fourchette pour un exercice principal ou du focus, le bas pour le reste ; moins la
+    // première fois.
     const volume = Math.min(1, readiness.volume);
-    let sets = role === 'main' || role === 'skill' ? most : fewest;
+    const leading = role === 'main' || role === 'skill' || Boolean(options.focus);
+    let sets = leading ? most : fewest;
 
     if (firstExposure) sets = fewest;
     if (firstExposure && definition.tags?.includes('eccentric')) sets = Math.min(sets, 2);
@@ -388,7 +394,7 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
 
     // Le plafond : une variante plus dure ou une reprise se découvre à une série de plus que le minimum, une
     // descente freinée à deux séries ; un premier essai ordinaire va jusqu’au nombre habituel de l’objectif.
-    const usual = role === 'core' ? fewest + 1 : role === 'accessory' ? most : most + 1;
+    const usual = leading || role === 'conditioning' ? most + 1 : role === 'core' ? fewest + 1 : most;
     const ceiling =
         firstExposure && definition.tags?.includes('eccentric')
             ? sets

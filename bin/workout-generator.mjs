@@ -14969,8 +14969,8 @@ var HINGE_FR = {
     breathing: "Souffler en pliant les genoux, inspirer en revenant."
   },
   "hamstring-walkout": {
-    name: "Ponts avec marche des talons",
-    aliases: ["Hamstring walkout", "Walkout ischios", "Pont fessier avec pas des talons"],
+    name: "Marche des talons en pont",
+    aliases: ["Ponts avec marche des talons", "Hamstring walkout", "Walkout ischios", "Pont fessier avec pas des talons"],
     summary: "Tenir le pont et \xE9loigner les talons \xE0 petits pas, puis revenir : ischio-jambiers et fessiers, sans aucun mat\xE9riel.",
     setup: ["S\u2019allonger sur le dos, genoux pli\xE9s, pieds \xE0 plat pr\xE8s des fesses.", "Monter le bassin en pont."],
     steps: [
@@ -15015,8 +15015,8 @@ var HINGE_FR = {
     safety: "En cas de crampe, ne faire que l\u2019aller et reposer le bassin pour ramener les pieds."
   },
   "single-leg-hamstring-walkout": {
-    name: "Ponts avec marche du talon sur une jambe",
-    aliases: ["Walkout ischios sur une jambe", "Single-leg hamstring walkout"],
+    name: "Marche du talon en pont sur une jambe",
+    aliases: ["Ponts avec marche du talon sur une jambe", "Walkout ischios sur une jambe", "Single-leg hamstring walkout"],
     summary: "La marche des talons en pont, sur un seul pied : un travail intense pour l\u2019ischio-jambier et le fessier d\u2019un c\xF4t\xE9.",
     setup: ["S\u2019allonger sur le dos, genoux pli\xE9s, pieds pr\xE8s des fesses.", "Monter en pont, puis tendre une jambe en l\u2019air dans le prolongement de la cuisse."],
     steps: [
@@ -21010,7 +21010,7 @@ function siblingPerformances(definition, context) {
   return found;
 }
 var even = (value) => Math.max(2, Math.ceil(value / 2) * 2);
-function prescribe(definition, role, context) {
+function prescribe(definition, role, context, options = {}) {
   const { settings, readiness, locale } = context;
   const range = targetRange(definition, settings, role);
   const [low, high] = range;
@@ -21112,11 +21112,12 @@ function prescribe(definition, role, context) {
     }
   }
   const volume = Math.min(1, readiness.volume);
-  let sets = role === "main" || role === "skill" ? most : fewest;
+  const leading = role === "main" || role === "skill" || Boolean(options.focus);
+  let sets = leading ? most : fewest;
   if (firstExposure) sets = fewest;
   if (firstExposure && definition.tags?.includes("eccentric")) sets = Math.min(sets, 2);
   sets = Math.max(1, Math.round((sets + extraSets) * readiness.volume));
-  const usual = role === "core" ? fewest + 1 : role === "accessory" ? most : most + 1;
+  const usual = leading || role === "conditioning" ? most + 1 : role === "core" ? fewest + 1 : most;
   const ceiling = firstExposure && definition.tags?.includes("eccentric") ? sets : step === "harder" || step === "comeback" ? Math.min(usual, fewest + 1) : step === "start" ? Math.min(usual, most) : usual;
   const maxSets = Math.max(sets, Math.round(Math.max(sets, ceiling + extraSets) * volume));
   let restSeconds = role === "main" && definition.compound ? settings.rest.compound : settings.rest.isolation;
@@ -21196,9 +21197,235 @@ function prescribe(definition, role, context) {
   };
 }
 
+// src/session/templates.ts
+var STRENGTH = ["strength"];
+var PULL_FALLBACK = ["scapular", "trunk-extension"];
+var ANY_STRENGTH = ["strength", "power"];
+var CARDIO = ["conditioning", "power"];
+var CORE_PATTERNS = ["anti-extension", "anti-lateral-flexion", "anti-rotation", "trunk-flexion"];
+var slot = (key, role, patterns, kinds = STRENGTH, fallback) => ({
+  key,
+  role,
+  patterns,
+  kinds,
+  ...fallback ? { fallback } : {},
+  ...fallback === PULL_FALLBACK ? { groups: ["back"] } : {}
+});
+var RAW_TEMPLATES = {
+  "full-body": {
+    base: [
+      slot("knee", "main", ["squat", "lunge"]),
+      slot("push", "main", ["horizontal-push", "vertical-push"]),
+      slot("hinge", "main", ["hinge", "knee-flexion"]),
+      slot("pull", "main", ["horizontal-pull", "vertical-pull"], STRENGTH, PULL_FALLBACK),
+      slot("core", "core", CORE_PATTERNS)
+    ],
+    extras: [
+      slot("single-leg", "accessory", ["lunge", "squat"]),
+      slot("pull-2", "accessory", ["vertical-pull", "horizontal-pull"]),
+      slot("push-2", "accessory", ["vertical-push", "horizontal-push"]),
+      slot("calves", "accessory", ["calf-raise"]),
+      slot("arms", "accessory", ["elbow-flexion", "elbow-extension"]),
+      slot("back-ext", "core", ["trunk-extension"]),
+      slot("shoulders", "accessory", ["shoulder-raise", "scapular"])
+    ]
+  },
+  upper: {
+    // Par paires, le tirage d’abord : quand le temps manque, c’est la deuxième poussée qui saute.
+    base: [
+      slot("pull", "main", ["vertical-pull", "horizontal-pull"], STRENGTH, PULL_FALLBACK),
+      slot("push", "main", ["horizontal-push"]),
+      slot("pull-h", "main", ["horizontal-pull"], STRENGTH, PULL_FALLBACK),
+      slot("push-v", "main", ["vertical-push"])
+    ],
+    extras: [
+      slot("biceps", "accessory", ["elbow-flexion"]),
+      slot("triceps", "accessory", ["elbow-extension"]),
+      slot("shoulders", "accessory", ["shoulder-raise", "scapular"]),
+      slot("core", "core", CORE_PATTERNS),
+      slot("push-2", "accessory", ["horizontal-push", "vertical-push"]),
+      slot("pull-2", "accessory", ["vertical-pull", "horizontal-pull"]),
+      slot("grip", "accessory", ["grip"])
+    ]
+  },
+  lower: {
+    base: [
+      slot("knee", "main", ["squat"]),
+      slot("hinge", "main", ["hinge"], STRENGTH, ["knee-flexion", "trunk-extension"]),
+      slot("single-leg", "main", ["lunge"]),
+      slot("hamstrings", "accessory", ["knee-flexion", "hinge"])
+    ],
+    extras: [
+      slot("calves", "accessory", ["calf-raise"]),
+      slot("hips", "accessory", ["hip-abduction", "hip-adduction"]),
+      slot("core", "core", CORE_PATTERNS),
+      slot("knee-2", "accessory", ["squat", "lunge"]),
+      slot("back-ext", "core", ["trunk-extension"])
+    ]
+  },
+  push: {
+    base: [
+      slot("push", "main", ["horizontal-push"]),
+      slot("push-v", "main", ["vertical-push"]),
+      slot("push-2", "accessory", ["horizontal-push", "vertical-push"]),
+      slot("triceps", "accessory", ["elbow-extension"])
+    ],
+    extras: [
+      slot("shoulders", "accessory", ["shoulder-raise"]),
+      slot("core", "core", CORE_PATTERNS),
+      slot("scapular", "accessory", ["scapular"])
+    ]
+  },
+  pull: {
+    base: [
+      slot("pull-v", "main", ["vertical-pull"], STRENGTH, PULL_FALLBACK),
+      slot("pull-h", "main", ["horizontal-pull"], STRENGTH, PULL_FALLBACK),
+      slot("pull-2", "accessory", ["vertical-pull", "horizontal-pull"]),
+      slot("biceps", "accessory", ["elbow-flexion"])
+    ],
+    extras: [
+      slot("rear", "accessory", ["scapular", "shoulder-raise"]),
+      slot("back-ext", "core", ["trunk-extension"]),
+      slot("grip", "accessory", ["grip", "carry"]),
+      slot("core", "core", CORE_PATTERNS)
+    ]
+  },
+  core: {
+    base: [
+      slot("front", "core", ["anti-extension"]),
+      slot("side", "core", ["anti-lateral-flexion", "anti-rotation"]),
+      slot("flexion", "core", ["trunk-flexion"]),
+      slot("back-ext", "core", ["trunk-extension"])
+    ],
+    extras: [
+      slot("rotation", "core", ["trunk-rotation", "anti-rotation"]),
+      slot("front-2", "core", ["anti-extension", "trunk-flexion"]),
+      slot("carry", "core", ["carry"])
+    ]
+  },
+  cardio: {
+    base: [
+      slot("cardio", "conditioning", ["cardio", "locomotion"], ["conditioning"]),
+      slot("full", "conditioning", ["full-body", "jump", "cardio"], CARDIO)
+    ],
+    extras: [
+      slot("cardio-2", "conditioning", ["cardio", "locomotion", "full-body"], CARDIO),
+      slot("carry", "conditioning", ["carry"], CARDIO)
+    ]
+  },
+  hiit: {
+    base: [
+      slot("full", "conditioning", ["full-body"], CARDIO),
+      slot("legs", "conditioning", ["jump", "squat", "lunge"], CARDIO),
+      slot("cardio", "conditioning", ["cardio", "locomotion"], CARDIO),
+      slot("upper", "conditioning", ["horizontal-push", "anti-extension", "locomotion"], ["conditioning", "power", "strength"])
+    ],
+    extras: [
+      slot("full-2", "conditioning", ["full-body", "jump"], CARDIO),
+      slot("core", "conditioning", ["anti-extension", "trunk-flexion"], ["conditioning", "strength"]),
+      slot("cardio-2", "conditioning", ["cardio", "locomotion"], CARDIO)
+    ]
+  },
+  mobility: {
+    base: [],
+    extras: []
+  },
+  recovery: {
+    base: [],
+    extras: []
+  },
+  skill: {
+    base: [
+      slot("skill", "skill", ["vertical-push", "anti-extension", "horizontal-push", "vertical-pull", "horizontal-pull", "full-body"], ["skill"]),
+      slot("push-v", "main", ["vertical-push"]),
+      slot("pull", "main", ["vertical-pull", "horizontal-pull"], STRENGTH, PULL_FALLBACK),
+      slot("core", "core", ["anti-extension", "trunk-flexion"])
+    ],
+    extras: [
+      slot("skill-2", "skill", ["vertical-push", "anti-extension", "horizontal-push", "vertical-pull", "horizontal-pull", "full-body"], ["skill"]),
+      slot("push", "accessory", ["horizontal-push"]),
+      slot("scapular", "accessory", ["scapular"])
+    ]
+  }
+};
+var KNEE_FALLBACK = ["hinge", "hip-abduction", "calf-raise"];
+var KNEE = { fallback: KNEE_FALLBACK, muscles: ["quads"] };
+var REFINEMENTS = {
+  knee: KNEE,
+  "knee-2": KNEE,
+  "single-leg": KNEE,
+  hinge: { kinds: ANY_STRENGTH },
+  push: { muscles: ["pecs", "upper-pecs"] },
+  calves: { muscles: ["gastrocnemius", "soleus"] },
+  "focus-calves": { muscles: ["gastrocnemius", "soleus"] },
+  hips: { muscles: ["glute-med", "glute-max"] },
+  carry: { kinds: ["strength", "conditioning", "power"] }
+};
+var refine = (entry) => {
+  const extra = REFINEMENTS[entry.key];
+  return extra ? { ...entry, ...extra, fallback: entry.fallback ?? extra.fallback ?? [] } : entry;
+};
+var refineTemplate = (template) => ({ base: template.base.map(refine), extras: template.extras.map(refine) });
+var TEMPLATES = {
+  "full-body": refineTemplate(RAW_TEMPLATES["full-body"]),
+  upper: refineTemplate(RAW_TEMPLATES.upper),
+  lower: refineTemplate(RAW_TEMPLATES.lower),
+  push: refineTemplate(RAW_TEMPLATES.push),
+  pull: refineTemplate(RAW_TEMPLATES.pull),
+  core: refineTemplate(RAW_TEMPLATES.core),
+  cardio: refineTemplate(RAW_TEMPLATES.cardio),
+  hiit: refineTemplate(RAW_TEMPLATES.hiit),
+  mobility: refineTemplate(RAW_TEMPLATES.mobility),
+  recovery: refineTemplate(RAW_TEMPLATES.recovery),
+  skill: refineTemplate(RAW_TEMPLATES.skill)
+};
+var RAW_FOCUS_SLOTS = {
+  chest: [slot("focus-chest", "accessory", ["horizontal-push"]), slot("focus-chest-2", "accessory", ["horizontal-push", "vertical-push"])],
+  back: [slot("focus-back", "accessory", ["horizontal-pull", "vertical-pull"]), slot("focus-back-2", "accessory", ["vertical-pull", "horizontal-pull"])],
+  shoulders: [slot("focus-shoulders", "accessory", ["vertical-push", "shoulder-raise"]), slot("focus-shoulders-2", "accessory", ["shoulder-raise", "scapular"])],
+  arms: [slot("focus-biceps", "accessory", ["elbow-flexion"]), slot("focus-triceps", "accessory", ["elbow-extension"])],
+  core: [slot("focus-core", "core", CORE_PATTERNS), slot("focus-core-2", "core", ["trunk-flexion", "trunk-rotation", "anti-rotation"])],
+  "lower-back": [slot("focus-lower-back", "core", ["trunk-extension"]), slot("focus-lower-back-2", "accessory", ["hinge"])],
+  glutes: [slot("focus-glutes", "accessory", ["hinge"]), slot("focus-glutes-2", "accessory", ["hip-abduction", "lunge"])],
+  legs: [slot("focus-legs", "accessory", ["squat", "lunge"]), slot("focus-legs-2", "accessory", ["knee-flexion", "hip-adduction", "lunge"])],
+  calves: [slot("focus-calves", "accessory", ["calf-raise"]), slot("focus-calves-2", "accessory", ["calf-raise", "jump"], ANY_STRENGTH)]
+};
+var FOCUS_SLOTS = Object.fromEntries(
+  Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map(refine)])
+);
+var isFocusSlot = (entry) => entry.key.startsWith("focus-");
+var PATTERN_GROUPS = {
+  squat: ["legs", "glutes"],
+  lunge: ["legs", "glutes"],
+  hinge: ["glutes", "legs", "lower-back"],
+  "knee-flexion": ["legs"],
+  "hip-abduction": ["glutes"],
+  "hip-adduction": ["legs"],
+  "calf-raise": ["calves"],
+  "horizontal-push": ["chest", "arms", "shoulders"],
+  "vertical-push": ["shoulders", "arms"],
+  "horizontal-pull": ["back", "arms"],
+  "vertical-pull": ["back", "arms"],
+  "elbow-flexion": ["arms"],
+  "elbow-extension": ["arms"],
+  "shoulder-raise": ["shoulders"],
+  scapular: ["shoulders", "back"],
+  grip: ["arms"],
+  "anti-extension": ["core"],
+  "anti-rotation": ["core"],
+  "anti-lateral-flexion": ["core"],
+  "trunk-flexion": ["core"],
+  "trunk-rotation": ["core"],
+  "trunk-extension": ["lower-back"],
+  jump: ["legs", "calves"]
+};
+
 // src/session/select.ts
 var IMPACT_ORDER4 = { none: 0, low: 1, high: 2 };
 var DRAW_SIZE = 4;
+var movementKey = (definition) => definition.family.replace(/^loaded-/, "");
+var loadsErectors = (definition) => definition.muscles.primary.includes("erectors") || Boolean(definition.muscles.secondary?.includes("erectors"));
+var warmupOnly = (definition) => Boolean(definition.tags?.some((tag) => tag === "activation" || tag === "rehab"));
 function feasible(definition, context) {
   if (context.exclude.has(definition.id)) return false;
   if (!satisfies(definition.equipment, context.inventory)) return false;
@@ -21263,14 +21490,14 @@ function score(definition, slot2, context, chosen) {
   if (slot2.role === "main" && family && family.days <= 14) value *= 1.25;
   if (seen && seen.count >= 10) value *= 0.7;
   if (slot2.role === "main" && seen && seen.days <= 14) {
-    value *= onPlateau(performancesOf(context.input.history ?? [], definition, context.date)) ? 3 : 2;
+    const own = performancesOf(context.input.history ?? [], definition, context.date);
+    const topped = !definition.tags?.includes("loaded") && own[0] !== void 0 && Math.min(...own[0].sets.map((set) => valueOf(set, definition.measure))) >= targetRange(definition, context.settings)[1];
+    if (!topped) value *= onPlateau(own) ? 3 : 2;
   }
   if (definition.difficulty > (context.capacity.families[definition.family] ?? 10) && familyOnPlateau(definition, context)) value *= 0.2;
   if (context.favorites.has(definition.id)) value *= 1.4;
-  if (slot2.role === "main") {
-    if (definition.compound) value *= 1.3;
-    if (definition.tags?.some((tag) => tag === "activation" || tag === "rehab")) value *= 0.3;
-  }
+  if (slot2.role === "main" && definition.compound) value *= 1.3;
+  if (warmupOnly(definition)) value *= 0.3;
   if (definition.measure === "reps" && definition.kind === "strength") {
     const [low, high] = context.settings.reps;
     if (definition.range[1] < low) value *= 0.5;
@@ -21278,31 +21505,47 @@ function score(definition, slot2, context, chosen) {
   }
   if ((context.goal === "endurance" || context.goal === "fat-loss") && definition.tags?.includes("eccentric")) value *= 0.4;
   if ((context.goal === "strength" || context.goal === "hypertrophy") && definition.tags?.includes("loaded")) value *= 1.2;
-  if (chosen.some((other) => other.family === definition.family)) value *= 0.15;
+  if (chosen.some((other) => movementKey(other) === movementKey(definition))) value *= 0.15;
   if (chosen.some((other) => other.pattern === definition.pattern)) value *= 0.4;
+  if (loadsErectors(definition) && chosen.some((other) => other.pattern === definition.pattern && loadsErectors(other))) value *= 0.4;
   return value;
 }
+var byScore = (a, b) => b.score - a.score || a.definition.id.localeCompare(b.definition.id);
 function rank(slot2, context, chosen) {
   const taken = new Set(chosen.map((definition) => definition.id));
-  const candidates = context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns }).filter((definition) => !taken.has(definition.id) && feasible(definition, context)).filter((definition) => !slot2.groups || definition.muscles.primary.some((muscle) => slot2.groups.includes(MUSCLE_INFO[muscle].group))).map((definition) => ({ definition, score: score(definition, slot2, context, chosen) })).sort((a, b) => b.score - a.score || a.definition.id.localeCompare(b.definition.id));
-  if (slot2.muscles) {
-    const matching = candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot2.muscles.includes(muscle)));
-    if (matching.length) return matching;
-  }
-  return candidates;
+  const candidates = context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns }).filter((definition) => !taken.has(definition.id) && feasible(definition, context)).filter((definition) => !slot2.groups || definition.muscles.primary.some((muscle) => slot2.groups.includes(MUSCLE_INFO[muscle].group))).map((definition) => ({ definition, score: score(definition, slot2, context, chosen) })).sort(byScore);
+  const matching = slot2.muscles ? candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot2.muscles.includes(muscle))) : [];
+  const pool = matching.length ? matching : candidates;
+  const loadable = (definition) => Boolean(definition.tags?.includes("loaded")) || Boolean(definition.equipment?.flat().some((id) => LOADABLE_EQUIPMENT.includes(id) && context.inventory.loadsOf(id).length > 0));
+  const strong = (definition) => definition.compound && loadable(definition);
+  const loadedFirst = (context.goal === "strength" || context.goal === "hypertrophy") && slot2.role === "main" && pool.some((entry) => strong(entry.definition));
+  return loadedFirst ? pool.map((entry) => strong(entry.definition) ? entry : { ...entry, score: entry.score * 0.3 }).sort(byScore) : pool;
 }
 var CEILING = 1.5;
 function pick(slot2, context, chosen, strict = false) {
   const ranked = rank(slot2, context, chosen);
-  const within2 = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
+  const reachable = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
+  const firstDescent = (definition) => Boolean(definition.tags?.includes("eccentric")) && performancesOf(context.input.history ?? [], definition, context.date).length === 0;
+  const working = isFocusSlot(slot2) ? reachable.filter((entry) => !warmupOnly(entry.definition) && !firstDescent(entry.definition)) : [];
+  const within2 = working.length ? working : reachable;
   if (within2.length === 0) {
     if (strict || ranked.length === 0) return void 0;
     return [...ranked].sort((a, b) => a.definition.difficulty - b.definition.difficulty || b.score - a.score)[0].definition;
   }
-  const finalists = within2.slice(0, DRAW_SIZE);
-  const best = finalists[0].score;
+  const movements = [];
+  for (const entry of within2) {
+    const group = movements.find((members) => movementKey(members[0].definition) === movementKey(entry.definition));
+    if (group) group.push(entry);
+    else if (movements.length < DRAW_SIZE) movements.push([entry]);
+  }
+  const best = movements[0][0].score;
+  const movement = context.random.weighted(
+    movements.filter((members) => members[0].score >= best * 0.35),
+    (members) => members[0].score * members[0].score
+  );
+  const top = movement[0].score;
   return context.random.weighted(
-    finalists.filter((entry) => entry.score >= best * 0.35),
+    movement.filter((entry) => entry.score >= top * 0.75).slice(0, DRAW_SIZE),
     (entry) => entry.score * entry.score
   ).definition;
 }
@@ -21550,7 +21793,8 @@ function pairUp(items) {
     if (index >= 0) {
       pairs.push([first, left.splice(index, 1)[0]]);
     } else if (left.length) {
-      pairs.push([first, left.shift()]);
+      const apart = left.findIndex((other) => !shareLoad(first, other));
+      pairs.push([first, left.splice(Math.max(0, apart), 1)[0]]);
     } else if (pairs.length) {
       pairs[pairs.length - 1].push(first);
     } else {
@@ -21561,11 +21805,19 @@ function pairUp(items) {
 }
 var title = (code, context, params = {}) => reason(code, params, context.locale).text;
 var regionOf2 = (item2) => GROUP_REGION[MUSCLE_INFO[item2.definition.muscles.primary[0]].group];
+var bothErectors = (a, b) => loadsErectors(a.definition) && loadsErectors(b.definition);
+function sharePrimary(a, b) {
+  const groups = new Set(a.definition.muscles.primary.map((muscle) => MUSCLE_INFO[muscle].group));
+  return b.definition.muscles.primary.some((muscle) => groups.has(MUSCLE_INFO[muscle].group));
+}
+var shareLoad = (a, b) => bothErectors(a, b) || sharePrimary(a, b);
 var postureGap = (a, b) => Math.abs(POSTURE_ORDER.indexOf(a.definition.posture) - POSTURE_ORDER.indexOf(b.definition.posture));
 function orderCost(order2, original) {
   let cost = 0;
   for (let index = 1; index < order2.length; index++) {
-    cost += (regionOf2(order2[index]) === regionOf2(order2[index - 1]) ? 12 : 0) + postureGap(order2[index], order2[index - 1]);
+    const [previous, current] = [order2[index - 1], order2[index]];
+    const muscles = (sharePrimary(previous, current) ? 12 : 0) + (bothErectors(previous, current) ? 12 : 0);
+    cost += (regionOf2(current) === regionOf2(previous) ? 12 : 0) + muscles + postureGap(current, previous);
   }
   return cost + order2.reduce((sum, item2, index) => sum + Math.abs(original.indexOf(item2) - index), 0) / 100;
 }
@@ -21599,7 +21851,8 @@ function buildMainBlocks(items, format2, context, mainSeconds) {
   const held = [];
   const kept = [];
   for (const block of blocks) {
-    const out = block.format === "straight" || block.format === "ladder" ? [] : block.items.filter((item2) => (item2.maxSets ?? Infinity) < block.rounds && (item2.maxSets ?? Infinity) <= 2);
+    const capped = (item2) => Boolean(item2.definition.tags?.includes("eccentric")) && (item2.maxSets ?? Infinity) < block.rounds && (item2.maxSets ?? Infinity) <= 2;
+    const out = block.format === "straight" || block.format === "ladder" ? [] : block.items.filter(capped);
     if (!out.length) {
       kept.push(block);
       continue;
@@ -21620,6 +21873,22 @@ function buildMainBlocks(items, format2, context, mainSeconds) {
   const rank2 = (item2) => TRUNK.has(item2.definition.pattern) ? 2 : item2.definition.compound ? 0 : 1;
   const first = { id: "main-0", role: "main", format: "straight", title: title("block-main", context), rounds: 1, restBetweenRounds: 0, items: [...held].sort((a, b) => rank2(a) - rank2(b)) };
   return [first, ...kept].map((block, index) => ({ ...block, id: `main-${index + 1}` }));
+}
+function splitCircuit(items) {
+  const size = Math.ceil(items.length / 2);
+  const first = items.filter((item2) => item2.focus).slice(0, size);
+  const second = [];
+  for (const item2 of items) {
+    if (first.includes(item2)) continue;
+    const firstFull = first.length >= size;
+    const secondFull = second.length >= items.length - size;
+    (secondFull || !firstFull && first.length <= second.length ? first : second).push(item2);
+  }
+  return [items.filter((item2) => first.includes(item2)), items.filter((item2) => second.includes(item2))];
+}
+function focusFirst(items, count) {
+  const kept = [...items.filter((item2) => item2.focus), ...items.filter((item2) => !item2.focus)].slice(0, count);
+  return items.filter((item2) => kept.includes(item2));
 }
 function assembleBlocks(items, format2, context, mainSeconds) {
   if (items.length === 0) {
@@ -21663,13 +21932,14 @@ function assembleBlocks(items, format2, context, mainSeconds) {
     });
   }
   if (format2 === "circuit") {
-    const groups = items.length >= 7 ? [items.filter((_, index) => index % 2 === 0), items.filter((_, index) => index % 2 === 1)] : [items];
+    const groups = items.length >= 7 ? splitCircuit(items) : [items];
     return groups.map((group, index) => ({
       id: `main-${index + 1}`,
       role: "main",
       format: "circuit",
       title: title("block-circuit", context),
-      rounds: Math.max(2, Math.round(group.reduce((sum, item2) => sum + item2.sets, 0) / group.length)),
+      // Autant de tours que la moyenne des séries, et au moins celles de ce qu'on vise.
+      rounds: Math.max(2, Math.round(group.reduce((sum, item2) => sum + item2.sets, 0) / group.length), ...group.filter((item2) => item2.focus).map((item2) => item2.sets)),
       restBetweenRounds: settings.circuit.betweenRounds + (lightDay(context) ? 15 : 0),
       restBetweenItems: settings.circuit.betweenItems,
       items: alternateRegions(group).map(perRound)
@@ -21677,7 +21947,7 @@ function assembleBlocks(items, format2, context, mainSeconds) {
   }
   if (format2 === "amrap") {
     const minutes = Math.max(5, Math.min(20, Math.round(mainSeconds / 60)));
-    const chosen = items.slice(0, 5).map((item2) => ({
+    const chosen = focusFirst(items, 5).map((item2) => ({
       ...perRound(item2),
       target: { ...item2.target, value: Math.max(1, Math.round(item2.target.value * 0.7)), range: [Math.min(item2.target.range[0], Math.max(1, Math.round(item2.target.value * 0.7))), item2.target.range[1]] }
     }));
@@ -21696,7 +21966,7 @@ function assembleBlocks(items, format2, context, mainSeconds) {
     ];
   }
   if (format2 === "emom") {
-    const chosen = items.slice(0, 3).map((item2) => {
+    const chosen = focusFirst(items, 3).map((item2) => {
       const capped = item2.target.measure === "reps" ? Math.min(item2.target.value, Math.max(1, Math.floor(40 / ((item2.tempo ? repSeconds(item2.tempo) : item2.definition.secondsPerRep ?? 3) * (item2.target.perSide ? 2 : 1))))) : Math.min(item2.target.value, item2.target.perSide ? 20 : 40);
       return { ...perRound(item2), target: { ...item2.target, value: capped, range: [Math.min(item2.target.range[0], capped), item2.target.range[1]] } };
     });
@@ -21797,227 +22067,6 @@ function buildFinisher(context, seconds, used, legsLoaded = false) {
   return buildIntervals("finisher", "finisher", picked, seconds, context, tabata);
 }
 
-// src/session/templates.ts
-var STRENGTH = ["strength"];
-var PULL_FALLBACK = ["scapular", "trunk-extension"];
-var ANY_STRENGTH = ["strength", "power"];
-var CARDIO = ["conditioning", "power"];
-var CORE_PATTERNS = ["anti-extension", "anti-lateral-flexion", "anti-rotation", "trunk-flexion"];
-var slot = (key, role, patterns, kinds = STRENGTH, fallback) => ({
-  key,
-  role,
-  patterns,
-  kinds,
-  ...fallback ? { fallback } : {},
-  ...fallback === PULL_FALLBACK ? { groups: ["back"] } : {}
-});
-var RAW_TEMPLATES = {
-  "full-body": {
-    base: [
-      slot("knee", "main", ["squat", "lunge"]),
-      slot("push", "main", ["horizontal-push", "vertical-push"]),
-      slot("hinge", "main", ["hinge", "knee-flexion"]),
-      slot("pull", "main", ["horizontal-pull", "vertical-pull"], STRENGTH, PULL_FALLBACK),
-      slot("core", "core", CORE_PATTERNS)
-    ],
-    extras: [
-      slot("single-leg", "accessory", ["lunge", "squat"]),
-      slot("pull-2", "accessory", ["vertical-pull", "horizontal-pull"]),
-      slot("push-2", "accessory", ["vertical-push", "horizontal-push"]),
-      slot("calves", "accessory", ["calf-raise"]),
-      slot("arms", "accessory", ["elbow-flexion", "elbow-extension"]),
-      slot("back-ext", "core", ["trunk-extension"]),
-      slot("shoulders", "accessory", ["shoulder-raise", "scapular"])
-    ]
-  },
-  upper: {
-    // Par paires, le tirage d’abord : quand le temps manque, c’est la deuxième poussée qui saute.
-    base: [
-      slot("pull", "main", ["vertical-pull", "horizontal-pull"], STRENGTH, PULL_FALLBACK),
-      slot("push", "main", ["horizontal-push"]),
-      slot("pull-h", "main", ["horizontal-pull"], STRENGTH, PULL_FALLBACK),
-      slot("push-v", "main", ["vertical-push"])
-    ],
-    extras: [
-      slot("biceps", "accessory", ["elbow-flexion"]),
-      slot("triceps", "accessory", ["elbow-extension"]),
-      slot("shoulders", "accessory", ["shoulder-raise", "scapular"]),
-      slot("core", "core", CORE_PATTERNS),
-      slot("push-2", "accessory", ["horizontal-push", "vertical-push"]),
-      slot("pull-2", "accessory", ["vertical-pull", "horizontal-pull"]),
-      slot("grip", "accessory", ["grip"])
-    ]
-  },
-  lower: {
-    base: [
-      slot("knee", "main", ["squat"]),
-      slot("hinge", "main", ["hinge"], STRENGTH, ["knee-flexion", "trunk-extension"]),
-      slot("single-leg", "main", ["lunge"]),
-      slot("hamstrings", "accessory", ["knee-flexion", "hinge"])
-    ],
-    extras: [
-      slot("calves", "accessory", ["calf-raise"]),
-      slot("hips", "accessory", ["hip-abduction", "hip-adduction"]),
-      slot("core", "core", CORE_PATTERNS),
-      slot("knee-2", "accessory", ["squat", "lunge"]),
-      slot("back-ext", "core", ["trunk-extension"])
-    ]
-  },
-  push: {
-    base: [
-      slot("push", "main", ["horizontal-push"]),
-      slot("push-v", "main", ["vertical-push"]),
-      slot("push-2", "accessory", ["horizontal-push", "vertical-push"]),
-      slot("triceps", "accessory", ["elbow-extension"])
-    ],
-    extras: [
-      slot("shoulders", "accessory", ["shoulder-raise"]),
-      slot("core", "core", CORE_PATTERNS),
-      slot("scapular", "accessory", ["scapular"])
-    ]
-  },
-  pull: {
-    base: [
-      slot("pull-v", "main", ["vertical-pull"], STRENGTH, PULL_FALLBACK),
-      slot("pull-h", "main", ["horizontal-pull"], STRENGTH, PULL_FALLBACK),
-      slot("pull-2", "accessory", ["vertical-pull", "horizontal-pull"]),
-      slot("biceps", "accessory", ["elbow-flexion"])
-    ],
-    extras: [
-      slot("rear", "accessory", ["scapular", "shoulder-raise"]),
-      slot("back-ext", "core", ["trunk-extension"]),
-      slot("grip", "accessory", ["grip", "carry"]),
-      slot("core", "core", CORE_PATTERNS)
-    ]
-  },
-  core: {
-    base: [
-      slot("front", "core", ["anti-extension"]),
-      slot("side", "core", ["anti-lateral-flexion", "anti-rotation"]),
-      slot("flexion", "core", ["trunk-flexion"]),
-      slot("back-ext", "core", ["trunk-extension"])
-    ],
-    extras: [
-      slot("rotation", "core", ["trunk-rotation", "anti-rotation"]),
-      slot("front-2", "core", ["anti-extension", "trunk-flexion"]),
-      slot("carry", "core", ["carry"])
-    ]
-  },
-  cardio: {
-    base: [
-      slot("cardio", "conditioning", ["cardio", "locomotion"], ["conditioning"]),
-      slot("full", "conditioning", ["full-body", "jump", "cardio"], CARDIO)
-    ],
-    extras: [
-      slot("cardio-2", "conditioning", ["cardio", "locomotion", "full-body"], CARDIO),
-      slot("carry", "conditioning", ["carry"], CARDIO)
-    ]
-  },
-  hiit: {
-    base: [
-      slot("full", "conditioning", ["full-body"], CARDIO),
-      slot("legs", "conditioning", ["jump", "squat", "lunge"], CARDIO),
-      slot("cardio", "conditioning", ["cardio", "locomotion"], CARDIO),
-      slot("upper", "conditioning", ["horizontal-push", "anti-extension", "locomotion"], ["conditioning", "power", "strength"])
-    ],
-    extras: [
-      slot("full-2", "conditioning", ["full-body", "jump"], CARDIO),
-      slot("core", "conditioning", ["anti-extension", "trunk-flexion"], ["conditioning", "strength"]),
-      slot("cardio-2", "conditioning", ["cardio", "locomotion"], CARDIO)
-    ]
-  },
-  mobility: {
-    base: [],
-    extras: []
-  },
-  recovery: {
-    base: [],
-    extras: []
-  },
-  skill: {
-    base: [
-      slot("skill", "skill", ["vertical-push", "anti-extension", "horizontal-push", "vertical-pull", "horizontal-pull", "full-body"], ["skill"]),
-      slot("push-v", "main", ["vertical-push"]),
-      slot("pull", "main", ["vertical-pull", "horizontal-pull"], STRENGTH, PULL_FALLBACK),
-      slot("core", "core", ["anti-extension", "trunk-flexion"])
-    ],
-    extras: [
-      slot("skill-2", "skill", ["vertical-push", "anti-extension", "horizontal-push", "vertical-pull", "horizontal-pull", "full-body"], ["skill"]),
-      slot("push", "accessory", ["horizontal-push"]),
-      slot("scapular", "accessory", ["scapular"])
-    ]
-  }
-};
-var KNEE_FALLBACK = ["hinge", "hip-abduction", "calf-raise"];
-var REFINEMENTS = {
-  knee: { fallback: KNEE_FALLBACK },
-  "knee-2": { fallback: KNEE_FALLBACK },
-  "single-leg": { fallback: KNEE_FALLBACK },
-  hinge: { kinds: ANY_STRENGTH },
-  push: { muscles: ["pecs", "upper-pecs"] },
-  calves: { muscles: ["gastrocnemius", "soleus"] },
-  "focus-calves": { muscles: ["gastrocnemius", "soleus"] },
-  hips: { muscles: ["glute-med", "glute-max"] },
-  carry: { kinds: ["strength", "conditioning", "power"] }
-};
-var refine = (entry) => {
-  const extra = REFINEMENTS[entry.key];
-  return extra ? { ...entry, ...extra, fallback: entry.fallback ?? extra.fallback ?? [] } : entry;
-};
-var refineTemplate = (template) => ({ base: template.base.map(refine), extras: template.extras.map(refine) });
-var TEMPLATES = {
-  "full-body": refineTemplate(RAW_TEMPLATES["full-body"]),
-  upper: refineTemplate(RAW_TEMPLATES.upper),
-  lower: refineTemplate(RAW_TEMPLATES.lower),
-  push: refineTemplate(RAW_TEMPLATES.push),
-  pull: refineTemplate(RAW_TEMPLATES.pull),
-  core: refineTemplate(RAW_TEMPLATES.core),
-  cardio: refineTemplate(RAW_TEMPLATES.cardio),
-  hiit: refineTemplate(RAW_TEMPLATES.hiit),
-  mobility: refineTemplate(RAW_TEMPLATES.mobility),
-  recovery: refineTemplate(RAW_TEMPLATES.recovery),
-  skill: refineTemplate(RAW_TEMPLATES.skill)
-};
-var RAW_FOCUS_SLOTS = {
-  chest: [slot("focus-chest", "accessory", ["horizontal-push"]), slot("focus-chest-2", "accessory", ["horizontal-push", "vertical-push"])],
-  back: [slot("focus-back", "accessory", ["horizontal-pull", "vertical-pull"]), slot("focus-back-2", "accessory", ["vertical-pull", "horizontal-pull"])],
-  shoulders: [slot("focus-shoulders", "accessory", ["vertical-push", "shoulder-raise"]), slot("focus-shoulders-2", "accessory", ["shoulder-raise", "scapular"])],
-  arms: [slot("focus-biceps", "accessory", ["elbow-flexion"]), slot("focus-triceps", "accessory", ["elbow-extension"])],
-  core: [slot("focus-core", "core", CORE_PATTERNS), slot("focus-core-2", "core", ["trunk-flexion", "trunk-rotation", "anti-rotation"])],
-  "lower-back": [slot("focus-lower-back", "core", ["trunk-extension"]), slot("focus-lower-back-2", "accessory", ["hinge"])],
-  glutes: [slot("focus-glutes", "accessory", ["hinge"]), slot("focus-glutes-2", "accessory", ["hip-abduction", "lunge"])],
-  legs: [slot("focus-legs", "accessory", ["squat", "lunge"]), slot("focus-legs-2", "accessory", ["knee-flexion", "hip-adduction", "lunge"])],
-  calves: [slot("focus-calves", "accessory", ["calf-raise"]), slot("focus-calves-2", "accessory", ["calf-raise", "jump"], ANY_STRENGTH)]
-};
-var FOCUS_SLOTS = Object.fromEntries(
-  Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map(refine)])
-);
-var PATTERN_GROUPS = {
-  squat: ["legs", "glutes"],
-  lunge: ["legs", "glutes"],
-  hinge: ["glutes", "legs", "lower-back"],
-  "knee-flexion": ["legs"],
-  "hip-abduction": ["glutes"],
-  "hip-adduction": ["legs"],
-  "calf-raise": ["calves"],
-  "horizontal-push": ["chest", "arms", "shoulders"],
-  "vertical-push": ["shoulders", "arms"],
-  "horizontal-pull": ["back", "arms"],
-  "vertical-pull": ["back", "arms"],
-  "elbow-flexion": ["arms"],
-  "elbow-extension": ["arms"],
-  "shoulder-raise": ["shoulders"],
-  scapular: ["shoulders", "back"],
-  grip: ["arms"],
-  "anti-extension": ["core"],
-  "anti-rotation": ["core"],
-  "anti-lateral-flexion": ["core"],
-  "trunk-flexion": ["core"],
-  "trunk-rotation": ["core"],
-  "trunk-extension": ["lower-back"],
-  jump: ["legs", "calves"]
-};
-
 // src/session/generate.ts
 function withIntensity(context) {
   const requested = context.request.intensity && context.request.intensity !== "auto" ? context.request.intensity : void 0;
@@ -22075,9 +22124,9 @@ function listOf(items, context) {
   if (items.length <= 1) return items[0] ?? "";
   return `${items.slice(0, -1).join(", ")} ${reason("list-or", {}, context.locale).text} ${items[items.length - 1]}`;
 }
-function itemReasons(definition, context) {
+function itemReasons(definition, slot2, context) {
   const groups = [...new Set(definition.muscles.primary.map((muscle) => MUSCLE_INFO[muscle].group))];
-  const focused = groups.find((group) => context.focusGroups.includes(group));
+  const focused = isFocusSlot(slot2) ? groups.find((group) => context.focusGroups.includes(group)) ?? context.focusGroups.find((group) => FOCUS_SLOTS[group].some((entry) => entry.key === slot2.key)) : void 0;
   if (focused) return [reason("item-focus", { group: GROUP_NAMES_WITH_ARTICLE[focused] }, context.locale)];
   if (context.favorites.has(definition.id)) return [reason("item-favorite", {}, context.locale)];
   const behind = groups.find((group) => context.needs[group] >= 0.9 && context.body.groups[group].weeklySets > 0);
@@ -22085,7 +22134,8 @@ function itemReasons(definition, context) {
   return [];
 }
 function plan(definition, slot2, context) {
-  const prescription = prescribe(definition, slot2.role, context);
+  const focus = isFocusSlot(slot2);
+  const prescription = prescribe(definition, slot2.role, context, { focus });
   return {
     definition,
     sets: prescription.sets,
@@ -22097,8 +22147,9 @@ function plan(definition, slot2, context) {
     equipment: prescription.equipment,
     progression: prescription.progression,
     ...prescription.note ? { note: prescription.note } : {},
-    reasons: [...itemReasons(definition, context), ...prescription.reasons],
+    reasons: [...itemReasons(definition, slot2, context), ...prescription.reasons],
     slotRole: slot2.role,
+    ...focus ? { focus } : {},
     maxSets: prescription.maxSets,
     ...prescription.warmupSets ? { warmupSets: prescription.warmupSets } : {}
   };
@@ -22107,7 +22158,8 @@ var RANK_OF_ROLE = { skill: -1, main: 0, accessory: 1, core: 2, conditioning: 1 
 function order(items) {
   const rank2 = (item2) => {
     const role = RANK_OF_ROLE[item2.slotRole ?? "accessory"] ?? 1;
-    return role === 0 && !item2.definition.compound ? 1 : role;
+    const base = role === 0 && !item2.definition.compound ? 1 : role;
+    return item2.focus && base === 1 ? 0.5 : base;
   };
   return [...items].sort((a, b) => rank2(a) - rank2(b) || b.definition.difficulty - a.definition.difficulty);
 }
@@ -22241,18 +22293,42 @@ function strengthSession(context, choice, type) {
   const maxItems = Math.min(9, Math.max(3, Math.round(available / 60 / minutesPerItem * Math.min(1, context.readiness.volume))));
   const [, most] = context.settings.sets[context.level];
   const fits = (list) => mainSeconds(list) <= mainBudget * 1.08;
+  const focusItems = () => items.filter((entry) => entry.focus && !((entry.maxSets ?? Infinity) <= 2 && entry.definition.tags?.includes("eccentric")));
+  const focusFloor = () => Math.min(Infinity, ...focusItems().map((entry) => entry.sets));
   const regionOf3 = (item2) => GROUP_REGION[MUSCLE_INFO[item2.definition.muscles.primary[0]].group];
   const grow = (ceiling) => {
     if (format2 === "amrap" || format2 === "emom") return;
     const blocked = /* @__PURE__ */ new Set();
     for (let guard = 0; guard < 60 && mainSeconds(items) < mainBudget * 0.9; guard++) {
       const regionSets = (region) => items.filter((entry) => regionOf3(entry) === region).reduce((sum, entry) => sum + entry.sets, 0);
-      const item2 = order(items).filter((entry) => !blocked.has(entry) && entry.sets < Math.min(ceiling(entry), entry.maxSets ?? Infinity)).sort((a, b) => a.sets - b.sets || regionSets(regionOf3(a)) - regionSets(regionOf3(b)))[0];
+      const floor = focusFloor();
+      const open = (entry) => !blocked.has(entry) && entry.sets < Math.min(ceiling(entry), entry.maxSets ?? Infinity);
+      const item2 = order(items).filter((entry) => open(entry) && (entry.focus || entry.sets < floor)).sort((a, b) => Number(Boolean(b.focus)) - Number(Boolean(a.focus)) || a.sets - b.sets || regionSets(regionOf3(a)) - regionSets(regionOf3(b)))[0];
       if (!item2) return;
-      item2.sets += 1;
+      const level = focusItems().includes(item2) ? focusItems().filter((entry) => entry.sets === item2.sets) : [item2];
+      if (level.some((entry) => !open(entry))) {
+        for (const entry of level) blocked.add(entry);
+        continue;
+      }
+      for (const entry of level) entry.sets += 1;
       if (!fits(items)) {
-        item2.sets -= 1;
-        blocked.add(item2);
+        for (const entry of level) {
+          entry.sets -= 1;
+          blocked.add(entry);
+        }
+      }
+    }
+  };
+  const rebalance = () => {
+    if (format2 === "amrap" || format2 === "emom") return;
+    for (let guard = 0; guard < 40; guard++) {
+      const taker = focusItems().sort((a, b) => a.sets - b.sets)[0];
+      const giver = taker && [...order(items)].reverse().find((entry) => !entry.focus && entry.sets > taker.sets);
+      if (!taker || !giver) return;
+      giver.sets -= 1;
+      if (taker.sets < (taker.maxSets ?? Infinity)) {
+        taker.sets += 1;
+        if (!fits(items)) taker.sets -= 1;
       }
     }
   };
@@ -22274,21 +22350,50 @@ function strengthSession(context, choice, type) {
     }
   };
   const pushIds = new Set(context.library.filter({}).filter(isPush).map((definition) => definition.id));
+  const erectorIds = new Set(context.library.filter({}).filter(loadsErectors).map((definition) => definition.id));
   const wantsPush = new Set(context.focusGroups.filter((group) => group === "chest" || group === "shoulders"));
+  const makeRoom = (planned) => {
+    const trial = [...items, planned];
+    const before = trial.map((entry) => entry.sets);
+    for (let guard = 0; guard < 30 && !fits(trial); guard++) {
+      const shrinkable = [...order(trial)].reverse().filter((entry) => entry.sets > 2).sort((a, b) => b.sets - a.sets || Number(Boolean(a.focus)) - Number(Boolean(b.focus)))[0];
+      if (!shrinkable) break;
+      shrinkable.sets -= 1;
+    }
+    if (fits(trial)) return true;
+    trial.forEach((entry, index) => {
+      entry.sets = before[index];
+    });
+    return false;
+  };
   const place = (slot2, optional = false) => {
     const pushes = items.filter((entry) => isPush(entry.definition)).length;
     const pulls = items.filter((entry) => PULLS.includes(entry.definition.pattern)).length;
-    const focusPush = slot2.key.startsWith("focus-") && wantsPush.size > 0;
+    const focusPush = isFocusSlot(slot2) && wantsPush.size > 0;
     const pushBlocked = BALANCED.includes(type) && !focusPush && pushes + 1 > Math.max(1, pulls);
     if (pushBlocked && slot2.patterns.every((pattern) => PUSHES.includes(pattern))) {
       return;
     }
-    const slotContext = pushBlocked ? { ...context, exclude: /* @__PURE__ */ new Set([...context.exclude, ...pushIds]) } : context;
+    const lumbarBusy = optional && type === "full-body" && chosen().some((other) => other.pattern === "hinge" && loadsErectors(other));
+    if (lumbarBusy && slot2.patterns.every((pattern) => pattern === "trunk-extension")) {
+      return;
+    }
+    const excluded = [...pushBlocked ? pushIds : [], ...lumbarBusy ? erectorIds : []];
+    const slotContext = excluded.length ? { ...context, exclude: /* @__PURE__ */ new Set([...context.exclude, ...excluded]) } : context;
+    const repeats = (found) => chosen().some((other) => movementKey(other) === movementKey(found));
     const direct = pick(slot2, slotContext, chosen(), optional);
-    const definition = direct ?? (slot2.fallback ?? []).reduce(
-      (found, pattern) => found ?? pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional),
-      void 0
-    );
+    const repeated = direct !== void 0 && baseKeys.has(slot2.key) && repeats(direct);
+    let rescue;
+    let repeatedRescue;
+    for (const pattern of !direct || repeated ? slot2.fallback ?? [] : []) {
+      const found = pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional);
+      if (found && !repeats(found)) {
+        rescue = found;
+        break;
+      }
+      repeatedRescue ??= found;
+    }
+    const definition = direct && !repeated ? direct : rescue ?? (direct ? void 0 : repeatedRescue);
     if (definition && !direct && baseKeys.has(slot2.key)) {
       const missing = missingEquipment(slot2, context);
       if (missing.length) {
@@ -22302,7 +22407,7 @@ function strengthSession(context, choice, type) {
       }
     }
     if (!definition) {
-      if (baseKeys.has(slot2.key)) {
+      if (baseKeys.has(slot2.key) && !direct) {
         const missing = missingEquipment(slot2, context);
         const pattern = PATTERN_NAMES[slot2.patterns[0]].toLowerCase();
         if (blockedByBody(slot2, context)) {
@@ -22319,32 +22424,36 @@ function strengthSession(context, choice, type) {
       }
       return;
     }
-    if (optional && chosen().some((other) => other.family === definition.family)) {
+    if (optional && repeats(definition)) {
       return;
     }
     const planned = plan(definition, slot2, context);
     if (slot2.role === "skill") {
       skillItems.push(planned);
-    } else if (items.length < 2 || items.length < maxItems && fits([...items, planned])) {
+    } else if (items.length < 2 || items.length < maxItems && (fits([...items, planned]) || baseKeys.has(slot2.key) && makeRoom(planned))) {
       items.push(planned);
     }
   };
   const focusKeys = new Set(context.focusGroups.flatMap((group) => FOCUS_SLOTS[group].map((slot2) => slot2.key)));
   const first = [...slots.filter((entry) => focusKeys.has(entry.key)), ...slots.filter((entry) => baseKeys.has(entry.key))];
   for (const slot2 of first) place(slot2);
-  grow((item2) => item2.slotRole === "main" ? most : most - 1);
+  grow((item2) => item2.slotRole === "main" || item2.focus ? most : most - 1);
+  rebalance();
   for (const slot2 of slots.filter((entry) => !baseKeys.has(entry.key) && !focusKeys.has(entry.key))) {
     if (items.length >= maxItems || mainSeconds(items) >= mainBudget * 0.92) break;
     place(slot2, true);
   }
   grow(() => most + 1);
+  rebalance();
   lengthen();
   for (let guard = 0; guard < 40 && mainSeconds(items) > mainBudget * 1.1; guard++) {
-    const shrinkable = [...order(items)].reverse().find((item2) => item2.sets > 1);
+    const last = [...order(items)].reverse();
+    const shrinkable = last.find((item2) => !item2.focus && item2.sets > 1) ?? last.find((item2) => item2.sets > 1);
     if (shrinkable) {
       shrinkable.sets -= 1;
     } else if (items.length > 2) {
-      items = order(items).slice(0, -1);
+      const dropped = last.find((item2) => !item2.focus) ?? last[0];
+      items = items.filter((item2) => item2 !== dropped);
     } else {
       break;
     }

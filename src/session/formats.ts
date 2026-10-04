@@ -14,7 +14,7 @@ import { reason } from '../i18n/messages';
 import type { BlockFormat, Reason, SessionType } from '../types';
 import { plannedBlockSeconds, type PlannedBlock, type PlannedItem } from './blocks';
 import type { Context } from './context';
-import { feasible } from './select';
+import { feasible, loadsErectors } from './select';
 import { repSeconds, workSeconds } from './timing';
 import { POSTURE_ORDER } from './warmup';
 
@@ -63,7 +63,10 @@ const PARTNERS: Readonly<Partial<Record<MovementPattern, readonly MovementPatter
     'trunk-extension': ['anti-extension', 'trunk-flexion'],
 };
 
-/** Former des paires : chaque exercice avec son opposé s'il y en a un, sinon avec le suivant. */
+/**
+ * Former des paires : chaque exercice avec son opposé s'il y en a un, sinon avec le suivant qui ne charge pas les
+ * mêmes muscles (pas un good morning derrière un soulevé de terre).
+ */
 export function pairUp(items: readonly PlannedItem[]): PlannedItem[][] {
     const left = [...items];
     const pairs: PlannedItem[][] = [];
@@ -78,7 +81,9 @@ export function pairUp(items: readonly PlannedItem[]): PlannedItem[][] {
         if (index >= 0) {
             pairs.push([first, left.splice(index, 1)[0]!]);
         } else if (left.length) {
-            pairs.push([first, left.shift()!]);
+            const apart = left.findIndex((other) => !shareLoad(first, other));
+
+            pairs.push([first, left.splice(Math.max(0, apart), 1)[0]!]);
         } else if (pairs.length) {
             // Resté seul : il rejoint la dernière paire, qui devient un trio, plutôt que de traîner en séries à part.
             pairs[pairs.length - 1]!.push(first);
@@ -95,15 +100,35 @@ const title = (code: string, context: Context, params = {}): string => reason(co
 /** La région d'un exercice, d'après son premier muscle principal. */
 const regionOf = (item: PlannedItem): string => GROUP_REGION[MUSCLE_INFO[item.definition.muscles.primary[0]!].group];
 
+/** Deux exercices sollicitent-ils tous les deux les érecteurs du rachis, même en aide ? */
+const bothErectors = (a: PlannedItem, b: PlannedItem): boolean => loadsErectors(a.definition) && loadsErectors(b.definition);
+
+/** Deux exercices ont-ils un groupe en commun parmi leurs muscles principaux ? */
+function sharePrimary(a: PlannedItem, b: PlannedItem): boolean {
+    const groups = new Set(a.definition.muscles.primary.map((muscle) => MUSCLE_INFO[muscle].group));
+
+    return b.definition.muscles.primary.some((muscle) => groups.has(MUSCLE_INFO[muscle].group));
+}
+
+/** Deux exercices chargent-ils un même groupe : par leurs muscles principaux, ou le bas du dos par les érecteurs ? */
+const shareLoad = (a: PlannedItem, b: PlannedItem): boolean => bothErectors(a, b) || sharePrimary(a, b);
+
 /** L'écart entre deux positions : se relever du sol pour un exercice debout coûte, enchaîner deux exercices au sol non. */
 const postureGap = (a: PlannedItem, b: PlannedItem): number => Math.abs(POSTURE_ORDER.indexOf(a.definition.posture) - POSTURE_ORDER.indexOf(b.definition.posture));
 
-/** Ce que coûte un ordre : deux exercices de la même région d'affilée pèsent plus que deux allers-retours au sol. */
+/**
+ * Ce que coûte un ordre : deux exercices de la même région d'affilée, qui ont des muscles principaux en commun, et
+ * surtout qui chargent tous les deux les érecteurs (un good morning puis des extensions lombaires), pèsent plus que
+ * deux allers-retours au sol.
+ */
 function orderCost(order: readonly PlannedItem[], original: readonly PlannedItem[]): number {
     let cost = 0;
 
     for (let index = 1; index < order.length; index++) {
-        cost += (regionOf(order[index]!) === regionOf(order[index - 1]!) ? 12 : 0) + postureGap(order[index]!, order[index - 1]!);
+        const [previous, current] = [order[index - 1]!, order[index]!];
+        const muscles = (sharePrimary(previous, current) ? 12 : 0) + (bothErectors(previous, current) ? 12 : 0);
+
+        cost += (regionOf(current) === regionOf(previous) ? 12 : 0) + muscles + postureGap(current, previous);
     }
 
     // À coût égal, l'ordre le plus proche de l'ordre d'importance.
@@ -162,7 +187,10 @@ export function buildMainBlocks(items: readonly PlannedItem[], format: BlockForm
     const kept: PlannedBlock[] = [];
 
     for (const block of blocks) {
-        const out = block.format === 'straight' || block.format === 'ladder' ? [] : block.items.filter((item) => (item.maxSets ?? Infinity) < block.rounds && (item.maxSets ?? Infinity) <= 2);
+        // Seulement une descente freinée : un exercice ordinaire plafonné à deux séries par l’objectif (l’endurance d’un
+        // débutant) suit les tours de son circuit, plutôt que de partir seul en séries classiques.
+        const capped = (item: PlannedItem): boolean => Boolean(item.definition.tags?.includes('eccentric')) && (item.maxSets ?? Infinity) < block.rounds && (item.maxSets ?? Infinity) <= 2;
+        const out = block.format === 'straight' || block.format === 'ladder' ? [] : block.items.filter(capped);
 
         if (!out.length) {
             kept.push(block);
@@ -194,6 +222,34 @@ export function buildMainBlocks(items: readonly PlannedItem[], format: BlockForm
     const first: PlannedBlock = { id: 'main-0', role: 'main', format: 'straight', title: title('block-main', context), rounds: 1, restBetweenRounds: 0, items: [...held].sort((a, b) => rank(a) - rank(b)) };
 
     return [first, ...kept].map((block, index) => ({ ...block, id: `main-${index + 1}` }));
+}
+
+/**
+ * Couper une longue liste en deux circuits, chacun avec sa part des gros mouvements (un sur deux), et ce qu'on vise
+ * dans le premier : c'est celui qu'on fait le plus frais.
+ */
+function splitCircuit(items: readonly PlannedItem[]): PlannedItem[][] {
+    const size = Math.ceil(items.length / 2);
+    const first = items.filter((item) => item.focus).slice(0, size);
+    const second: PlannedItem[] = [];
+
+    for (const item of items) {
+        if (first.includes(item)) continue;
+
+        const firstFull = first.length >= size;
+        const secondFull = second.length >= items.length - size;
+
+        (secondFull || (!firstFull && first.length <= second.length) ? first : second).push(item);
+    }
+
+    return [items.filter((item) => first.includes(item)), items.filter((item) => second.includes(item))];
+}
+
+/** Les exercices qu'un bloc limité garde : ce qu'on vise d'abord, puis l'ordre de la séance, qu'on ne change pas. */
+function focusFirst(items: readonly PlannedItem[], count: number): PlannedItem[] {
+    const kept = [...items.filter((item) => item.focus), ...items.filter((item) => !item.focus)].slice(0, count);
+
+    return items.filter((item) => kept.includes(item));
 }
 
 function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, context: Context, mainSeconds: number): PlannedBlock[] {
@@ -247,14 +303,15 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
     }
 
     if (format === 'circuit') {
-        const groups = items.length >= 7 ? [items.filter((_, index) => index % 2 === 0), items.filter((_, index) => index % 2 === 1)] : [items];
+        const groups = items.length >= 7 ? splitCircuit(items) : [items];
 
         return groups.map((group, index) => ({
             id: `main-${index + 1}`,
             role: 'main',
             format: 'circuit',
             title: title('block-circuit', context),
-            rounds: Math.max(2, Math.round(group.reduce((sum, item) => sum + item.sets, 0) / group.length)),
+            // Autant de tours que la moyenne des séries, et au moins celles de ce qu'on vise.
+            rounds: Math.max(2, Math.round(group.reduce((sum, item) => sum + item.sets, 0) / group.length), ...group.filter((item) => item.focus).map((item) => item.sets)),
             restBetweenRounds: settings.circuit.betweenRounds + (lightDay(context) ? 15 : 0),
             restBetweenItems: settings.circuit.betweenItems,
             items: alternateRegions(group).map(perRound),
@@ -263,7 +320,7 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
 
     if (format === 'amrap') {
         const minutes = Math.max(5, Math.min(20, Math.round(mainSeconds / 60)));
-        const chosen = items.slice(0, 5).map((item) => ({
+        const chosen = focusFirst(items, 5).map((item) => ({
             ...perRound(item),
             target: { ...item.target, value: Math.max(1, Math.round(item.target.value * 0.7)), range: [Math.min(item.target.range[0], Math.max(1, Math.round(item.target.value * 0.7))), item.target.range[1]] as const },
         }));
@@ -284,7 +341,7 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
     }
 
     if (format === 'emom') {
-        const chosen = items.slice(0, 3).map((item) => {
+        const chosen = focusFirst(items, 3).map((item) => {
             const capped =
                 item.target.measure === 'reps'
                     ? Math.min(item.target.value, Math.max(1, Math.floor(40 / ((item.tempo ? repSeconds(item.tempo) : (item.definition.secondsPerRep ?? 3)) * (item.target.perSide ? 2 : 1)))))

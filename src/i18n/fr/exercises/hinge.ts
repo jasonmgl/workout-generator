@@ -525,8 +525,8 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
         breathing: 'Souffler en pliant les genoux, inspirer en revenant.',
     },
     'hamstring-walkout': {
-        name: 'Ponts avec marche des talons',
-        aliases: ['Hamstring walkout', 'Walkout ischios', 'Pont fessier avec pas des talons'],
+        name: 'Marche des talons en pont',
+        aliases: ['Ponts avec marche des talons', 'Hamstring walkout', 'Walkout ischios', 'Pont fessier avec pas des talons'],
         summary: 'Tenir le pont et éloigner les talons à petits pas, puis revenir : ischio-jambiers et fessiers, sans aucun matériel.',
         setup: ['S’allonger sur le dos, genoux pliés, pieds à plat près des fesses.', 'Monter le bassin en pont.'],
         steps: [
@@ -571,8 +571,8 @@ export const HINGE_FR: Readonly<Record<string, ExerciseText>> = {
         safety: 'En cas de crampe, ne faire que l’aller et reposer le bassin pour ramener les pieds.',
     },
     'single-leg-hamstring-walkout': {
-        name: 'Ponts avec marche du talon sur une jambe',
-        aliases: ['Walkout ischios sur une jambe', 'Single-leg hamstring walkout'],
+        name: 'Marche du talon en pont sur une jambe',
+        aliases: ['Ponts avec marche du talon sur une jambe', 'Walkout ischios sur une jambe', 'Single-leg hamstring walkout'],
         summary: 'La marche des talons en pont, sur un seul pied : un travail intense pour l’ischio-jambier et le fessier d’un côté.',
         setup: ['S’allonger sur le dos, genoux pliés, pieds près des fesses.', 'Monter en pont, puis tendre une jambe en l’air dans le prolongement de la cuisse.'],
         steps: [

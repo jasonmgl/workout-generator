@@ -19,8 +19,8 @@ import { GOAL_SETTINGS } from './goals';
 import { buildCooldown, cooldownSeconds, muscleLoad } from './cooldown';
 import { buildFinisher, buildIntervals, buildMainBlocks, cardioCandidates, chooseFormat, formatReason, pickIntervalExercises } from './formats';
 import { prescribe } from './prescribe';
-import { feasible, pick } from './select';
-import { FOCUS_SLOTS, PATTERN_GROUPS, TEMPLATES, type Slot } from './templates';
+import { feasible, loadsErectors, movementKey, pick } from './select';
+import { FOCUS_SLOTS, isFocusSlot, PATTERN_GROUPS, TEMPLATES, type Slot } from './templates';
 import { BLOCK_TRANSITION_SECONDS } from './timing';
 import { buildWarmup, byPosture, gentleCeiling, warmupSeconds } from './warmup';
 
@@ -119,10 +119,15 @@ function listOf(items: readonly string[], context: Context): string {
     return `${items.slice(0, -1).join(', ')} ${reason('list-or', {}, context.locale).text} ${items[items.length - 1]}`;
 }
 
-/** La raison d'un exercice : ce qu'on vise, un favori, un groupe en retard. */
-function itemReasons(definition: ExerciseDefinition, context: Context): Reason[] {
+/**
+ * La raison d'un exercice : ce qu'on vise, un favori, un groupe en retard. « Comme demandé » ne se dit que d'un
+ * exercice qui tient une place du focus : c'est lui qui reçoit ses séries en premier.
+ */
+function itemReasons(definition: ExerciseDefinition, slot: Slot, context: Context): Reason[] {
     const groups = [...new Set(definition.muscles.primary.map((muscle) => MUSCLE_INFO[muscle].group))];
-    const focused = groups.find((group) => context.focusGroups.includes(group));
+    const focused = isFocusSlot(slot)
+        ? (groups.find((group) => context.focusGroups.includes(group)) ?? context.focusGroups.find((group) => FOCUS_SLOTS[group].some((entry) => entry.key === slot.key)))
+        : undefined;
 
     if (focused) return [reason('item-focus', { group: GROUP_NAMES_WITH_ARTICLE[focused] }, context.locale)];
     if (context.favorites.has(definition.id)) return [reason('item-favorite', {}, context.locale)];
@@ -135,7 +140,8 @@ function itemReasons(definition: ExerciseDefinition, context: Context): Reason[]
 }
 
 function plan(definition: ExerciseDefinition, slot: Slot, context: Context): PlannedItem {
-    const prescription = prescribe(definition, slot.role, context);
+    const focus = isFocusSlot(slot);
+    const prescription = prescribe(definition, slot.role, context, { focus });
 
     return {
         definition,
@@ -148,21 +154,26 @@ function plan(definition: ExerciseDefinition, slot: Slot, context: Context): Pla
         equipment: prescription.equipment,
         progression: prescription.progression,
         ...(prescription.note ? { note: prescription.note } : {}),
-        reasons: [...itemReasons(definition, context), ...prescription.reasons],
+        reasons: [...itemReasons(definition, slot, context), ...prescription.reasons],
         slotRole: slot.role,
+        ...(focus ? { focus } : {}),
         maxSets: prescription.maxSets,
         ...(prescription.warmupSets ? { warmupSets: prescription.warmupSets } : {}),
     };
 }
 
-/** L'ordre de la séance : poly-articulaire avant isolation, le plus dur d'abord, abdominaux et lombaires à la fin. */
+/**
+ * L'ordre de la séance : poly-articulaire avant isolation, le plus dur d'abord, abdominaux et lombaires à la fin. Ce
+ * qu'on vise passe juste après les gros mouvements, avant les autres exercices d'appoint.
+ */
 const RANK_OF_ROLE: Readonly<Record<string, number>> = { skill: -1, main: 0, accessory: 1, core: 2, conditioning: 1 };
 
 function order(items: readonly PlannedItem[]): PlannedItem[] {
     const rank = (item: PlannedItem): number => {
         const role = RANK_OF_ROLE[item.slotRole ?? 'accessory'] ?? 1;
+        const base = role === 0 && !item.definition.compound ? 1 : role;
 
-        return role === 0 && !item.definition.compound ? 1 : role;
+        return item.focus && base === 1 ? 0.5 : base;
     };
 
     return [...items].sort((a, b) => rank(a) - rank(b) || b.definition.difficulty - a.definition.difficulty);
@@ -353,7 +364,13 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
     const [, most] = context.settings.sets[context.level];
     const fits = (list: readonly PlannedItem[]): boolean => mainSeconds(list) <= mainBudget * 1.08;
 
-    // Une série de plus, d'abord aux gros exercices, tant que le temps le permet.
+    // Ce qu'on vise n'a jamais moins de séries qu'un autre exercice. Une première descente freinée, plafonnée à deux
+    // séries pour les courbatures (et faite à part, en tête), ne plafonne pas toute la séance.
+    const focusItems = (): PlannedItem[] => items.filter((entry) => entry.focus && !((entry.maxSets ?? Infinity) <= 2 && entry.definition.tags?.includes('eccentric')));
+    const focusFloor = (): number => Math.min(Infinity, ...focusItems().map((entry) => entry.sets));
+
+    // Une série de plus, d'abord à ce qu'on vise (c'est sur ce groupe que la personne juge la séance), puis aux gros
+    // exercices, tant que le temps le permet.
     const regionOf = (item: PlannedItem): string => GROUP_REGION[MUSCLE_INFO[item.definition.muscles.primary[0]!].group];
     const grow = (ceiling: (item: PlannedItem) => number): void => {
         if (format === 'amrap' || format === 'emom') return;
@@ -362,17 +379,52 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
 
         for (let guard = 0; guard < 60 && mainSeconds(items) < mainBudget * 0.9; guard++) {
             const regionSets = (region: string): number => items.filter((entry) => regionOf(entry) === region).reduce((sum, entry) => sum + entry.sets, 0);
+            const floor = focusFloor();
+            const open = (entry: PlannedItem): boolean => !blocked.has(entry) && entry.sets < Math.min(ceiling(entry), entry.maxSets ?? Infinity);
             const item = order(items)
-                .filter((entry) => !blocked.has(entry) && entry.sets < Math.min(ceiling(entry), entry.maxSets ?? Infinity))
-                .sort((a, b) => a.sets - b.sets || regionSets(regionOf(a)) - regionSets(regionOf(b)))[0];
+                .filter((entry) => open(entry) && (entry.focus || entry.sets < floor))
+                .sort((a, b) => Number(Boolean(b.focus)) - Number(Boolean(a.focus)) || a.sets - b.sets || regionSets(regionOf(a)) - regionSets(regionOf(b)))[0];
 
             if (!item) return;
 
-            item.sets += 1;
+            // Ce qu'on vise monte d'un même pas : les exercices du focus au même nombre de séries en reçoivent une
+            // ensemble, ou aucun (sinon, par deux, le partenaire du mieux servi en ferait plus que l'autre exercice visé).
+            const level = focusItems().includes(item) ? focusItems().filter((entry) => entry.sets === item.sets) : [item];
+
+            if (level.some((entry) => !open(entry))) {
+                for (const entry of level) blocked.add(entry);
+                continue;
+            }
+
+            for (const entry of level) entry.sets += 1;
 
             if (!fits(items)) {
-                item.sets -= 1;
-                blocked.add(item);
+                for (const entry of level) {
+                    entry.sets -= 1;
+                    blocked.add(entry);
+                }
+            }
+        }
+    };
+
+    // Un gros exercice démarre au haut de ses séries, un autre en reçoit une de plus quand ses répétitions sont
+    // plafonnées : quand ce qu'on vise en a moins, une série passe de l'un à l'autre, ou, si elle ne tient pas (temps,
+    // plafond de l'exercice visé), l'autre en perd une.
+    const rebalance = (): void => {
+        if (format === 'amrap' || format === 'emom') return;
+
+        for (let guard = 0; guard < 40; guard++) {
+            const taker = focusItems().sort((a, b) => a.sets - b.sets)[0];
+            const giver = taker && [...order(items)].reverse().find((entry) => !entry.focus && entry.sets > taker.sets);
+
+            if (!taker || !giver) return;
+
+            giver.sets -= 1;
+
+            if (taker.sets < (taker.maxSets ?? Infinity)) {
+                taker.sets += 1;
+
+                if (!fits(items)) taker.sets -= 1;
             }
         }
     };
@@ -407,32 +459,85 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
         }
     };
 
-    // Les poussées qu’on écarte d’une place quand elles dépasseraient les tirages.
+    // Les poussées qu’on écarte d’une place quand elles dépasseraient les tirages, et ce qui charge les érecteurs.
     const pushIds = new Set(context.library.filter({}).filter(isPush).map((definition) => definition.id));
+    const erectorIds = new Set(context.library.filter({}).filter(loadsErectors).map((definition) => definition.id));
     const wantsPush = new Set(context.focusGroups.filter((group) => group === 'chest' || group === 'shoulders'));
+
+    // Une place de base passe avant les séries en plus : quand elle ne tient pas, les exercices qui ont le plus de
+    // séries en cèdent une (jamais sous deux), plutôt que de laisser un développé couché sans tirage.
+    const makeRoom = (planned: PlannedItem): boolean => {
+        const trial = [...items, planned];
+        const before = trial.map((entry) => entry.sets);
+
+        for (let guard = 0; guard < 30 && !fits(trial); guard++) {
+            const shrinkable = [...order(trial)]
+                .reverse()
+                .filter((entry) => entry.sets > 2)
+                .sort((a, b) => b.sets - a.sets || Number(Boolean(a.focus)) - Number(Boolean(b.focus)))[0];
+
+            if (!shrinkable) break;
+
+            shrinkable.sets -= 1;
+        }
+
+        if (fits(trial)) return true;
+
+        trial.forEach((entry, index) => {
+            entry.sets = before[index]!;
+        });
+
+        return false;
+    };
 
     const place = (slot: Slot, optional = false): void => {
         const pushes = items.filter((entry) => isPush(entry.definition)).length;
         const pulls = items.filter((entry) => PULLS.includes(entry.definition.pattern)).length;
         // Jamais plus de poussées que de vrais tirages (la première poussée exceptée) : sans tirage faisable, une seule
         // poussée. Les pompes sphinx en sont une. Seul un focus pectoraux ou épaules, demandé, passe outre.
-        const focusPush = slot.key.startsWith('focus-') && wantsPush.size > 0;
+        const focusPush = isFocusSlot(slot) && wantsPush.size > 0;
         const pushBlocked = BALANCED.includes(type) && !focusPush && pushes + 1 > Math.max(1, pulls);
 
         if (pushBlocked && slot.patterns.every((pattern) => PUSHES.includes(pattern))) {
             return;
         }
 
-        const slotContext = pushBlocked ? { ...context, exclude: new Set([...context.exclude, ...pushIds]) } : context;
+        // En corps entier, une place en plus ne charge pas encore les érecteurs quand une charnière le fait déjà : pas
+        // d’extensions lombaires après un good morning, pas de soulevé de terre sur une jambe en secours d’une place de
+        // fentes. Chez un débutant, ils fatiguent vite et tiennent la technique de tous les autres exercices.
+        const lumbarBusy = optional && type === 'full-body' && chosen().some((other) => other.pattern === 'hinge' && loadsErectors(other));
 
-        // Les schémas de secours s'essaient dans l'ordre : les omoplates avant le gainage du dos.
+        if (lumbarBusy && slot.patterns.every((pattern) => pattern === 'trunk-extension')) {
+            return;
+        }
+
+        const excluded = [...(pushBlocked ? pushIds : []), ...(lumbarBusy ? erectorIds : [])];
+        const slotContext = excluded.length ? { ...context, exclude: new Set([...context.exclude, ...excluded]) } : context;
+
+        // Les schémas de secours s'essaient dans l'ordre : les omoplates avant le gainage du dos. Une place de base dont
+        // le meilleur candidat est le jumeau d'un exercice déjà choisi, l'un chargé, l'autre pas (des fentes statiques
+        // après des fentes statiques avec haltères), les essaie aussi, et reste vide s'ils n'offrent rien d'autre. Une
+        // autre variante de la même famille, elle, reste permise : sans matériel, toutes les poussées qui font
+        // travailler les pectoraux sont des pompes, et un focus pectoraux en veut plus d'une.
+        const repeats = (found: ExerciseDefinition): boolean => chosen().some((other) => movementKey(other) === movementKey(found));
+        const twin = (found: ExerciseDefinition): boolean => chosen().some((other) => movementKey(other) === movementKey(found) && other.family !== found.family);
         const direct = pick(slot, slotContext, chosen(), optional);
-        const definition =
-            direct ??
-            (slot.fallback ?? []).reduce<ExerciseDefinition | undefined>(
-                (found, pattern) => found ?? pick({ ...slot, key: `${slot.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional),
-                undefined,
-            );
+        const repeated = direct !== undefined && baseKeys.has(slot.key) && twin(direct);
+        let rescue: ExerciseDefinition | undefined;
+        let repeatedRescue: ExerciseDefinition | undefined;
+
+        for (const pattern of !direct || repeated ? (slot.fallback ?? []) : []) {
+            const found = pick({ ...slot, key: `${slot.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional);
+
+            if (found && !twin(found)) {
+                rescue = found;
+                break;
+            }
+
+            repeatedRescue ??= found;
+        }
+
+        const definition = direct && !repeated ? direct : (rescue ?? (direct ? undefined : repeatedRescue));
 
         if (definition && !direct && baseKeys.has(slot.key)) {
             const missing = missingEquipment(slot, context);
@@ -449,7 +554,7 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
         }
 
         if (!definition) {
-            if (baseKeys.has(slot.key)) {
+            if (baseKeys.has(slot.key) && !direct) {
                 const missing = missingEquipment(slot, context);
                 const pattern = PATTERN_NAMES[slot.patterns[0] as MovementPattern].toLowerCase();
 
@@ -469,9 +574,9 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
             return;
         }
 
-        // Une place en plus ne vaut pas un doublon : si le seul candidat est de la même famille qu’un exercice déjà
-        // choisi (des troisièmes pompes), on la laisse vide.
-        if (optional && chosen().some((other) => other.family === definition.family)) {
+        // Une place en plus ne vaut pas un doublon : si le seul candidat est du même mouvement qu’un exercice déjà
+        // choisi (des troisièmes pompes, des fentes après des fentes avec haltères), on la laisse vide.
+        if (optional && repeats(definition)) {
             return;
         }
 
@@ -479,7 +584,7 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
 
         if (slot.role === 'skill') {
             skillItems.push(planned);
-        } else if (items.length < 2 || (items.length < maxItems && fits([...items, planned]))) {
+        } else if (items.length < 2 || (items.length < maxItems && (fits([...items, planned]) || (baseKeys.has(slot.key) && makeRoom(planned))))) {
             items.push(planned);
         }
     };
@@ -492,7 +597,8 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
     // 1. Ce qu'on vise et les places de base. 2. Des séries en plus. 3. Les places en plus. 4. Encore des séries.
     for (const slot of first) place(slot);
 
-    grow((item) => (item.slotRole === 'main' ? most : most - 1));
+    grow((item) => (item.slotRole === 'main' || item.focus ? most : most - 1));
+    rebalance();
 
     for (const slot of slots.filter((entry) => !baseKeys.has(entry.key) && !focusKeys.has(entry.key))) {
         if (items.length >= maxItems || mainSeconds(items) >= mainBudget * 0.92) break;
@@ -501,15 +607,20 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
     }
 
     grow(() => most + 1);
+    rebalance();
     lengthen();
 
+    // Trop long : on retire des séries en partant de la fin, ce qu'on vise en dernier.
     for (let guard = 0; guard < 40 && mainSeconds(items) > mainBudget * 1.1; guard++) {
-        const shrinkable = [...order(items)].reverse().find((item) => item.sets > 1);
+        const last = [...order(items)].reverse();
+        const shrinkable = last.find((item) => !item.focus && item.sets > 1) ?? last.find((item) => item.sets > 1);
 
         if (shrinkable) {
             shrinkable.sets -= 1;
         } else if (items.length > 2) {
-            items = order(items).slice(0, -1);
+            const dropped = last.find((item) => !item.focus) ?? last[0]!;
+
+            items = items.filter((item) => item !== dropped);
         } else {
             break;
         }

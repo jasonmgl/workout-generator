@@ -476,8 +476,9 @@ describe('la progression', () => {
 });
 
 describe('les objectifs', () => {
+    // Vingt graines : une moyenne sur cinq séances dépend trop du tirage des exercices.
     const sample = (goal: Goal): SessionItem[] =>
-        [1, 2, 3, 4, 5].flatMap((seed) =>
+        Array.from({ length: 20 }, (_, index) => index + 1).flatMap((seed) =>
             items(generateSession({ date: DATE, seed, profile: { goal, level: 'intermediate' }, equipment: EQUIPMENT.salle!, request: { minutes: 45 } }), ['main']),
         ).filter((item) => item.target.measure === 'reps' && library.get(item.exercise).kind === 'strength');
     const average = (list: readonly number[]): number => list.reduce((sum, value) => sum + value, 0) / list.length;
