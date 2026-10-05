@@ -48,7 +48,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 - **Ne pas toucher au dépôt DidIt** (`C:\Users\jason\OneDrive\Documents\Claude\Didit`) :
   une autre session y travaille. On le lit, c'est tout.
 
-## État au 3 octobre 2026 (nuit)
+## État au 4 octobre 2026
 
 - **Version utilisable sur `master`.** 285 tests au vert, types propres.
 - **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
@@ -97,9 +97,9 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## Reste à faire
 
-**Ordre décidé le 03/10 au soir** : corriger les constats de la deuxième
-relecture des coachs, puis préparer le branchement DidIt (point 3), puis les
-cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
+**Ordre confirmé le 04/10** (question posée) : finir d'abord tous les lots
+des coachs (fin du lot 3, cardio, notes, tempo, le reste), les cycles de
+plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
 
 1. **Les constats de la deuxième relecture des coachs** (03/10, soir) :
    35 constats, avec cause et correctif, dans
@@ -116,7 +116,17 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
      demandé (securite-1, -2) ;
    - [x] poussée / tirage : pompes sphinx comptées en poussée, places de
      base du haut du corps en commençant par le tirage (programmation-2) ;
-   - [ ] **à reprendre ici** : focus servi d'abord (un rôle « focus »,
+   - [ ] **à reprendre ici, sur la branche `lot3-fin-en-cours`** (poussée,
+     `125a518`, PAS au vert : 2 tests sur 297 échouent, non relue jusqu'au
+     bout). L'implémentation était au vert, mais trois relecteurs ont trouvé
+     trois effets de bord graves : un focus pectoraux sans matériel tombe
+     à un seul exercice (9,9 → 3 séries), la règle « du chargé d'abord »
+     écrase la progression et donne des charges dérisoires, les séances
+     avec focus raccourcissent en santé et en endurance. Le correcteur a été
+     arrêté en cours de route. Tout est dans
+     `docs/relectures/2026-10-04-lot3-relecture.md` (sur la branche).
+     Repartir de la branche, corriger ces trois points, faire relire, puis
+     fusionner dans `master`. Le lot : focus servi d'abord (un rôle « focus »,
      plafond d'une place principale, servi en premier par `grow`, dans le
      premier circuit ; pénalité d'activation sur toute place) ; développé
      chargé en salle (une fiche par famille au tirage) ; pas d'extensions
@@ -237,6 +247,12 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   d'avant après 8 / 21 / 43 jours. `load.estimated` dit « à ajuster ». Pas
   de réserve sur l'activation, la posture, la rééducation ni le gainage
   facile, et jamais plus que la fiche ne le permet.
+- **Les cycles de plusieurs semaines** (choix de l'utilisateur, 04/10) :
+  4 semaines par défaut, 3 qui montent (volume puis intensité) et 1
+  allégée ; on enchaîne les cycles. **Les tests de niveau** se font en fin
+  de cycle, dans une séance : la semaine allégée commence par un test court
+  (le plus de pompes, de tractions, la planche la plus longue) qui recale
+  les niveaux.
 - **Le dosage dépend du rôle** : seuls les gros mouvements suivent la
   fourchette de l'objectif ; un exercice d'appoint se fait à 8-12 au moins,
   le gainage à 8-15 ou en tenue, avec moins de repos.
@@ -265,6 +281,12 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   `.mjs` de remplacements dans le dossier de travail (avec l'outil Write)
   plutôt qu'un `node -e` : les accents graves y sont interprétés par Bash et
   des morceaux de commentaires disparaissent.
+- Dans le terminal Bash de cette machine, un heredoc qui contient `${…}`
+  ou des accents graves casse (« unexpected EOF ») : écrire scripts et blocs
+  de test avec l'outil Write, puis `cat >>` ou `node fichier.mjs`.
+- Un agent qui écrit dans `src/i18n/fr/messages.ts` doit mettre les
+  espaces fines (U+202F) et insécables (U+00A0) : l'outil Edit tape des
+  espaces ordinaires, le test de typographie le voit.
 - Comparer le travail de deux séances par le nombre de séries trompe (un
   circuit est plus dense qu'un superset) : comparer séries × répétitions.
 - La session DidIt a fusionné son branchement (0.13.0, paquet verrouillé
@@ -352,3 +374,12 @@ cycles de plusieurs semaines (point 5), jusqu'à 80 % de la consommation.
   as une version viable, arrête-toi »), à 57 % de la consommation de la
   semaine. Ensuite : la fin du lot 3, puis les lots cardio, notes, tempo et
   le reste, puis les cycles de plusieurs semaines.
+- **04/10** — Questions posées : finir les coachs avant les cycles ; cycles
+  de 4 semaines (3 + 1 allégée) ; tests de niveau en fin de cycle, dans une
+  séance. Fin du lot 3 lancée en workflow (un implémenteur, trois
+  relecteurs qui cherchent à réfuter, un correcteur) : l'implémentation
+  passe à 297 tests, mais les relecteurs trouvent trois effets de bord
+  graves (voir Reste à faire). Arrêt demandé par l'utilisateur pendant la
+  correction, à 58 % de la consommation de la semaine : le travail est mis
+  de côté sur la branche `lot3-fin-en-cours` (pas au vert), `master`
+  reste à `c808737` plus cette passation.
