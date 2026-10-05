@@ -127,7 +127,7 @@ export function buildWarmup(main: readonly ExerciseDefinition[], context: Contex
     const middle: PlannedItem[] = [];
 
     for (const entry of mobility) {
-        if (plannedBlockSeconds(block) + middle.reduce((sum, chosen) => sum + chosen.target.value, 0) >= budget * reserve || middle.length >= 4) break;
+        if (plannedBlockSeconds(block) + middle.reduce((sum, chosen) => sum + chosen.target.value, 0) >= budget * reserve || middle.length >= 6) break;
         if (families.has(entry.definition.family) || used.has(entry.definition.id)) continue;
 
         families.add(entry.definition.family);
@@ -179,14 +179,24 @@ export function buildWarmup(main: readonly ExerciseDefinition[], context: Contex
         }
     }
 
-    // Plus de temps que prévu : on garde l'essentiel ; moins : un deuxième tour léger.
+    // Plus de temps que prévu : on garde l'essentiel.
     while (plannedBlockSeconds(block) > budget * 1.25 && items.length > 2) {
         items.splice(items.length - 2, 1);
     }
 
-    if (plannedBlockSeconds(block) < budget * 0.6 && items.length > 0) {
-        block.rounds = 2;
-        block.restBetweenRounds = 15;
+    // Moins : une montée du pouls plus longue (jusqu'à 2 min 30), puis des mobilités un peu plus longues. Jamais un
+    // deuxième tour, qui ferait remonter le pouls au milieu de l'échauffement et refaire la version facile avant la
+    // mobilité.
+    const pulseItem = items.find((entry) => entry.reasons.some((why) => why.code === 'warmup-pulse'));
+
+    if (pulseItem && plannedBlockSeconds(block) < budget * 0.9) {
+        pulseItem.target = targetForSeconds(pulseItem.definition, Math.min(150, PULSE_SECONDS + budget * 0.9 - plannedBlockSeconds(block)));
+    }
+
+    for (const entry of items.filter((candidate) => middle.includes(candidate))) {
+        if (plannedBlockSeconds(block) >= budget * 0.9) break;
+
+        entry.target = targetForSeconds(entry.definition, MOBILITY_SECONDS * 1.5);
     }
 
     return block;

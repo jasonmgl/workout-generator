@@ -567,6 +567,10 @@ var MESSAGES_FR = {
   "text-intervals": "{n} {n|tour|tours} de {work}\xA0s d\u2019effort / {rest}\xA0s de r\xE9cup\xE9ration",
   "text-tempo-slow": "lentement (2\xA0s pour descendre, 2\xA0s pour remonter)",
   "text-tempo-normal": "tempo normal",
+  "text-manner-very-easy": "tr\xE8s facile",
+  "text-manner-half-speed": "\xE0 mi-vitesse",
+  "text-manner-ramp": "version facile, pour pr\xE9parer le geste",
+  "text-manner-light-load": "charge l\xE9g\xE8re, pour pr\xE9parer le geste",
   "text-tempo-fast": "vite et contr\xF4l\xE9",
   "text-rir": "r\xE9serve\u202F: {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions}",
   // Le lecteur
@@ -20143,6 +20147,13 @@ function describeTarget(item2, locale = "fr", alternating = false) {
   if (alternating) return message("text-reps-alternating", { n: target.value, half: target.value / 2 }, locale);
   return `${message("text-reps", { n: target.value }, locale)}${side}`;
 }
+var MANNERS = {
+  "warmup-steady": "text-manner-very-easy",
+  "cooldown-easy": "text-manner-very-easy",
+  "warmup-intervals": "text-manner-half-speed",
+  "warmup-ramp": "text-manner-ramp",
+  "warmup-ramp-light": "text-manner-light-load"
+};
 function describeItem(item2, block, locale, alternating) {
   const straight = block.format === "straight" || block.format === "ladder" || block.format === "steady";
   const target = describeTarget(item2, locale, Boolean(item2.alternating) || alternating.has(item2.exercise));
@@ -20152,6 +20163,8 @@ function describeItem(item2, block, locale, alternating) {
   if (item2.load) parts.push(message(item2.load.estimated ? "text-load-guess" : "text-load", { kg: item2.load.kg }, locale));
   if (item2.tempo && item2.tempo !== "normal") parts.push(message(`text-tempo-${item2.tempo}`, {}, locale));
   if (item2.rir !== void 0 && block.role !== "warmup" && block.role !== "cooldown") parts.push(message("text-rir", { rir: item2.rir }, locale));
+  const manner = item2.reasons.map((entry) => MANNERS[entry.code]).find(Boolean);
+  if (manner) parts.push(message(manner, {}, locale));
   const lines = [`  \xB7 ${item2.name} \u2014 ${parts.join(" \xB7 ")}`];
   if (item2.warmupSets?.length) {
     lines.unshift(`  \xB7 ${message("text-approach", { sets: item2.warmupSets.map((set) => `${set.kg}\xA0kg\xA0\xD7\xA0${set.reps}`).join(", "), name: item2.name }, locale)}`);
@@ -21657,7 +21670,7 @@ function buildWarmup(main2, context, budget = warmupSeconds(context), options = 
   const reserve = options.intervals?.length ? 0.55 : 0.75;
   const middle = [];
   for (const entry of mobility) {
-    if (plannedBlockSeconds(block) + middle.reduce((sum, chosen) => sum + chosen.target.value, 0) >= budget * reserve || middle.length >= 4) break;
+    if (plannedBlockSeconds(block) + middle.reduce((sum, chosen) => sum + chosen.target.value, 0) >= budget * reserve || middle.length >= 6) break;
     if (families.has(entry.definition.family) || used.has(entry.definition.id)) continue;
     families.add(entry.definition.family);
     used.add(entry.definition.id);
@@ -21693,9 +21706,13 @@ function buildWarmup(main2, context, budget = warmupSeconds(context), options = 
   while (plannedBlockSeconds(block) > budget * 1.25 && items.length > 2) {
     items.splice(items.length - 2, 1);
   }
-  if (plannedBlockSeconds(block) < budget * 0.6 && items.length > 0) {
-    block.rounds = 2;
-    block.restBetweenRounds = 15;
+  const pulseItem = items.find((entry) => entry.reasons.some((why) => why.code === "warmup-pulse"));
+  if (pulseItem && plannedBlockSeconds(block) < budget * 0.9) {
+    pulseItem.target = targetForSeconds(pulseItem.definition, Math.min(150, PULSE_SECONDS + budget * 0.9 - plannedBlockSeconds(block)));
+  }
+  for (const entry of items.filter((candidate) => middle.includes(candidate))) {
+    if (plannedBlockSeconds(block) >= budget * 0.9) break;
+    entry.target = targetForSeconds(entry.definition, MOBILITY_SECONDS * 1.5);
   }
   return block;
 }
@@ -22591,7 +22608,7 @@ function strengthSession(context, choice, type) {
   const spare = total - projected;
   const mayFinish = !lighter && type !== "skill" && context.minutes >= 25 && (context.readiness.level === "normal" || context.readiness.level === "push") && cardioCandidates(context).length > 0;
   if (mayFinish && spare >= 240) {
-    const seconds = Math.min(600, (finisher ? finisherBudget : -BLOCK_TRANSITION_SECONDS) + spare);
+    const seconds = Math.min(context.minutes >= 60 ? 720 : 600, (finisher ? finisherBudget : -BLOCK_TRANSITION_SECONDS) + spare);
     finisher = buildFinisher(context, seconds, used, legsLoaded) ?? finisher;
   }
   const extraReasons = [];
@@ -22651,21 +22668,28 @@ function cardioSession(context, choice, type) {
   }
   if (main2) {
     if (warmBudget > 0) {
-      const warmup = buildWarmup(
+      let warmup = buildWarmup(
         main2.items.map((item2) => item2.definition),
         context,
         warmBudget,
         steadyDefinition ? {} : { intervals: main2.items.map((item2) => item2.definition) }
       );
       if (steadyDefinition) {
-        warmup.items[0] = {
+        const ride = Math.min(420, Math.max(120, Math.round(warmBudget * 0.6 / 30) * 30));
+        const moves = [];
+        for (const item2 of warmup.items.filter((entry) => entry.definition.kind === "mobility" && entry.definition.posture === "standing")) {
+          if (plannedBlockSeconds({ ...warmup, rounds: 1, items: [...moves, item2] }) > warmBudget - ride) break;
+          moves.push(item2);
+        }
+        const machine = {
           definition: steadyDefinition,
           sets: 1,
-          target: { ...easyTarget(steadyDefinition), value: Math.min(300, Math.round(warmBudget * 0.6 / 30) * 30) },
+          target: targetForSeconds(steadyDefinition, ride, true),
           restSeconds: 0,
           equipment: [],
           reasons: [reason("warmup-steady", {}, context.locale)]
         };
+        warmup = { ...warmup, rounds: 1, restBetweenRounds: 0, items: [...moves, machine] };
       }
       blocks.push(warmup);
     }

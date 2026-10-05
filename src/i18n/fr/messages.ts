@@ -174,6 +174,10 @@ export const MESSAGES_FR = {
     'text-intervals': '{n} {n|tour|tours} de {work} s d’effort / {rest} s de récupération',
     'text-tempo-slow': 'lentement (2 s pour descendre, 2 s pour remonter)',
     'text-tempo-normal': 'tempo normal',
+    'text-manner-very-easy': 'très facile',
+    'text-manner-half-speed': 'à mi-vitesse',
+    'text-manner-ramp': 'version facile, pour préparer le geste',
+    'text-manner-light-load': 'charge légère, pour préparer le geste',
     'text-tempo-fast': 'vite et contrôlé',
     'text-rir': 'réserve : {rir} {rir|répétition|répétitions}',
 

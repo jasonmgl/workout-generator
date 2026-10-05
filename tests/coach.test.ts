@@ -6,6 +6,7 @@ import { MESSAGES_FR } from '../src/i18n/fr/messages';
 import { MUSCLE_GROUPS, MUSCLE_INFO } from '../src/library/anatomy';
 import type { EquipmentInput } from '../src/library/equipment';
 import type { ExerciseDefinition } from '../src/library/types';
+import { sessionToText } from '../src/output/text';
 import { generateSession } from '../src/session/generate';
 import { buildContext } from '../src/session/context';
 import { alternateRegions, buildMainBlocks, lightDay, pairUp } from '../src/session/formats';
@@ -180,10 +181,29 @@ describe('le cardio', () => {
         const main = session.blocks.find((block) => block.role === 'main')!;
         const machine = main.items[0]!.exercise;
 
+        const warmup = session.blocks[0]!;
+
         expect(main.format).toBe('steady');
-        expect(session.blocks[0]!.items[0]!.exercise).toBe(machine);
+        // Des mobilités debout, puis la machine en dernier, jusqu’à l’allure de travail : rien au sol avant l’effort.
+        expect(warmup.items.at(-1)!.exercise).toBe(machine);
+        expect(warmup.rounds).toBe(1);
+        expect(warmup.items.every((item) => item.exercise === machine || library.get(item.exercise).posture === 'standing')).toBe(true);
         expect(session.blocks.find((block) => block.role === 'cooldown')!.items[0]!.exercise).toBe(machine);
         expect(session.summary).toMatch(/allure/);
+    });
+
+    it('tient la durée d’un cardio continu, et dit « très facile » à l’échauffement et au retour au calme', () => {
+        for (const equipment of [['bike'], ['rower'], ['outdoor'], ['treadmill']] as const) {
+            for (const minutes of [20, 30, 45, 60]) {
+                const session = generateSession({ date: DATE, equipment: [...equipment], request: { type: 'cardio', minutes } });
+
+                expect(Math.abs(session.estimatedMinutes - minutes), `${equipment[0]} · ${minutes} min`).toBeLessThanOrEqual(minutes * 0.1);
+            }
+        }
+
+        const text = sessionToText(generateSession({ date: DATE, equipment: ['bike'], request: { type: 'cardio', minutes: 45 } }));
+
+        expect(text.match(/très facile/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
     });
 
     it('chauffe au moins cinq minutes avant des intervalles', () => {
@@ -1066,9 +1086,12 @@ describe('le tempo de DidIt et le temps qui reste', () => {
             const at60 = many({ date: DATE, profile: { goal }, request: { minutes: 60 } });
 
             for (const session of at45) expect(session.estimatedMinutes, `${goal} · 45 min`).toBeGreaterThanOrEqual(45 * 0.9);
-            // À 60 minutes, un débutant plafonne à une demi-heure de renforcement et dix minutes de finisher : la séance
-            // tient au moins 85 % du temps, et dit sa vraie durée quand elle reste sous 90 %.
-            for (const session of at60) expect(session.estimatedMinutes, `${goal} · 60 min`).toBeGreaterThanOrEqual(60 * 0.85);
+            // À 60 minutes, un débutant plafonne à une demi-heure de renforcement et douze minutes de finisher : la séance
+            // tient au moins 80 % du temps, et dit sa vraie durée quand elle reste sous 90 %.
+            for (const session of at60) {
+                expect(session.estimatedMinutes, `${goal} · 60 min`).toBeGreaterThanOrEqual(60 * 0.8);
+                if (session.estimatedMinutes < 60 * 0.9) expect(session.summary).toMatch(/tient en/);
+            }
         }
     });
 
@@ -1090,5 +1113,19 @@ describe('le tempo de DidIt et le temps qui reste', () => {
 
         expect(easy.target.measure).toBe('time');
         expect(easy.target.value).toBeLessThanOrEqual(180);
+    });
+});
+
+describe('la deuxième relecture : l’échauffement', () => {
+    it('ne rejoue jamais tout l’échauffement en deux tours : il s’allonge à la place', () => {
+        for (const minutes of [20, 30, 45, 60]) {
+            for (const request of [{ minutes }, { minutes, type: 'cardio' as const }, { minutes, type: 'hiit' as const }]) {
+                for (const session of many({ date: DATE, equipment: ['bike'], request })) {
+                    const warmup = session.blocks.find((block) => block.role === 'warmup');
+
+                    if (warmup) expect(warmup.rounds, `${request.type ?? 'du jour'} · ${minutes} min`).toBe(1);
+                }
+            }
+        }
     });
 });

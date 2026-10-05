@@ -50,7 +50,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## État au 4 octobre 2026
 
-- **Version utilisable sur `master`.** 316 tests au vert, types propres.
+- **Version utilisable sur `master`.** 318 tests au vert, types propres.
 - **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
   `main`, derrière l’interrupteur `DIDIT_GENERATEUR`) : `app/Support/WorkoutGenerator.php`
   appelle la commande JSON, dépend de `github:jasonmgl/workout-generator#master`
@@ -130,15 +130,19 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
    - [x] le tempo de DidIt (2, 1 et 0,5 s par phase, demandé le 05/10) et
      le temps qu'il libère : finisher de cardio doux sur le temps resté
      libre, durées exactes au retour au calme (respiration, machine) ;
-   - [ ] **à reprendre ici** : le lot cardio. Le retour au calme sur la
-     machine est réglé (2 min 30 au lieu de 10), mais l'échauffement d'un
-     cardio continu à 45 et 60 min fait encore deux tours de 13 à 15 min
-     (45 → 52 min, 60 → 66 min). Repérés aussi : avec une barre, un
-     intermédiaire en prise de muscle reçoit parfois une suspension bras
-     fléchis comme seul tirage au lieu de tractions ;
-   - [ ] cardio en continu : retour au calme de 2 à 3 min, échauffement en
-     un tour, durée tenue ; « très facile » écrit ; machine et corde
-     utilisées (programmation-3, -9 ; securite-9 ; clarte-3, -4, -10) ;
+   - [x] cardio en continu : échauffement en un tour, mobilités debout puis
+     la machine en dernier jusqu'à l'allure de travail ; retour au calme de
+     2 min 30 sur la machine ; durée tenue à 10 % près (vélo, rameur, course,
+     tapis, de 20 à 60 min) ; « très facile », « à mi-vitesse », « version
+     facile » écrits sur les lignes ; plus jamais d'échauffement en deux tours
+     (il s'allonge à la place) (programmation-3 ; securite-9 ; clarte-3, -4,
+     -10) ;
+   - [ ] **à reprendre ici** : programmation-9 (le matériel de cardio déclaré
+     ne sert pas hors cardio continu : vélo, rameur, tapis ou dehors exclus
+     des intervalles par `cardioCandidates` ; corde écartée du finisher par
+     `legsLoaded` et de l'échauffement), puis les lots notes, tempo et le
+     reste. Repéré aussi : avec une barre, un intermédiaire en prise de muscle
+     reçoit parfois une suspension bras fléchis comme seul tirage ;
    - [ ] notes : un message par secours (tirage, articulation), porte +
      serviette et table d'abord, majuscules (clarte-1, -2 ; programmation-10 ;
      securite-11) ;
@@ -279,10 +283,14 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
   charnière). Pas d'extensions lombaires après une charnière.
 - **Le temps resté libre** quand le renforcement est plein (places,
   séries et longueur au plafond) devient un finisher de cardio doux, jusqu'à
-  10 min, à partir de 25 min et pas un jour léger ; un tabata ne sert que
+  10 min (12 dans une séance d'une heure), à partir de 25 min et pas un jour léger ; un tabata ne sert que
   sous 5 min à remplir. Une durée de retour au calme (respiration, machine)
   est donnée telle quelle, même sous le bas de la fiche (`targetForSeconds`
   avec `exact`).
+- **L'échauffement ne se rejoue jamais en deux tours** : il s'allonge
+  (montée du pouls jusqu'à 2 min 30, six mobilités, mobilités plus
+  longues). Avant un cardio continu : mobilités debout, puis la machine en
+  dernier, en montant jusqu'à l'allure de travail.
 - **Une séance nettement plus courte que demandé le dit** (« La séance
   tient en … min ») au lieu de se remplir d'exercices en plus.
 - **Le dosage dépend du rôle** : seuls les gros mouvements suivent la
@@ -431,3 +439,10 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
   au retour au calme : sans focus, 0 séance sur 60 sous 90 % à 45 min, 10
   sur 60 à 60 min (95 % en moyenne) ; le retour au calme du vélo passe de
   12 à 3-7 min. 316 tests. Session DidIt prévenue.
+  Puis le lot cardio : échauffement du cardio continu en un tour (mobilités
+  debout, puis la machine jusqu'à l'allure), 45 → 45-46 min et 60 → 54-59
+  min (contre 52 et 66) ; la manière de faire écrite sur les lignes
+  (« très facile », « à mi-vitesse ») ; l'échauffement s'allonge au lieu de
+  se rejouer en deux tours ; le finisher de temps libre monte à 12 min dans
+  une séance d'une heure. 318 tests. Pause pour ce soir à la demande de
+  l'utilisateur (5 h : environ 50 %, semaine : environ 8 %).

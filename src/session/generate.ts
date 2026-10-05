@@ -12,7 +12,7 @@ import type { ExerciseDefinition, MovementPattern } from '../library/types';
 import { EQUIPMENT_NAMES, GROUP_NAMES, GROUP_NAMES_WITH_ARTICLE, JOINT_NAMES, PATTERN_NAMES } from '../i18n/fr/labels';
 import { reason } from '../i18n/messages';
 import type { GenerateInput, Intensity, ReadinessAssessment, Reason, Session, SessionType } from '../types';
-import { easyTarget, plannedBlockSeconds, toSessionBlock, type PlannedBlock, type PlannedItem } from './blocks';
+import { easyTarget, plannedBlockSeconds, targetForSeconds, toSessionBlock, type PlannedBlock, type PlannedItem } from './blocks';
 import { chooseType, type TypeChoice } from './choose';
 import { buildContext, type Context } from './context';
 import { GOAL_SETTINGS } from './goals';
@@ -773,7 +773,7 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
         !lighter && type !== 'skill' && context.minutes >= 25 && (context.readiness.level === 'normal' || context.readiness.level === 'push') && cardioCandidates(context).length > 0;
 
     if (mayFinish && spare >= 240) {
-        const seconds = Math.min(600, (finisher ? finisherBudget : -BLOCK_TRANSITION_SECONDS) + spare);
+        const seconds = Math.min(context.minutes >= 60 ? 720 : 600, (finisher ? finisherBudget : -BLOCK_TRANSITION_SECONDS) + spare);
 
         finisher = buildFinisher(context, seconds, used, legsLoaded) ?? finisher;
     }
@@ -852,23 +852,36 @@ function cardioSession(context: Context, choice: TypeChoice, type: 'cardio' | 'h
 
     if (main) {
         if (warmBudget > 0) {
-            const warmup = buildWarmup(
+            let warmup = buildWarmup(
                 main.items.map((item) => item.definition),
                 context,
                 warmBudget,
                 steadyDefinition ? {} : { intervals: main.items.map((item) => item.definition) },
             );
 
-            // Avant un cardio continu, l'échauffement commence sur la même machine, en douceur.
+            // Avant un cardio continu : quelques mobilités debout, puis la même machine en montant doucement jusqu’à
+            // l’allure de travail. Un seul tour : on ne redescend pas au sol entre l’échauffement et l’effort, et la
+            // machine ne compte pas deux fois.
             if (steadyDefinition) {
-                warmup.items[0] = {
+                const ride = Math.min(420, Math.max(120, Math.round((warmBudget * 0.6) / 30) * 30));
+                const moves: PlannedItem[] = [];
+
+                for (const item of warmup.items.filter((entry) => entry.definition.kind === 'mobility' && entry.definition.posture === 'standing')) {
+                    if (plannedBlockSeconds({ ...warmup, rounds: 1, items: [...moves, item] }) > warmBudget - ride) break;
+
+                    moves.push(item);
+                }
+
+                const machine: PlannedItem = {
                     definition: steadyDefinition,
                     sets: 1,
-                    target: { ...easyTarget(steadyDefinition), value: Math.min(300, Math.round(warmBudget * 0.6 / 30) * 30) },
+                    target: targetForSeconds(steadyDefinition, ride, true),
                     restSeconds: 0,
                     equipment: [],
                     reasons: [reason('warmup-steady', {}, context.locale)],
                 };
+
+                warmup = { ...warmup, rounds: 1, restBetweenRounds: 0, items: [...moves, machine] };
             }
 
             blocks.push(warmup);

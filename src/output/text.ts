@@ -29,6 +29,15 @@ export function describeTarget(item: SessionItem, locale = 'fr', alternating = f
     return `${message('text-reps', { n: target.value }, locale)}${side}`;
 }
 
+/** Ce que la séance sait de la manière de faire une ligne, et qu’il faut écrire : sinon on pédale l’échauffement à l’allure de la séance. */
+const MANNERS: Readonly<Record<string, string>> = {
+    'warmup-steady': 'text-manner-very-easy',
+    'cooldown-easy': 'text-manner-very-easy',
+    'warmup-intervals': 'text-manner-half-speed',
+    'warmup-ramp': 'text-manner-ramp',
+    'warmup-ramp-light': 'text-manner-light-load',
+};
+
 function describeItem(item: SessionItem, block: SessionBlock, locale: string, alternating: ReadonlySet<string>): string[] {
     const straight = block.format === 'straight' || block.format === 'ladder' || block.format === 'steady';
     const target = describeTarget(item, locale, Boolean(item.alternating) || alternating.has(item.exercise));
@@ -39,6 +48,10 @@ function describeItem(item: SessionItem, block: SessionBlock, locale: string, al
     if (item.load) parts.push(message(item.load.estimated ? 'text-load-guess' : 'text-load', { kg: item.load.kg }, locale));
     if (item.tempo && item.tempo !== 'normal') parts.push(message(`text-tempo-${item.tempo}`, {}, locale));
     if (item.rir !== undefined && block.role !== 'warmup' && block.role !== 'cooldown') parts.push(message('text-rir', { rir: item.rir }, locale));
+
+    const manner = item.reasons.map((entry) => MANNERS[entry.code]).find(Boolean);
+
+    if (manner) parts.push(message(manner, {}, locale));
 
     const lines = [`  · ${item.name} — ${parts.join(' · ')}`];
 
