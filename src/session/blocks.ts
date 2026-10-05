@@ -24,7 +24,7 @@ export interface PlannedItem {
     reasons: Reason[];
     /** La place du gabarit qu'il remplit, pour savoir ce qu'on peut retirer en premier. */
     slotRole?: string;
-    /** Il tient une place du focus : servi en séries avant les autres, dans le premier circuit. */
+    /** Il tient une place du focus et fait travailler le groupe visé : servi en séries avant les autres, dans le premier circuit. */
     focus?: boolean;
     /** Le plus de séries qu'on peut lui donner en remplissant la séance. */
     maxSets?: number;

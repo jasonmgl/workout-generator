@@ -16,11 +16,11 @@
  * séances de suite ne sont pas identiques, la même graine redonne la même.
  */
 import { MUSCLE_INFO, type MuscleId } from '../library/anatomy';
-import { LOADABLE_EQUIPMENT, satisfies } from '../library/equipment';
-import type { ExerciseDefinition, Impact } from '../library/types';
+import { satisfies } from '../library/equipment';
+import type { ExerciseDefinition, Impact, MovementPattern } from '../library/types';
 import { performancesOf, struggledOn, valueOf, LEVEL_DIFFICULTY } from '../history/progress';
 import type { Context } from './context';
-import { onPlateau, targetRange } from './prescribe';
+import { loadVerdict, onPlateau, targetRange } from './prescribe';
 import { isFocusSlot, type Slot } from './templates';
 
 const IMPACT_ORDER: Readonly<Record<Impact, number>> = { none: 0, low: 1, high: 2 };
@@ -39,7 +39,25 @@ export const loadsErectors = (definition: ExerciseDefinition): boolean =>
     definition.muscles.primary.includes('erectors') || Boolean(definition.muscles.secondary?.includes('erectors'));
 
 /** Un exercice d’activation ou de rééducation (donkey kicks, clamshells) : sa place est l’échauffement. */
-const warmupOnly = (definition: ExerciseDefinition): boolean => Boolean(definition.tags?.some((tag) => tag === 'activation' || tag === 'rehab'));
+export const warmupOnly = (definition: ExerciseDefinition): boolean => Boolean(definition.tags?.some((tag) => tag === 'activation' || tag === 'rehab'));
+
+/** Un exercice chargé, avec une charge assez lourde pour l’objectif, ou dont on ne connaît pas les charges. */
+const heavyEnough = (definition: ExerciseDefinition, context: Context): boolean => Boolean(definition.tags?.includes('loaded')) && loadVerdict(definition, context) !== 'light';
+
+/** Un exercice chargé dont la charge la plus lourde qu’on a est dérisoire pour l’objectif (un développé à 4 kg). */
+const tooLight = (definition: ExerciseDefinition, context: Context): boolean => Boolean(definition.tags?.includes('loaded')) && loadVerdict(definition, context) === 'light';
+
+const TRUNK_PATTERNS: readonly MovementPattern[] = ['anti-extension', 'anti-rotation', 'anti-lateral-flexion', 'trunk-flexion', 'trunk-rotation', 'trunk-extension'];
+
+/**
+ * Un exercice dont la charge est limitée par le gainage : un tirage tenu en planche (renegade row) fait travailler les
+ * obliques en principal, et ce sont eux qui lâchent, pas le dos.
+ */
+const trunkLimited = (definition: ExerciseDefinition): boolean =>
+    !TRUNK_PATTERNS.includes(definition.pattern) && definition.muscles.primary.some((muscle) => MUSCLE_INFO[muscle].group === 'core');
+
+/** Les places principales où la force et le volume se construisent sur une charge : pousser, tirer, les jambes. */
+const LOADED_FIRST: readonly MovementPattern[] = ['horizontal-push', 'vertical-push', 'horizontal-pull', 'vertical-pull', 'squat', 'lunge', 'hinge'];
 
 /** Ce qui rend un exercice impossible aujourd'hui. */
 export function feasible(definition: ExerciseDefinition, context: Context): boolean {
@@ -116,9 +134,13 @@ function muscleAppeal(muscle: MuscleId, context: Context): number {
 export function score(definition: ExerciseDefinition, slot: Slot, context: Context, chosen: readonly ExerciseDefinition[]): number {
     const target = targetDifficulty(definition, context);
     // Un exercice chargé progresse par la charge : être techniquement plus simple que le niveau ne le dessert
-    // presque pas (un avancé fait encore des squats à la barre), être plus technique, si.
+    // presque pas (un avancé fait encore des squats à la barre), pourvu que la charge soit assez lourde (un goblet
+    // squat à 6 kg reste un squat facile pour un avancé). Une marche au-dessus, il se règle avec la charge la plus
+    // légère quand elle permet de commencer doucement : un goblet squat avec un haltère de 6 kg vaut des squats pour
+    // un débutant. Les haltères que la personne a déclarés servent.
     const rawGap = definition.difficulty - target;
-    const gap = definition.tags?.includes('loaded') && rawGap < 0 ? rawGap / 3 : rawGap;
+    const adjustable = Boolean(definition.tags?.includes('loaded')) && loadVerdict(definition, context) === 'adjustable';
+    const gap = rawGap < 0 && heavyEnough(definition, context) ? rawGap / 3 : rawGap > 0 && adjustable ? Math.max(0, rawGap - 1) : rawGap;
     let value = Math.exp(-(gap * gap) / (2 * 1.2 * 1.2));
 
     if (gap > 1.5) {
@@ -135,22 +157,27 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
         if (context.body.muscles[muscle].recovery < 0.4) value *= 0.85;
     }
 
-    // Variété : pas le même exercice que la dernière fois, sauf sur un gros mouvement qu'on fait progresser.
+    // Variété : pas le même exercice que la dernière fois, sauf sur un gros mouvement qu'on fait progresser. Sur une
+    // place principale, l'exercice refait deux jours plus tard garde sa place quand il est en cours de progression (au
+    // moins deux séances ces six dernières semaines) : c'est sur lui qu'on progresse. Jamais celui de la veille : deux
+    // jours de suite, la même séance ne revient pas exercice pour exercice.
     const seen = context.exerciseRecency.get(definition.id);
     const family = context.familyRecency.get(definition.family);
 
-    if (seen && seen.days <= 2) value *= 0.5;
+    if (seen && seen.days <= 2 && (slot.role !== 'main' || seen.days < 2 || seen.count < 2)) value *= 0.5;
     if (slot.role === 'main' && family && family.days <= 14) value *= 1.25;
     if (seen && seen.count >= 10) value *= 0.7;
 
     // Sur une place principale, l’exercice exact fait ces deux dernières semaines passe devant ses variantes sœurs :
     // on progresse sur ce qu’on refait, et au plateau on le garde pour en changer le rythme (prescribe), pas l’exercice.
-    // Au haut de sa fourchette, un exercice qui ne se charge pas a fini son escalier : place à la variante plus dure.
+    // Au haut de sa fourchette, un exercice qui ne se charge pas a fini son escalier : place à la variante plus dure,
+    // sauf au plateau, où l’on ne passe pas à plus dur (ci-dessous) : on le garde, plus lent.
     if (slot.role === 'main' && seen && seen.days <= 14) {
         const own = performancesOf(context.input.history ?? [], definition, context.date);
+        const plateau = onPlateau(own);
         const topped = !definition.tags?.includes('loaded') && own[0] !== undefined && Math.min(...own[0].sets.map((set) => valueOf(set, definition.measure))) >= targetRange(definition, context.settings)[1];
 
-        if (!topped) value *= onPlateau(own) ? 3 : 2;
+        if (!topped || plateau) value *= plateau ? 3 : 2;
     }
 
     // Une famille au plateau ne passe pas à plus dur : on débloque d’abord le plateau.
@@ -175,15 +202,23 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
 
     if ((context.goal === 'endurance' || context.goal === 'fat-loss') && definition.tags?.includes('eccentric')) value *= 0.4;
 
-    // Avec des charges à disposition, la force et le volume progressent mieux sur un exercice chargé.
-    if ((context.goal === 'strength' || context.goal === 'hypertrophy') && definition.tags?.includes('loaded')) value *= 1.2;
+    // Avec des charges à disposition, assez lourdes, la force et le volume progressent mieux sur un exercice chargé ;
+    // pas sur un exercice dont le gainage limite la charge (un renegade row comme tirage principal).
+    const strong = context.goal === 'strength' || context.goal === 'hypertrophy';
+
+    if (strong && heavyEnough(definition, context)) value *= 1.2;
+    // Pour la force et le volume, une charge dérisoire ne fait pas un vrai exercice chargé : la variante au poids du
+    // corps passe devant. Pour la forme ou l'endurance, un exercice chargé léger reste un exercice facile.
+    if (strong && tooLight(definition, context)) value *= 0.5;
+    if (strong && slot.role === 'main' && trunkLimited(definition)) value *= 0.5;
 
     // Deux exercices du même mouvement dans une séance (même famille, chargée ou non) : seulement s'il n'y a rien d'autre.
     if (chosen.some((other) => movementKey(other) === movementKey(definition))) value *= 0.15;
     if (chosen.some((other) => other.pattern === definition.pattern)) value *= 0.4;
     // Deux charnières qui chargent les érecteurs (un soulevé de terre sumo, puis un roumain) : le bas du dos paie deux
-    // fois. Un leg curl ou un pont fait mieux la deuxième place.
-    if (loadsErectors(definition) && chosen.some((other) => other.pattern === definition.pattern && loadsErectors(other))) value *= 0.4;
+    // fois. Un leg curl ou un pont fait mieux la deuxième place ; chez un débutant, dont les érecteurs fatiguent vite et
+    // tiennent la technique de tous les autres exercices, autant que deux fois le même mouvement.
+    if (loadsErectors(definition) && chosen.some((other) => other.pattern === definition.pattern && loadsErectors(other))) value *= context.level === 'beginner' ? 0.15 : 0.4;
 
     return value;
 }
@@ -204,20 +239,39 @@ export function rank(slot: Slot, context: Context, chosen: readonly ExerciseDefi
         .sort(byScore);
 
     // Les muscles qu’une place doit faire travailler, quand le catalogue le permet : une place « mollets » prend des
-    // mollets, pas le jambier antérieur ; une poussée horizontale, les pectoraux plutôt que les seuls triceps.
-    const matching = slot.muscles ? candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot.muscles!.includes(muscle))) : [];
-    const pool = matching.length ? matching : candidates;
+    // mollets, pas le jambier antérieur ; une poussée horizontale, les pectoraux plutôt que les seuls triceps. À
+    // défaut d’un exercice où ils sont en principal, un exercice où ils aident (un good morning pour les lombaires).
+    const works = (muscles: readonly MuscleId[] | undefined): boolean => Boolean(muscles?.some((muscle) => slot.muscles!.includes(muscle)));
+    const primary = slot.muscles ? candidates.filter((entry) => works(entry.definition.muscles.primary)) : [];
+    const secondary = slot.muscles && !primary.length ? candidates.filter((entry) => works(entry.definition.muscles.secondary)) : [];
+    const pool = primary.length ? primary : secondary.length ? secondary : candidates;
 
-    // En force et en prise de muscle, un gros mouvement progresse sur des charges qu’on note : quand un mouvement
-    // polyarticulaire qui se charge est faisable, les variantes au poids du corps, et l’isolation, passent derrière,
-    // comme un exercice d’activation (un développé couché plutôt que des pompes sur un bras à quatre répétitions, ou
-    // que des écartés) : elles ne sortent que si les charges ne conviennent pas.
-    const loadable = (definition: ExerciseDefinition): boolean =>
-        Boolean(definition.tags?.includes('loaded')) || Boolean(definition.equipment?.flat().some((id) => LOADABLE_EQUIPMENT.includes(id) && context.inventory.loadsOf(id).length > 0));
-    const strong = (definition: ExerciseDefinition): boolean => definition.compound && loadable(definition);
-    const loadedFirst = (context.goal === 'strength' || context.goal === 'hypertrophy') && slot.role === 'main' && pool.some((entry) => strong(entry.definition));
+    // En force et en prise de muscle, un gros mouvement progresse sur des charges qu’on note : sur une place principale
+    // pour pousser, tirer ou les jambes, quand un polyarticulaire chargé assez lourd est faisable dans un schéma, les
+    // autres exercices de ce schéma passent derrière (un développé couché plutôt que des pompes sur un bras à quatre
+    // répétitions, ou que des écartés). Pas une traction derrière un rowing : chaque schéma se juge à part. Et jamais
+    // ce qu’on fait progresser : une famille faite ces deux dernières semaines garde sa place.
+    const strong = (definition: ExerciseDefinition): boolean => definition.compound && heavyEnough(definition, context);
+    const loadedPatterns =
+        (context.goal === 'strength' || context.goal === 'hypertrophy') && slot.role === 'main' && slot.patterns.some((pattern) => LOADED_FIRST.includes(pattern))
+            ? new Set(pool.filter((entry) => strong(entry.definition)).map((entry) => entry.definition.pattern))
+            : new Set<MovementPattern>();
+    const behind = (definition: ExerciseDefinition): boolean =>
+        loadedPatterns.has(definition.pattern) && !strong(definition) && (context.familyRecency.get(definition.family)?.days ?? Infinity) > 14;
 
-    return loadedFirst ? pool.map((entry) => (strong(entry.definition) ? entry : { ...entry, score: entry.score * 0.3 })).sort(byScore) : pool;
+    // On progresse sur ce qu’on refait : sur une place principale, le mouvement qu’on fait progresser (sa famille faite
+    // au moins deux fois ces six dernières semaines, la dernière il y a moins de deux semaines) passe devant les autres
+    // mouvements de la place, chargés compris. Des pompes qu’on monte séance après séance ne cèdent pas une fois sur
+    // deux la place à un développé ; elles passent à une variante plus dure, ou à leur version chargée.
+    const progressing = (definition: ExerciseDefinition): boolean => {
+        const recency = context.familyRecency.get(definition.family);
+
+        return recency !== undefined && recency.count >= 2 && recency.days <= 14;
+    };
+    const progressed = new Set(slot.role === 'main' ? pool.filter((entry) => progressing(entry.definition)).map((entry) => movementKey(entry.definition)) : []);
+    const weight = (definition: ExerciseDefinition): number => (behind(definition) ? 0.3 : 1) * (progressed.size && !progressed.has(movementKey(definition)) ? 0.5 : 1);
+
+    return loadedPatterns.size || progressed.size ? pool.map((entry) => ({ ...entry, score: entry.score * weight(entry.definition) })).sort(byScore) : pool;
 }
 
 /** Au-delà d’une marche et demie au-dessus de la difficulté visée, un exercice est trop dur pour être proposé. */
@@ -233,10 +287,19 @@ export function pick(slot: Slot, context: Context, chosen: readonly ExerciseDefi
     const reachable = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
     // Qui demande « fessiers » attend du travail pour les fessiers : une place du focus ne prend un exercice
     // d’activation, ou une descente freinée jamais faite (deux séries au plus la première fois), que s’il n’y a rien
-    // d’autre de faisable.
+    // d’autre de faisable. Une place de tirage non plus, quand un autre tirage est à portée : des tractions négatives à
+    // deux séries ne répondent pas à un développé qui en a quatre. Ni une place principale quand l’objectif demande
+    // plus de deux séries. Elle reste l’entrée dans la famille quand rien d’autre n’est à portée, et celle d’un débutant
+    // (deux séries, c’est déjà son compte).
     const firstDescent = (definition: ExerciseDefinition): boolean =>
         Boolean(definition.tags?.includes('eccentric')) && performancesOf(context.input.history ?? [], definition, context.date).length === 0;
-    const working = isFocusSlot(slot) ? reachable.filter((entry) => !warmupOnly(entry.definition) && !firstDescent(entry.definition)) : [];
+    const pulling = slot.patterns.some((pattern) => pattern === 'horizontal-pull' || pattern === 'vertical-pull');
+    const thin = slot.role === 'main' && context.settings.sets[context.level][0] > 2;
+    const working = isFocusSlot(slot)
+        ? reachable.filter((entry) => !warmupOnly(entry.definition) && !firstDescent(entry.definition))
+        : pulling || thin
+          ? reachable.filter((entry) => !firstDescent(entry.definition))
+          : [];
     const within = working.length ? working : reachable;
 
     if (within.length === 0) {
@@ -245,9 +308,11 @@ export function pick(slot: Slot, context: Context, chosen: readonly ExerciseDefi
         return [...ranked].sort((a, b) => a.definition.difficulty - b.definition.difficulty || b.score - a.score)[0]!.definition;
     }
 
-    // Le tirage se fait en deux temps : d’abord le mouvement, chacun avec la note de sa meilleure variante (quatre
-    // pompes contre un développé ne laisseraient sortir le développé qu’une fois sur quatre), puis la variante, parmi
-    // celles qui valent presque la meilleure. Toujours deux tirages : le hasard garde le même ordre.
+    // Le tirage se fait en deux temps : d’abord le mouvement, puis la variante, parmi celles qui valent presque la
+    // meilleure. Un mouvement pèse ses deux meilleures variantes, jamais plus : quatre pompes contre un développé ne
+    // laissent plus sortir le développé qu’une fois sur quatre, mais une famille d’une seule fiche (le renegade row)
+    // ne pèse pas autant que deux bons rowings, ni un exercice isolé autant que la famille qu’on fait progresser.
+    // Toujours deux tirages : le hasard garde le même ordre.
     const movements: (typeof within)[] = [];
 
     for (const entry of within) {
@@ -258,14 +323,14 @@ export function pick(slot: Slot, context: Context, chosen: readonly ExerciseDefi
     }
 
     const best = movements[0]![0]!.score;
+    const close = (members: typeof within): typeof within => members.filter((entry) => entry.score >= members[0]!.score * 0.75);
     const movement = context.random.weighted(
         movements.filter((members) => members[0]!.score >= best * 0.35),
-        (members) => members[0]!.score * members[0]!.score,
+        (members) =>
+            close(members)
+                .slice(0, 2)
+                .reduce((sum, entry) => sum + entry.score * entry.score, 0),
     );
-    const top = movement[0]!.score;
 
-    return context.random.weighted(
-        movement.filter((entry) => entry.score >= top * 0.75).slice(0, DRAW_SIZE),
-        (entry) => entry.score * entry.score,
-    ).definition;
+    return context.random.weighted(close(movement).slice(0, DRAW_SIZE), (entry) => entry.score * entry.score).definition;
 }

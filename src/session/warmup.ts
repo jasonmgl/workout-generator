@@ -169,7 +169,9 @@ export function buildWarmup(main: readonly ExerciseDefinition[], context: Contex
                 ...item(ramp, 20, context, loaded ? 'warmup-ramp-light' : 'warmup-ramp'),
                 target: (() => {
                     const base = easyTarget(ramp, 0);
-                    const value = Math.max(3, Math.round(base.value * (easier ? 1 : 0.5)));
+                    const halved = Math.max(3, Math.round(base.value * (easier ? 1 : 0.5)));
+                    // En alternance, un nombre pair : autant de chaque côté, pas « 1.5 de chaque côté ».
+                    const value = ramp.alternating && ramp.measure === 'reps' ? Math.max(4, Math.ceil(halved / 2) * 2) : halved;
 
                     return { ...base, value, range: [Math.min(base.range[0], value), base.range[1]] as const };
                 })(),

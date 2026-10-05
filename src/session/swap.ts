@@ -7,7 +7,10 @@
  * On passe la même entrée que pour générer la séance : c'est elle qui dit
  * le matériel, la forme du jour et l'historique.
  */
-import type { GenerateInput, Session, SessionBlock, SessionItem } from '../types';
+import { MUSCLE_INFO } from '../library/anatomy';
+import { GROUP_NAMES_WITH_ARTICLE } from '../i18n/fr/labels';
+import { reason } from '../i18n/messages';
+import type { GenerateInput, Reason, Session, SessionBlock, SessionItem } from '../types';
 import { buildContext } from './context';
 import { prescribe } from './prescribe';
 import { feasible } from './select';
@@ -50,7 +53,12 @@ export function replaceExercise(session: Session, input: GenerateInput, blockId:
     const { block, item } = findItem(session, blockId, index);
     const definition = context.library.get(exerciseId);
     const role = block.role === 'main' ? (definition.compound ? 'main' : 'accessory') : block.role === 'skill' ? 'skill' : 'accessory';
-    const prescription = prescribe(definition, role, context);
+    // Un exercice de ce qu'on vise garde son rôle quand son remplaçant fait travailler le même groupe : ses séries
+    // d'abord, et « comme demandé ».
+    const muscles = [...definition.muscles.primary, ...(definition.muscles.secondary ?? [])];
+    const focusGroup = item.reasons[0]?.code === 'item-focus' ? context.focusGroups.find((group) => muscles.some((muscle) => MUSCLE_INFO[muscle].group === group)) : undefined;
+    const reasons: Reason[] = focusGroup ? [reason('item-focus', { group: GROUP_NAMES_WITH_ARTICLE[focusGroup] }, context.locale)] : [];
+    const prescription = prescribe(definition, role, context, { focus: focusGroup !== undefined });
     const keepsRounds = block.format !== 'straight' && block.format !== 'ladder';
     const replaced: SessionItem = {
         exercise: definition.id,
@@ -67,7 +75,7 @@ export function replaceExercise(session: Session, input: GenerateInput, blockId:
         equipment: prescription.equipment,
         progression: prescription.progression,
         ...(prescription.note ? { note: prescription.note } : {}),
-        reasons: [],
+        reasons,
         setSeconds: 0,
         estimatedSeconds: 0,
     };

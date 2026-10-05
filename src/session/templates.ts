@@ -9,7 +9,7 @@
  * poussée, une charnière, un tirage et du gainage : chaque grand groupe a sa
  * part, et les groupes opposés (pousser / tirer) se répondent.
  */
-import type { MuscleGroupId, MuscleId } from '../library/anatomy';
+import { musclesOfGroup, type MuscleGroupId, type MuscleId } from '../library/anatomy';
 import type { ExerciseKind, MovementPattern } from '../library/types';
 import type { SessionType } from '../types';
 
@@ -58,11 +58,13 @@ export interface Template {
 
 const RAW_TEMPLATES: Readonly<Record<SessionType, Template>> = {
     'full-body': {
+        // Le tirage juste après la poussée, qu’il équilibre : quand le temps manque (la force, ses repos et ses séries
+        // d’approche), c’est la charnière qui saute, la flexion des jambes ayant déjà servi le bas du corps.
         base: [
             slot('knee', 'main', ['squat', 'lunge']),
             slot('push', 'main', ['horizontal-push', 'vertical-push']),
-            slot('hinge', 'main', ['hinge', 'knee-flexion']),
             slot('pull', 'main', ['horizontal-pull', 'vertical-pull'], STRENGTH, PULL_FALLBACK),
+            slot('hinge', 'main', ['hinge', 'knee-flexion']),
             slot('core', 'core', CORE_PATTERNS),
         ],
         extras: [
@@ -244,7 +246,11 @@ export const TEMPLATES: Readonly<Record<SessionType, Template>> = {
 /** Les places qui servent un groupe qu'on veut travailler : ajoutées avant les places en plus. */
 const RAW_FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = {
     chest: [slot('focus-chest', 'accessory', ['horizontal-push']), slot('focus-chest-2', 'accessory', ['horizontal-push', 'vertical-push'])],
-    back: [slot('focus-back', 'accessory', ['horizontal-pull', 'vertical-pull']), slot('focus-back-2', 'accessory', ['vertical-pull', 'horizontal-pull'])],
+    // Sans rien pour tirer, le dos visé se travaille quand même au sol, comme la place de base du tirage.
+    back: [
+        slot('focus-back', 'accessory', ['horizontal-pull', 'vertical-pull'], STRENGTH, PULL_FALLBACK),
+        slot('focus-back-2', 'accessory', ['vertical-pull', 'horizontal-pull'], STRENGTH, PULL_FALLBACK),
+    ],
     shoulders: [slot('focus-shoulders', 'accessory', ['vertical-push', 'shoulder-raise']), slot('focus-shoulders-2', 'accessory', ['shoulder-raise', 'scapular'])],
     arms: [slot('focus-biceps', 'accessory', ['elbow-flexion']), slot('focus-triceps', 'accessory', ['elbow-extension'])],
     core: [slot('focus-core', 'core', CORE_PATTERNS), slot('focus-core-2', 'core', ['trunk-flexion', 'trunk-rotation', 'anti-rotation'])],
@@ -254,9 +260,18 @@ const RAW_FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = {
     calves: [slot('focus-calves', 'accessory', ['calf-raise']), slot('focus-calves-2', 'accessory', ['calf-raise', 'jump'], ANY_STRENGTH)],
 };
 
+/**
+ * Une place du focus fait travailler le groupe visé quand le catalogue le permet : une poussée pour les pectoraux
+ * prend des pompes plutôt que des pompes piquées, une charnière pour les lombaires un good morning plutôt qu’un pont.
+ */
 export const FOCUS_SLOTS: Readonly<Record<MuscleGroupId, readonly Slot[]>> = Object.fromEntries(
-    Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map(refine)]),
+    Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map((entry) => refine({ ...entry, muscles: musclesOfGroup(group as MuscleGroupId) }))]),
 ) as unknown as Record<MuscleGroupId, readonly Slot[]>;
+
+/** Le groupe visé qu’une place du focus sert (sa place de secours comprise). */
+export function focusGroupOfSlot(entry: Slot, groups: readonly MuscleGroupId[]): MuscleGroupId | undefined {
+    return groups.find((group) => FOCUS_SLOTS[group].some((other) => entry.key === other.key || entry.key === `${other.key}-fallback`));
+}
 
 /** Une place du focus : ce que la personne a demandé de travailler. */
 export const isFocusSlot = (entry: Slot): boolean => entry.key.startsWith('focus-');

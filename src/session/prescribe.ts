@@ -172,6 +172,29 @@ export function estimatedLoad(
     return { kg, value: Math.max(allowed[0], Math.min(allowed[1], repsAt(kg, base, rir))) };
 }
 
+/**
+ * Ce que valent les charges qu’on a pour un exercice chargé et pour l’objectif, réserve gardée :
+ * - `light` : même la plus lourde est dérisoire, elle fait dépasser d’un quart le haut de la fourchette (des haltères
+ *   de 6 kg ne font pas un squat de force pour un avancé de 80 kg, il en ferait cinquante) ;
+ * - `heavy` : la plus lourde convient ;
+ * - `adjustable` : la plus lourde convient, et la plus légère permet de commencer doucement (elle ne fait pas tomber
+ *   sous le bas de la fourchette).
+ * Sans charges déclarées, on ne sait pas (`undefined`) : la personne choisit la sienne.
+ */
+export function loadVerdict(definition: ExerciseDefinition, context: Context): 'light' | 'heavy' | 'adjustable' | undefined {
+    const equipment = equipmentUsed(definition.equipment, context.inventory).find((id) => LOADABLE_EQUIPMENT.includes(id));
+    const loads = equipment ? context.inventory.loadsOf(equipment) : [];
+
+    if (!equipment || !loads.length) return undefined;
+
+    const base = (context.input.profile?.bodyweightKg ?? 70) * (LOAD_RATIO[definition.pattern]?.[equipment] ?? 0.1) * LEVEL_LOAD[context.level];
+    const [low, high] = context.settings.reps;
+
+    if (repsAt(Math.max(...loads), base, context.settings.rir) > Math.round(high * 1.25)) return 'light';
+
+    return repsAt(Math.min(...loads), base, context.settings.rir) >= low ? 'adjustable' : 'heavy';
+}
+
 /** Ce qu’on reprend de la charge d’avant après un arrêt, selon les jours sans l’exercice (chiffres à nous). */
 export function comebackLoadFactor(daysOff: number): number {
     if (daysOff > 42) return 0.7;
@@ -385,25 +408,28 @@ export function prescribe(definition: ExerciseDefinition, role: SlotRole, contex
     // première fois.
     const volume = Math.min(1, readiness.volume);
     const leading = role === 'main' || role === 'skill' || Boolean(options.focus);
+    // Une descente freinée découverte : deux séries au plus, série de plus comprise, et jamais au-delà en remplissant
+    // la séance : les courbatures viennent vite (c’est aussi ce qui la fait sortir d’un circuit ou d’un superset).
+    const firstDescent = firstExposure && Boolean(definition.tags?.includes('eccentric'));
     let sets = leading ? most : fewest;
 
     if (firstExposure) sets = fewest;
-    if (firstExposure && definition.tags?.includes('eccentric')) sets = Math.min(sets, 2);
 
     sets = Math.max(1, Math.round((sets + extraSets) * readiness.volume));
 
+    if (firstDescent) sets = Math.min(sets, 2);
+
     // Le plafond : une variante plus dure ou une reprise se découvre à une série de plus que le minimum, une
-    // descente freinée à deux séries ; un premier essai ordinaire va jusqu’au nombre habituel de l’objectif.
+    // descente freinée à deux séries ; un premier essai ordinaire va jusqu’au nombre habituel de l’objectif, une
+    // série de plus pour ce que la personne a demandé de travailler (c’est lui qui reçoit ses séries en premier).
     const usual = leading || role === 'conditioning' ? most + 1 : role === 'core' ? fewest + 1 : most;
     const ceiling =
-        firstExposure && definition.tags?.includes('eccentric')
-            ? sets
-            : step === 'harder' || step === 'comeback'
-              ? Math.min(usual, fewest + 1)
-              : step === 'start'
-                ? Math.min(usual, most)
-                : usual;
-    const maxSets = Math.max(sets, Math.round(Math.max(sets, ceiling + extraSets) * volume));
+        step === 'harder' || step === 'comeback'
+            ? Math.min(usual, fewest + 1)
+            : step === 'start'
+              ? Math.min(usual, options.focus ? most + 1 : most)
+              : usual;
+    const maxSets = firstDescent ? sets : Math.max(sets, Math.round(Math.max(sets, ceiling + extraSets) * volume));
 
     // Le repos et la réserve : un exercice d'appoint et le gainage se reposent moins qu'un gros mouvement.
     let restSeconds = role === 'main' && definition.compound ? settings.rest.compound : settings.rest.isolation;

@@ -15,7 +15,7 @@ import type { BlockFormat, Reason, SessionType } from '../types';
 import { plannedBlockSeconds, type PlannedBlock, type PlannedItem } from './blocks';
 import type { Context } from './context';
 import { feasible, loadsErectors } from './select';
-import { repSeconds, workSeconds } from './timing';
+import { BLOCK_TRANSITION_SECONDS, repSeconds, workSeconds } from './timing';
 import { POSTURE_ORDER } from './warmup';
 
 /** Les formats que sait faire un bloc principal de renforcement. */
@@ -178,19 +178,39 @@ const perRound = (item: PlannedItem): PlannedItem => ({ ...item, sets: 1, reason
 
 /**
  * Les blocs principaux d'une séance, à partir des exercices dosés. Un exercice plafonné à deux séries (une première
- * descente freinée) sort d'un bloc qui a plus de tours, en séries classiques avant les
- * autres : un circuit de quatre tours ne fait pas faire quatre fois une première série de curls nordiques.
+ * descente freinée, ou n'importe quel exercice un jour léger) sort d'un bloc qui a plus de tours, en séries classiques
+ * avant les autres : un circuit de quatre tours ne fait pas faire quatre fois une première série de curls nordiques.
  */
 export function buildMainBlocks(items: readonly PlannedItem[], format: BlockFormat, context: Context, mainSeconds: number): PlannedBlock[] {
+    // Un bloc minuté (AMRAP, EMOM) compte des tours, pas des séries : une première descente freinée n’y entre pas du
+    // tout. Elle se fait avant, en séries classiques, et le bloc garde les autres exercices et le reste du temps (jamais
+    // ses tours donnés en séries à l’exercice resté seul).
+    const descent = (item: PlannedItem): boolean => Boolean(item.definition.tags?.includes('eccentric')) && (item.maxSets ?? Infinity) <= 2;
+    const descents = format === 'amrap' || format === 'emom' ? items.filter(descent) : [];
+
+    if (descents.length && descents.length < items.length) {
+        const before: PlannedBlock = { id: 'main-1', role: 'main', format: 'straight', title: title('block-main', context), rounds: 1, restBetweenRounds: 0, items: descents };
+        const timed = assembleBlocks(
+            items.filter((item) => !descents.includes(item)),
+            format,
+            context,
+            Math.max(0, mainSeconds - plannedBlockSeconds(before) - BLOCK_TRANSITION_SECONDS),
+        );
+
+        return [before, ...timed].map((block, index) => ({ ...block, id: `main-${index + 1}` }));
+    }
+
     const blocks = assembleBlocks(items, format, context, mainSeconds);
     const held: PlannedItem[] = [];
     const kept: PlannedBlock[] = [];
 
     for (const block of blocks) {
-        // Seulement une descente freinée : un exercice ordinaire plafonné à deux séries par l’objectif (l’endurance d’un
-        // débutant) suit les tours de son circuit, plutôt que de partir seul en séries classiques.
-        const capped = (item: PlannedItem): boolean => Boolean(item.definition.tags?.includes('eccentric')) && (item.maxSets ?? Infinity) < block.rounds && (item.maxSets ?? Infinity) <= 2;
-        const out = block.format === 'straight' || block.format === 'ladder' ? [] : block.items.filter(capped);
+        // Une descente freinée, ou un exercice plafonné par la petite forme du jour : un exercice ordinaire plafonné à deux
+        // séries par l’objectif seul (l’endurance d’un débutant) suit les tours de son circuit, plutôt que de partir seul
+        // en séries classiques. Les tours d’un bloc minuté ne sont pas des séries : il garde ses exercices.
+        const capped = (item: PlannedItem): boolean =>
+            (Boolean(item.definition.tags?.includes('eccentric')) || lightDay(context)) && (item.maxSets ?? Infinity) < block.rounds && (item.maxSets ?? Infinity) <= 2;
+        const out = ['straight', 'ladder', 'amrap', 'emom'].includes(block.format) ? [] : block.items.filter(capped);
 
         if (!out.length) {
             kept.push(block);
@@ -225,21 +245,23 @@ export function buildMainBlocks(items: readonly PlannedItem[], format: BlockForm
 }
 
 /**
- * Couper une longue liste en deux circuits, chacun avec sa part des gros mouvements (un sur deux), et ce qu'on vise
- * dans le premier : c'est celui qu'on fait le plus frais.
+ * Couper une longue liste en deux circuits : ce qu'on vise dans le premier, celui qu'on fait le plus frais, puis les
+ * autres un sur deux, dans l'ordre de la séance, en commençant par le premier circuit : chacun a sa part des gros
+ * mouvements, et le premier d'entre eux reste en tête de séance.
  */
 function splitCircuit(items: readonly PlannedItem[]): PlannedItem[][] {
     const size = Math.ceil(items.length / 2);
     const first = items.filter((item) => item.focus).slice(0, size);
     const second: PlannedItem[] = [];
+    let turn = 0;
 
     for (const item of items) {
         if (first.includes(item)) continue;
 
-        const firstFull = first.length >= size;
-        const secondFull = second.length >= items.length - size;
+        const toFirst = second.length >= items.length - size || (first.length < size && turn % 2 === 0);
 
-        (secondFull || (!firstFull && first.length <= second.length) ? first : second).push(item);
+        (toFirst ? first : second).push(item);
+        turn++;
     }
 
     return [items.filter((item) => first.includes(item)), items.filter((item) => second.includes(item))];
@@ -251,6 +273,10 @@ function focusFirst(items: readonly PlannedItem[], count: number): PlannedItem[]
 
     return items.filter((item) => kept.includes(item));
 }
+
+/** Les répétitions d'un tour, arrondies ; en alternance, un nombre pair : autant de chaque côté. */
+const paired = (item: PlannedItem, value: number, round: (x: number) => number): number =>
+    item.definition.alternating && item.target.measure === 'reps' ? Math.max(2, round(value / 2) * 2) : Math.max(1, round(value));
 
 function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, context: Context, mainSeconds: number): PlannedBlock[] {
     if (items.length === 0) {
@@ -294,7 +320,8 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
                 role: 'main',
                 format: pair.length === 2 ? 'superset' : 'circuit',
                 title: title(pair.length === 2 ? 'block-superset' : 'block-triset', context),
-                rounds: Math.max(...pair.map((item) => item.sets)),
+                // Autant de tours que le mieux servi des deux ; un jour léger, pas au-delà du plafond du jour de l'autre.
+                rounds: Math.min(Math.max(...pair.map((item) => item.sets)), lightDay(context) ? Math.min(...pair.map((item) => item.maxSets ?? Infinity)) : Infinity),
                 restBetweenRounds: Math.max(...pair.map((item) => item.restSeconds)),
                 restBetweenItems: 10,
                 items: pair.map(perRound),
@@ -305,13 +332,24 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
     if (format === 'circuit') {
         const groups = items.length >= 7 ? splitCircuit(items) : [items];
 
+        // Autant de tours que la moyenne des séries, et au moins celles de ce qu'on vise, sans faire dépasser aux autres
+        // leur plafond (une variante découverte, la petite forme du jour). Le circuit sans ce qu'on vise n'en fait pas
+        // plus que celui de ce qu'on vise.
+        const roundsOf = (group: readonly PlannedItem[]): number => {
+            const focus = Math.max(0, ...group.filter((item) => item.focus).map((item) => item.sets));
+            const ceiling = Math.min(...group.map((item) => item.maxSets ?? Infinity));
+
+            return Math.max(2, Math.round(group.reduce((sum, item) => sum + item.sets, 0) / group.length), Math.min(focus, ceiling));
+        };
+        const focusRounds = Math.max(0, ...groups.filter((group) => group.some((item) => item.focus)).map(roundsOf));
+        const rounds = groups.map((group) => (focusRounds && !group.some((item) => item.focus) ? Math.max(2, Math.min(roundsOf(group), focusRounds)) : roundsOf(group)));
+
         return groups.map((group, index) => ({
             id: `main-${index + 1}`,
             role: 'main',
             format: 'circuit',
             title: title('block-circuit', context),
-            // Autant de tours que la moyenne des séries, et au moins celles de ce qu'on vise.
-            rounds: Math.max(2, Math.round(group.reduce((sum, item) => sum + item.sets, 0) / group.length), ...group.filter((item) => item.focus).map((item) => item.sets)),
+            rounds: rounds[index]!,
             restBetweenRounds: settings.circuit.betweenRounds + (lightDay(context) ? 15 : 0),
             restBetweenItems: settings.circuit.betweenItems,
             items: alternateRegions(group).map(perRound),
@@ -320,10 +358,11 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
 
     if (format === 'amrap') {
         const minutes = Math.max(5, Math.min(20, Math.round(mainSeconds / 60)));
-        const chosen = focusFirst(items, 5).map((item) => ({
-            ...perRound(item),
-            target: { ...item.target, value: Math.max(1, Math.round(item.target.value * 0.7)), range: [Math.min(item.target.range[0], Math.max(1, Math.round(item.target.value * 0.7))), item.target.range[1]] as const },
-        }));
+        const chosen = focusFirst(items, 5).map((item) => {
+            const value = paired(item, item.target.value * 0.7, Math.round);
+
+            return { ...perRound(item), target: { ...item.target, value, range: [Math.min(item.target.range[0], value), item.target.range[1]] as const } };
+        });
         const oneRound = chosen.reduce((sum, item) => sum + workSeconds(item.definition, item.target, item.tempo) + 10, 0);
 
         return [
@@ -347,7 +386,9 @@ function assembleBlocks(items: readonly PlannedItem[], format: BlockFormat, cont
                     ? Math.min(item.target.value, Math.max(1, Math.floor(40 / ((item.tempo ? repSeconds(item.tempo) : (item.definition.secondsPerRep ?? 3)) * (item.target.perSide ? 2 : 1)))))
                     : Math.min(item.target.value, item.target.perSide ? 20 : 40);
 
-            return { ...perRound(item), target: { ...item.target, value: capped, range: [Math.min(item.target.range[0], capped), item.target.range[1]] as const } };
+            const value = paired(item, capped, Math.floor);
+
+            return { ...perRound(item), target: { ...item.target, value, range: [Math.min(item.target.range[0], value), item.target.range[1]] as const } };
         });
         const cycles = Math.max(2, Math.floor(mainSeconds / 60 / chosen.length));
 

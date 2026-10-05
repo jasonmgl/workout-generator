@@ -20965,6 +20965,15 @@ function estimatedLoad(loads, base, value, rir, goal, allowed) {
   const [kg] = [below, above].filter((load) => load !== void 0).map((load) => [load, outside(repsAt(load, base, rir)), Math.abs(load - wanted)]).sort((a, b) => a[1] - b[1] || a[2] - b[2])[0];
   return { kg, value: Math.max(allowed[0], Math.min(allowed[1], repsAt(kg, base, rir))) };
 }
+function loadVerdict(definition, context) {
+  const equipment = equipmentUsed(definition.equipment, context.inventory).find((id) => LOADABLE_EQUIPMENT.includes(id));
+  const loads = equipment ? context.inventory.loadsOf(equipment) : [];
+  if (!equipment || !loads.length) return void 0;
+  const base = (context.input.profile?.bodyweightKg ?? 70) * (LOAD_RATIO[definition.pattern]?.[equipment] ?? 0.1) * LEVEL_LOAD[context.level];
+  const [low, high] = context.settings.reps;
+  if (repsAt(Math.max(...loads), base, context.settings.rir) > Math.round(high * 1.25)) return "light";
+  return repsAt(Math.min(...loads), base, context.settings.rir) >= low ? "adjustable" : "heavy";
+}
 function comebackLoadFactor(daysOff) {
   if (daysOff > 42) return 0.7;
   if (daysOff > 20) return 0.8;
@@ -21118,7 +21127,7 @@ function prescribe(definition, role, context, options = {}) {
   if (firstExposure && definition.tags?.includes("eccentric")) sets = Math.min(sets, 2);
   sets = Math.max(1, Math.round((sets + extraSets) * readiness.volume));
   const usual = leading || role === "conditioning" ? most + 1 : role === "core" ? fewest + 1 : most;
-  const ceiling = firstExposure && definition.tags?.includes("eccentric") ? sets : step === "harder" || step === "comeback" ? Math.min(usual, fewest + 1) : step === "start" ? Math.min(usual, most) : usual;
+  const ceiling = firstExposure && definition.tags?.includes("eccentric") ? sets : step === "harder" || step === "comeback" ? Math.min(usual, fewest + 1) : step === "start" ? Math.min(usual, options.focus ? most + 1 : most) : usual;
   const maxSets = Math.max(sets, Math.round(Math.max(sets, ceiling + extraSets) * volume));
   let restSeconds = role === "main" && definition.compound ? settings.rest.compound : settings.rest.isolation;
   if (role === "core") restSeconds = Math.min(restSeconds, 45);
@@ -21213,11 +21222,13 @@ var slot = (key, role, patterns, kinds = STRENGTH, fallback) => ({
 });
 var RAW_TEMPLATES = {
   "full-body": {
+    // Le tirage juste après la poussée, qu’il équilibre : quand le temps manque (la force, ses repos et ses séries
+    // d’approche), c’est la charnière qui saute, la flexion des jambes ayant déjà servi le bas du corps.
     base: [
       slot("knee", "main", ["squat", "lunge"]),
       slot("push", "main", ["horizontal-push", "vertical-push"]),
-      slot("hinge", "main", ["hinge", "knee-flexion"]),
       slot("pull", "main", ["horizontal-pull", "vertical-pull"], STRENGTH, PULL_FALLBACK),
+      slot("hinge", "main", ["hinge", "knee-flexion"]),
       slot("core", "core", CORE_PATTERNS)
     ],
     extras: [
@@ -21381,7 +21392,11 @@ var TEMPLATES = {
 };
 var RAW_FOCUS_SLOTS = {
   chest: [slot("focus-chest", "accessory", ["horizontal-push"]), slot("focus-chest-2", "accessory", ["horizontal-push", "vertical-push"])],
-  back: [slot("focus-back", "accessory", ["horizontal-pull", "vertical-pull"]), slot("focus-back-2", "accessory", ["vertical-pull", "horizontal-pull"])],
+  // Sans rien pour tirer, le dos visé se travaille quand même au sol, comme la place de base du tirage.
+  back: [
+    slot("focus-back", "accessory", ["horizontal-pull", "vertical-pull"], STRENGTH, PULL_FALLBACK),
+    slot("focus-back-2", "accessory", ["vertical-pull", "horizontal-pull"], STRENGTH, PULL_FALLBACK)
+  ],
   shoulders: [slot("focus-shoulders", "accessory", ["vertical-push", "shoulder-raise"]), slot("focus-shoulders-2", "accessory", ["shoulder-raise", "scapular"])],
   arms: [slot("focus-biceps", "accessory", ["elbow-flexion"]), slot("focus-triceps", "accessory", ["elbow-extension"])],
   core: [slot("focus-core", "core", CORE_PATTERNS), slot("focus-core-2", "core", ["trunk-flexion", "trunk-rotation", "anti-rotation"])],
@@ -21391,8 +21406,11 @@ var RAW_FOCUS_SLOTS = {
   calves: [slot("focus-calves", "accessory", ["calf-raise"]), slot("focus-calves-2", "accessory", ["calf-raise", "jump"], ANY_STRENGTH)]
 };
 var FOCUS_SLOTS = Object.fromEntries(
-  Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map(refine)])
+  Object.entries(RAW_FOCUS_SLOTS).map(([group, slots]) => [group, slots.map((entry) => refine({ ...entry, muscles: musclesOfGroup(group) }))])
 );
+function focusGroupOfSlot(entry, groups) {
+  return groups.find((group) => FOCUS_SLOTS[group].some((other) => entry.key === other.key || entry.key === `${other.key}-fallback`));
+}
 var isFocusSlot = (entry) => entry.key.startsWith("focus-");
 var PATTERN_GROUPS = {
   squat: ["legs", "glutes"],
@@ -21426,6 +21444,11 @@ var DRAW_SIZE = 4;
 var movementKey = (definition) => definition.family.replace(/^loaded-/, "");
 var loadsErectors = (definition) => definition.muscles.primary.includes("erectors") || Boolean(definition.muscles.secondary?.includes("erectors"));
 var warmupOnly = (definition) => Boolean(definition.tags?.some((tag) => tag === "activation" || tag === "rehab"));
+var heavyEnough = (definition, context) => Boolean(definition.tags?.includes("loaded")) && loadVerdict(definition, context) !== "light";
+var tooLight = (definition, context) => Boolean(definition.tags?.includes("loaded")) && loadVerdict(definition, context) === "light";
+var TRUNK_PATTERNS = ["anti-extension", "anti-rotation", "anti-lateral-flexion", "trunk-flexion", "trunk-rotation", "trunk-extension"];
+var trunkLimited = (definition) => !TRUNK_PATTERNS.includes(definition.pattern) && definition.muscles.primary.some((muscle) => MUSCLE_INFO[muscle].group === "core");
+var LOADED_FIRST = ["horizontal-push", "vertical-push", "horizontal-pull", "vertical-pull", "squat", "lunge", "hinge"];
 function feasible(definition, context) {
   if (context.exclude.has(definition.id)) return false;
   if (!satisfies(definition.equipment, context.inventory)) return false;
@@ -21472,7 +21495,8 @@ function muscleAppeal(muscle, context) {
 function score(definition, slot2, context, chosen) {
   const target = targetDifficulty(definition, context);
   const rawGap = definition.difficulty - target;
-  const gap = definition.tags?.includes("loaded") && rawGap < 0 ? rawGap / 3 : rawGap;
+  const adjustable = Boolean(definition.tags?.includes("loaded")) && loadVerdict(definition, context) === "adjustable";
+  const gap = rawGap < 0 && heavyEnough(definition, context) ? rawGap / 3 : rawGap > 0 && adjustable ? Math.max(0, rawGap - 1) : rawGap;
   let value = Math.exp(-(gap * gap) / (2 * 1.2 * 1.2));
   if (gap > 1.5) {
     value *= 0.2;
@@ -21486,13 +21510,14 @@ function score(definition, slot2, context, chosen) {
   }
   const seen = context.exerciseRecency.get(definition.id);
   const family = context.familyRecency.get(definition.family);
-  if (seen && seen.days <= 2) value *= 0.5;
+  if (seen && seen.days <= 2 && slot2.role !== "main") value *= 0.5;
   if (slot2.role === "main" && family && family.days <= 14) value *= 1.25;
   if (seen && seen.count >= 10) value *= 0.7;
   if (slot2.role === "main" && seen && seen.days <= 14) {
     const own = performancesOf(context.input.history ?? [], definition, context.date);
+    const plateau = onPlateau(own);
     const topped = !definition.tags?.includes("loaded") && own[0] !== void 0 && Math.min(...own[0].sets.map((set) => valueOf(set, definition.measure))) >= targetRange(definition, context.settings)[1];
-    if (!topped) value *= onPlateau(own) ? 3 : 2;
+    if (!topped || plateau) value *= plateau ? 3 : 2;
   }
   if (definition.difficulty > (context.capacity.families[definition.family] ?? 10) && familyOnPlateau(definition, context)) value *= 0.2;
   if (context.favorites.has(definition.id)) value *= 1.4;
@@ -21504,7 +21529,10 @@ function score(definition, slot2, context, chosen) {
     if (definition.range[0] > high) value *= 0.6;
   }
   if ((context.goal === "endurance" || context.goal === "fat-loss") && definition.tags?.includes("eccentric")) value *= 0.4;
-  if ((context.goal === "strength" || context.goal === "hypertrophy") && definition.tags?.includes("loaded")) value *= 1.2;
+  const strong = context.goal === "strength" || context.goal === "hypertrophy";
+  if (strong && heavyEnough(definition, context)) value *= 1.2;
+  if (strong && tooLight(definition, context)) value *= 0.5;
+  if (strong && slot2.role === "main" && trunkLimited(definition)) value *= 0.5;
   if (chosen.some((other) => movementKey(other) === movementKey(definition))) value *= 0.15;
   if (chosen.some((other) => other.pattern === definition.pattern)) value *= 0.4;
   if (loadsErectors(definition) && chosen.some((other) => other.pattern === definition.pattern && loadsErectors(other))) value *= 0.4;
@@ -21514,12 +21542,14 @@ var byScore = (a, b) => b.score - a.score || a.definition.id.localeCompare(b.def
 function rank(slot2, context, chosen) {
   const taken = new Set(chosen.map((definition) => definition.id));
   const candidates = context.library.filter({ kinds: slot2.kinds, patterns: slot2.patterns }).filter((definition) => !taken.has(definition.id) && feasible(definition, context)).filter((definition) => !slot2.groups || definition.muscles.primary.some((muscle) => slot2.groups.includes(MUSCLE_INFO[muscle].group))).map((definition) => ({ definition, score: score(definition, slot2, context, chosen) })).sort(byScore);
-  const matching = slot2.muscles ? candidates.filter((entry) => entry.definition.muscles.primary.some((muscle) => slot2.muscles.includes(muscle))) : [];
-  const pool = matching.length ? matching : candidates;
-  const loadable = (definition) => Boolean(definition.tags?.includes("loaded")) || Boolean(definition.equipment?.flat().some((id) => LOADABLE_EQUIPMENT.includes(id) && context.inventory.loadsOf(id).length > 0));
-  const strong = (definition) => definition.compound && loadable(definition);
-  const loadedFirst = (context.goal === "strength" || context.goal === "hypertrophy") && slot2.role === "main" && pool.some((entry) => strong(entry.definition));
-  return loadedFirst ? pool.map((entry) => strong(entry.definition) ? entry : { ...entry, score: entry.score * 0.3 }).sort(byScore) : pool;
+  const works = (muscles) => Boolean(muscles?.some((muscle) => slot2.muscles.includes(muscle)));
+  const primary = slot2.muscles ? candidates.filter((entry) => works(entry.definition.muscles.primary)) : [];
+  const secondary = slot2.muscles && !primary.length ? candidates.filter((entry) => works(entry.definition.muscles.secondary)) : [];
+  const pool = primary.length ? primary : secondary.length ? secondary : candidates;
+  const strong = (definition) => definition.compound && heavyEnough(definition, context);
+  const loadedPatterns = (context.goal === "strength" || context.goal === "hypertrophy") && slot2.role === "main" && slot2.patterns.some((pattern) => LOADED_FIRST.includes(pattern)) ? new Set(pool.filter((entry) => strong(entry.definition)).map((entry) => entry.definition.pattern)) : /* @__PURE__ */ new Set();
+  const behind = (definition) => loadedPatterns.has(definition.pattern) && !strong(definition) && (context.familyRecency.get(definition.family)?.days ?? Infinity) > 14;
+  return loadedPatterns.size ? pool.map((entry) => behind(entry.definition) ? { ...entry, score: entry.score * 0.3 } : entry).sort(byScore) : pool;
 }
 var CEILING = 1.5;
 function pick(slot2, context, chosen, strict = false) {
@@ -21539,15 +21569,12 @@ function pick(slot2, context, chosen, strict = false) {
     else if (movements.length < DRAW_SIZE) movements.push([entry]);
   }
   const best = movements[0][0].score;
+  const close = (members) => members.filter((entry) => entry.score >= members[0].score * 0.75);
   const movement = context.random.weighted(
     movements.filter((members) => members[0].score >= best * 0.35),
-    (members) => members[0].score * members[0].score
+    (members) => close(members).slice(0, 2).reduce((sum, entry) => sum + entry.score * entry.score, 0)
   );
-  const top = movement[0].score;
-  return context.random.weighted(
-    movement.filter((entry) => entry.score >= top * 0.75).slice(0, DRAW_SIZE),
-    (entry) => entry.score * entry.score
-  ).definition;
+  return context.random.weighted(close(movement).slice(0, DRAW_SIZE), (entry) => entry.score * entry.score).definition;
 }
 
 // src/session/warmup.ts
@@ -21646,7 +21673,8 @@ function buildWarmup(main2, context, budget = warmupSeconds(context), options = 
         ...item(ramp, 20, context, loaded ? "warmup-ramp-light" : "warmup-ramp"),
         target: (() => {
           const base = easyTarget(ramp, 0);
-          const value = Math.max(3, Math.round(base.value * (easier ? 1 : 0.5)));
+          const halved = Math.max(3, Math.round(base.value * (easier ? 1 : 0.5)));
+          const value = ramp.alternating && ramp.measure === "reps" ? Math.max(4, Math.ceil(halved / 2) * 2) : halved;
           return { ...base, value, range: [Math.min(base.range[0], value), base.range[1]] };
         })()
       });
@@ -21851,7 +21879,7 @@ function buildMainBlocks(items, format2, context, mainSeconds) {
   const held = [];
   const kept = [];
   for (const block of blocks) {
-    const capped = (item2) => Boolean(item2.definition.tags?.includes("eccentric")) && (item2.maxSets ?? Infinity) < block.rounds && (item2.maxSets ?? Infinity) <= 2;
+    const capped = (item2) => (Boolean(item2.definition.tags?.includes("eccentric")) || lightDay(context)) && (item2.maxSets ?? Infinity) < block.rounds && (item2.maxSets ?? Infinity) <= 2;
     const out = block.format === "straight" || block.format === "ladder" ? [] : block.items.filter(capped);
     if (!out.length) {
       kept.push(block);
@@ -21878,11 +21906,12 @@ function splitCircuit(items) {
   const size = Math.ceil(items.length / 2);
   const first = items.filter((item2) => item2.focus).slice(0, size);
   const second = [];
+  let turn = 0;
   for (const item2 of items) {
     if (first.includes(item2)) continue;
-    const firstFull = first.length >= size;
-    const secondFull = second.length >= items.length - size;
-    (secondFull || !firstFull && first.length <= second.length ? first : second).push(item2);
+    const toFirst = second.length >= items.length - size || first.length < size && turn % 2 === 0;
+    (toFirst ? first : second).push(item2);
+    turn++;
   }
   return [items.filter((item2) => first.includes(item2)), items.filter((item2) => second.includes(item2))];
 }
@@ -21924,7 +21953,8 @@ function assembleBlocks(items, format2, context, mainSeconds) {
         role: "main",
         format: pair.length === 2 ? "superset" : "circuit",
         title: title(pair.length === 2 ? "block-superset" : "block-triset", context),
-        rounds: Math.max(...pair.map((item2) => item2.sets)),
+        // Autant de tours que le mieux servi des deux ; un jour léger, pas au-delà du plafond du jour de l'autre.
+        rounds: Math.min(Math.max(...pair.map((item2) => item2.sets)), lightDay(context) ? Math.min(...pair.map((item2) => item2.maxSets ?? Infinity)) : Infinity),
         restBetweenRounds: Math.max(...pair.map((item2) => item2.restSeconds)),
         restBetweenItems: 10,
         items: pair.map(perRound)
@@ -21933,13 +21963,19 @@ function assembleBlocks(items, format2, context, mainSeconds) {
   }
   if (format2 === "circuit") {
     const groups = items.length >= 7 ? splitCircuit(items) : [items];
+    const roundsOf = (group) => {
+      const focus = Math.max(0, ...group.filter((item2) => item2.focus).map((item2) => item2.sets));
+      const ceiling = Math.min(...group.map((item2) => item2.maxSets ?? Infinity));
+      return Math.max(2, Math.round(group.reduce((sum, item2) => sum + item2.sets, 0) / group.length), Math.min(focus, ceiling));
+    };
+    const focusRounds = Math.max(0, ...groups.filter((group) => group.some((item2) => item2.focus)).map(roundsOf));
+    const rounds = groups.map((group) => focusRounds && !group.some((item2) => item2.focus) ? Math.max(2, Math.min(roundsOf(group), focusRounds)) : roundsOf(group));
     return groups.map((group, index) => ({
       id: `main-${index + 1}`,
       role: "main",
       format: "circuit",
       title: title("block-circuit", context),
-      // Autant de tours que la moyenne des séries, et au moins celles de ce qu'on vise.
-      rounds: Math.max(2, Math.round(group.reduce((sum, item2) => sum + item2.sets, 0) / group.length), ...group.filter((item2) => item2.focus).map((item2) => item2.sets)),
+      rounds: rounds[index],
       restBetweenRounds: settings.circuit.betweenRounds + (lightDay(context) ? 15 : 0),
       restBetweenItems: settings.circuit.betweenItems,
       items: alternateRegions(group).map(perRound)
@@ -22124,9 +22160,14 @@ function listOf(items, context) {
   if (items.length <= 1) return items[0] ?? "";
   return `${items.slice(0, -1).join(", ")} ${reason("list-or", {}, context.locale).text} ${items[items.length - 1]}`;
 }
+function servedFocus(definition, slot2, context) {
+  const group = focusGroupOfSlot(slot2, context.focusGroups);
+  const muscles = [...definition.muscles.primary, ...definition.muscles.secondary ?? []];
+  return group && muscles.some((muscle) => MUSCLE_INFO[muscle].group === group) ? group : void 0;
+}
 function itemReasons(definition, slot2, context) {
   const groups = [...new Set(definition.muscles.primary.map((muscle) => MUSCLE_INFO[muscle].group))];
-  const focused = isFocusSlot(slot2) ? groups.find((group) => context.focusGroups.includes(group)) ?? context.focusGroups.find((group) => FOCUS_SLOTS[group].some((entry) => entry.key === slot2.key)) : void 0;
+  const focused = servedFocus(definition, slot2, context);
   if (focused) return [reason("item-focus", { group: GROUP_NAMES_WITH_ARTICLE[focused] }, context.locale)];
   if (context.favorites.has(definition.id)) return [reason("item-favorite", {}, context.locale)];
   const behind = groups.find((group) => context.needs[group] >= 0.9 && context.body.groups[group].weeklySets > 0);
@@ -22134,7 +22175,7 @@ function itemReasons(definition, slot2, context) {
   return [];
 }
 function plan(definition, slot2, context) {
-  const focus = isFocusSlot(slot2);
+  const focus = servedFocus(definition, slot2, context) !== void 0;
   const prescription = prescribe(definition, slot2.role, context, { focus });
   return {
     definition,
@@ -22293,8 +22334,14 @@ function strengthSession(context, choice, type) {
   const maxItems = Math.min(9, Math.max(3, Math.round(available / 60 / minutesPerItem * Math.min(1, context.readiness.volume))));
   const [, most] = context.settings.sets[context.level];
   const fits = (list) => mainSeconds(list) <= mainBudget * 1.08;
+  const capped = (entry) => entry.sets >= (entry.maxSets ?? Infinity);
   const focusItems = () => items.filter((entry) => entry.focus && !((entry.maxSets ?? Infinity) <= 2 && entry.definition.tags?.includes("eccentric")));
-  const focusFloor = () => Math.min(Infinity, ...focusItems().map((entry) => entry.sets));
+  const focusFloor = () => {
+    const focus = focusItems();
+    const growing = focus.filter((entry) => !capped(entry));
+    if (!focus.length) return Infinity;
+    return growing.length ? Math.min(...growing.map((entry) => entry.sets)) : Math.max(...focus.map((entry) => entry.sets));
+  };
   const regionOf3 = (item2) => GROUP_REGION[MUSCLE_INFO[item2.definition.muscles.primary[0]].group];
   const grow = (ceiling) => {
     if (format2 === "amrap" || format2 === "emom") return;
@@ -22305,11 +22352,7 @@ function strengthSession(context, choice, type) {
       const open = (entry) => !blocked.has(entry) && entry.sets < Math.min(ceiling(entry), entry.maxSets ?? Infinity);
       const item2 = order(items).filter((entry) => open(entry) && (entry.focus || entry.sets < floor)).sort((a, b) => Number(Boolean(b.focus)) - Number(Boolean(a.focus)) || a.sets - b.sets || regionSets(regionOf3(a)) - regionSets(regionOf3(b)))[0];
       if (!item2) return;
-      const level = focusItems().includes(item2) ? focusItems().filter((entry) => entry.sets === item2.sets) : [item2];
-      if (level.some((entry) => !open(entry))) {
-        for (const entry of level) blocked.add(entry);
-        continue;
-      }
+      const level = focusItems().includes(item2) ? focusItems().filter((entry) => entry.sets === item2.sets && open(entry)) : [item2];
       for (const entry of level) entry.sets += 1;
       if (!fits(items)) {
         for (const entry of level) {
@@ -22322,14 +22365,27 @@ function strengthSession(context, choice, type) {
   const rebalance = () => {
     if (format2 === "amrap" || format2 === "emom") return;
     for (let guard = 0; guard < 40; guard++) {
-      const taker = focusItems().sort((a, b) => a.sets - b.sets)[0];
+      const taker = focusItems().filter((entry) => !capped(entry)).sort((a, b) => a.sets - b.sets)[0];
       const giver = taker && [...order(items)].reverse().find((entry) => !entry.focus && entry.sets > taker.sets);
       if (!taker || !giver) return;
       giver.sets -= 1;
-      if (taker.sets < (taker.maxSets ?? Infinity)) {
-        taker.sets += 1;
-        if (!fits(items)) taker.sets -= 1;
-      }
+      taker.sets += 1;
+      if (!fits(items)) taker.sets -= 1;
+    }
+  };
+  const evenFocus = () => {
+    if (format2 !== "superset") return;
+    for (let guard = 0; guard < 10; guard++) {
+      const focus = focusItems();
+      const low = Math.min(...focus.filter((entry) => !capped(entry)).map((entry) => entry.sets));
+      const high = Math.max(...focus.map((entry) => entry.sets));
+      const behind = focus.filter((entry) => entry.sets === low && !capped(entry));
+      if (!behind.length || low >= high) return;
+      for (const entry of behind) entry.sets += 1;
+      if (fits(items)) continue;
+      for (const entry of behind) entry.sets -= 1;
+      for (const entry of focus) entry.sets = Math.min(entry.sets, low);
+      return;
     }
   };
   const lengthen = () => {
@@ -22351,12 +22407,17 @@ function strengthSession(context, choice, type) {
   };
   const pushIds = new Set(context.library.filter({}).filter(isPush).map((definition) => definition.id));
   const erectorIds = new Set(context.library.filter({}).filter(loadsErectors).map((definition) => definition.id));
+  const warmupIds = new Set(context.library.filter({}).filter(warmupOnly).map((definition) => definition.id));
   const wantsPush = new Set(context.focusGroups.filter((group) => group === "chest" || group === "shoulders"));
+  const [fewest] = context.settings.sets[context.level];
+  const leastSets = (entry) => entry.slotRole === "main" && entry.definition.compound ? Math.max(2, fewest) : 2;
+  const restoresBalance = (planned) => PULLS.includes(planned.definition.pattern) && !items.some((entry) => PULLS.includes(entry.definition.pattern)) && items.some((entry) => isPush(entry.definition));
   const makeRoom = (planned) => {
+    if (!restoresBalance(planned)) return false;
     const trial = [...items, planned];
     const before = trial.map((entry) => entry.sets);
     for (let guard = 0; guard < 30 && !fits(trial); guard++) {
-      const shrinkable = [...order(trial)].reverse().filter((entry) => entry.sets > 2).sort((a, b) => b.sets - a.sets || Number(Boolean(a.focus)) - Number(Boolean(b.focus)))[0];
+      const shrinkable = [...order(trial)].reverse().filter((entry) => entry.sets > leastSets(entry)).sort((a, b) => b.sets - a.sets || Number(Boolean(a.focus)) - Number(Boolean(b.focus)))[0];
       if (!shrinkable) break;
       shrinkable.sets -= 1;
     }
@@ -22374,20 +22435,23 @@ function strengthSession(context, choice, type) {
     if (pushBlocked && slot2.patterns.every((pattern) => PUSHES.includes(pattern))) {
       return;
     }
-    const lumbarBusy = optional && type === "full-body" && chosen().some((other) => other.pattern === "hinge" && loadsErectors(other));
+    const lumbarBusy = optional && (type === "full-body" || type === "lower" && context.level === "beginner") && chosen().some((other) => other.pattern === "hinge" && loadsErectors(other));
     if (lumbarBusy && slot2.patterns.every((pattern) => pattern === "trunk-extension")) {
       return;
     }
-    const excluded = [...pushBlocked ? pushIds : [], ...lumbarBusy ? erectorIds : []];
+    const lowerFocus = context.focusGroups.filter((group) => GROUP_REGION[group] === "lower");
+    const servesFocus = slot2.patterns.some((pattern) => (PATTERN_GROUPS[pattern] ?? []).some((group) => lowerFocus.includes(group)));
+    const excluded = [...pushBlocked ? pushIds : [], ...lumbarBusy ? erectorIds : [], ...optional && servesFocus ? warmupIds : []];
     const slotContext = excluded.length ? { ...context, exclude: /* @__PURE__ */ new Set([...context.exclude, ...excluded]) } : context;
     const repeats = (found) => chosen().some((other) => movementKey(other) === movementKey(found));
+    const twin = (found) => chosen().some((other) => movementKey(other) === movementKey(found) && other.family !== found.family);
     const direct = pick(slot2, slotContext, chosen(), optional);
-    const repeated = direct !== void 0 && baseKeys.has(slot2.key) && repeats(direct);
+    const repeated = direct !== void 0 && baseKeys.has(slot2.key) && twin(direct);
     let rescue;
     let repeatedRescue;
     for (const pattern of !direct || repeated ? slot2.fallback ?? [] : []) {
       const found = pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional);
-      if (found && !repeats(found)) {
+      if (found && !twin(found)) {
         rescue = found;
         break;
       }
@@ -22445,6 +22509,7 @@ function strengthSession(context, choice, type) {
   }
   grow(() => most + 1);
   rebalance();
+  evenFocus();
   lengthen();
   for (let guard = 0; guard < 40 && mainSeconds(items) > mainBudget * 1.1; guard++) {
     const last = [...order(items)].reverse();
@@ -22634,7 +22699,10 @@ function replaceExercise(session, input, blockId, index, exerciseId) {
   const { block, item: item2 } = findItem(session, blockId, index);
   const definition = context.library.get(exerciseId);
   const role = block.role === "main" ? definition.compound ? "main" : "accessory" : block.role === "skill" ? "skill" : "accessory";
-  const prescription = prescribe(definition, role, context);
+  const muscles = [...definition.muscles.primary, ...definition.muscles.secondary ?? []];
+  const focusGroup = item2.reasons[0]?.code === "item-focus" ? context.focusGroups.find((group) => muscles.some((muscle) => MUSCLE_INFO[muscle].group === group)) : void 0;
+  const reasons = focusGroup ? [reason("item-focus", { group: GROUP_NAMES_WITH_ARTICLE[focusGroup] }, context.locale)] : [];
+  const prescription = prescribe(definition, role, context, { focus: focusGroup !== void 0 });
   const keepsRounds = block.format !== "straight" && block.format !== "ladder";
   const replaced = {
     exercise: definition.id,
@@ -22648,7 +22716,7 @@ function replaceExercise(session, input, blockId, index, exerciseId) {
     equipment: prescription.equipment,
     progression: prescription.progression,
     ...prescription.note ? { note: prescription.note } : {},
-    reasons: [],
+    reasons,
     setSeconds: 0,
     estimatedSeconds: 0
   };

@@ -8,9 +8,10 @@ import type { EquipmentInput } from '../src/library/equipment';
 import type { ExerciseDefinition } from '../src/library/types';
 import { generateSession } from '../src/session/generate';
 import { buildContext } from '../src/session/context';
-import { alternateRegions, pairUp } from '../src/session/formats';
+import { alternateRegions, buildMainBlocks, lightDay, pairUp } from '../src/session/formats';
 import { comebackLoadFactor, estimatedLoad, prescribe } from '../src/session/prescribe';
 import { CEILING, loadsErectors, movementKey, pick, rank, score, targetDifficulty } from '../src/session/select';
+import { alternativesFor, replaceExercise } from '../src/session/swap';
 import { FOCUS_SLOTS, type Slot } from '../src/session/templates';
 import type { PlannedItem } from '../src/session/blocks';
 import { POSTURE_ORDER } from '../src/session/warmup';
@@ -544,169 +545,379 @@ describe('la deuxième relecture : focus, développé chargé, lombaires et doub
     const asked = (item: SessionItem): boolean => item.reasons[0]?.code === 'item-focus';
     /** Une première descente freinée, plafonnée à deux séries pour les courbatures : elle a sa propre règle. */
     const firstDescent = (item: SessionItem): boolean => Boolean(library.get(item.exercise).tags?.includes('eccentric')) && ['start', 'harder', 'comeback'].includes(item.progression?.step ?? '');
+    /** Un exercice visé à son plafond de découverte (variante plus dure, reprise, première descente freinée). */
+    const discovering = (item: SessionItem): boolean => firstDescent(item) || ['harder', 'comeback'].includes(item.progression?.step ?? '');
     const totals = (session: Session): { item: SessionItem; total: number }[] =>
         session.blocks.filter((block) => block.role === 'main').flatMap((block) => block.items.map((item) => ({ item, total: item.sets * Math.max(1, block.rounds) })));
     const warmupOnly = (definition: ExerciseDefinition): boolean => Boolean(definition.tags?.some((tag) => tag === 'activation' || tag === 'rehab'));
+    /** L'exercice fait-il travailler le groupe, en principal ou en aide ? */
+    const works = (definition: ExerciseDefinition, group: string): boolean =>
+        [...definition.muscles.primary, ...(definition.muscles.secondary ?? [])].some((muscle) => MUSCLE_INFO[muscle].group === group);
+    const days = (ago: number): string => new Date(Date.UTC(2026, 9, 3 - ago)).toISOString().slice(0, 10);
+    /** Un historique : la même fiche, séance après séance (les plus anciennes d'abord). */
+    const series = (exercise: string, reps: readonly (readonly number[])[], ago: readonly number[]): PastSession[] =>
+        ago.map((when, index) => ({ date: days(when), exercises: [{ exercise, sets: reps[Math.min(index, reps.length - 1)]!.map((value) => ({ reps: value })) }] }));
+    const share = (runs: readonly Session[], test: (session: Session) => boolean): number => runs.filter(test).length / runs.length;
+    const runs = (input: Omit<GenerateInput, 'seed'>, count = 20): Session[] => seeds(count).map((seed) => generateSession({ ...input, seed }));
+    const pattern = (item: SessionItem): string => library.get(item.exercise).pattern;
+    const PULLS = ['horizontal-pull', 'vertical-pull'];
+    const PUSHES = ['horizontal-push', 'vertical-push'];
     const dumbbells: EquipmentInput[] = ['mini-band', { id: 'dumbbells', loads: [6, 10, 14] }];
+    const homeDumbbells: EquipmentInput[] = [{ id: 'dumbbells', loads: [4, 6, 8, 10, 12, 14, 16, 20] }, 'bench'];
     const gym: EquipmentInput[] = [{ id: 'barbell', loads: [20, 30, 40, 50, 60, 70, 80, 90, 100] }, 'rack', 'bench', { id: 'dumbbells', loads: [5, 10, 15, 20, 25] }, 'pullup-bar', 'dip-bars'];
     const focusCases: [string, Omit<GenerateInput, 'seed'>][] = [
         ['fessiers, mini-bande et haltères', { date: DATE, equipment: dumbbells, request: { minutes: 40, focus: ['glutes'] } }],
         ['fessiers, corps entier sans matériel', { date: DATE, request: { minutes: 45, type: 'full-body', focus: ['glutes'] } }],
-        ['pectoraux, prise de muscle', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: [{ id: 'dumbbells', loads: [4, 6, 8, 10, 12, 14, 16, 20] }, 'bench'], request: { minutes: 45, focus: ['chest'] } }],
-        ['bras, haut du corps', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate', bodyweightKg: 75 }, equipment: [{ id: 'dumbbells', loads: [4, 6, 8, 10, 12, 14, 16, 20] }, 'bench'], request: { minutes: 30, focus: ['arms'] } }],
+        ['fessiers, bas du corps sans matériel', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate' }, request: { minutes: 45, type: 'lower', focus: ['glutes'] } }],
+        ['fessiers, haltères, prise de muscle', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: homeDumbbells, request: { minutes: 45, focus: ['glutes'] } }],
+        ['pectoraux, prise de muscle', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: homeDumbbells, request: { minutes: 45, focus: ['chest'] } }],
+        ['pectoraux, sans matériel', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate' }, request: { minutes: 45, focus: ['chest'] } }],
+        ['bras, haut du corps', { date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate', bodyweightKg: 75 }, equipment: homeDumbbells, request: { minutes: 30, focus: ['arms'] } }],
         ['jambes, sans matériel', { date: DATE, request: { minutes: 45, focus: ['legs'] } }],
         ['abdominaux, endurance', { date: DATE, profile: { goal: 'endurance' }, request: { minutes: 45, type: 'full-body', focus: ['core'] } }],
     ];
 
-    it('donne à chaque exercice du focus au moins autant de séries qu’à tout autre exercice', () => {
-        for (const [label, input] of focusCases) {
-            for (const session of many(input)) {
-                const all = totals(session);
-                const focus = all.filter((entry) => asked(entry.item) && !firstDescent(entry.item));
-                const others = all.filter((entry) => !asked(entry.item));
+    describe('le focus', () => {
+        it('donne à chaque exercice du focus au moins autant de séries qu’à tout autre exercice, et au moins trois', () => {
+            for (const [label, input] of focusCases) {
+                for (const session of many(input)) {
+                    const all = totals(session);
+                    const focus = all.filter((entry) => asked(entry.item) && !discovering(entry.item));
+                    const others = all.filter((entry) => !asked(entry.item));
+                    const detail = `${label} · ${all.map((entry) => `${entry.item.exercise}${asked(entry.item) ? '*' : ''} ${entry.total}`).join(', ')}`;
 
-                expect(focus.length, label).toBeGreaterThan(0);
+                    expect(focus.length, label).toBeGreaterThan(0);
+                    // Pas tout aplati à deux séries : ce qu'on vise a du vrai volume.
+                    expect(Math.max(...focus.map((entry) => entry.total)), detail).toBeGreaterThanOrEqual(3);
 
-                if (others.length) {
-                    expect(Math.min(...focus.map((entry) => entry.total)), `${label} · ${all.map((entry) => `${entry.item.exercise} ${entry.total}`).join(', ')}`).toBeGreaterThanOrEqual(
-                        Math.max(...others.map((entry) => entry.total)),
-                    );
+                    if (others.length) expect(Math.min(...focus.map((entry) => entry.total)), detail).toBeGreaterThanOrEqual(Math.max(...others.map((entry) => entry.total)));
                 }
             }
-        }
-    });
+        });
 
-    it('met ce qu’on vise dans le premier circuit', () => {
-        let split = 0;
+        it('donne plus de travail au groupe visé que la même séance sans focus', () => {
+            const equipments: EquipmentInput[][] = [[], homeDumbbells];
 
-        for (const [label, input] of focusCases) {
-            for (const session of many({ ...input, request: { ...input.request, format: 'circuit' } })) {
-                const circuits = session.blocks.filter((block) => block.role === 'main' && block.format === 'circuit');
+            for (const group of MUSCLE_GROUPS) {
+                for (const equipment of equipments) {
+                    for (const goal of ['health', 'hypertrophy'] as const) {
+                        const volume = (focus: boolean): number =>
+                            many({ date: DATE, profile: { goal, level: 'intermediate' }, equipment, request: { minutes: 45, ...(focus ? { focus: [group] } : {}) } }).reduce(
+                                (sum, session) => sum + (session.volume[group] ?? 0),
+                                0,
+                            );
 
-                if (circuits.length < 2) continue;
-
-                split++;
-
-                for (const item of circuits.slice(1).flatMap((block) => block.items)) expect(asked(item), `${label} · ${item.exercise}`).toBe(false);
-            }
-        }
-
-        expect(split).toBeGreaterThan(10);
-    });
-
-    it('ne met aucun exercice d’activation dans une place du focus quand un autre est faisable', () => {
-        const equipments: EquipmentInput[][] = [[], dumbbells, ['resistance-band', 'two-chairs', 'table']];
-        let checked = 0;
-
-        for (const group of MUSCLE_GROUPS) {
-            for (const equipment of equipments) {
-                for (const seed of SEEDS) {
-                    const context = buildContext({ date: DATE, seed, equipment, request: { focus: [group] } });
-
-                    for (const slot of FOCUS_SLOTS[group]) {
-                        const workable = rank(slot, context, []).some((entry) => !warmupOnly(entry.definition) && entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
-                        const picked = pick(slot, context, []);
-
-                        if (!workable || !picked) continue;
-
-                        checked++;
-                        expect(warmupOnly(picked), `${group} · ${slot.key} · ${picked.id}`).toBe(false);
+                        expect(volume(true), `${group} · ${goal} · ${equipment.length ? 'haltères' : 'rien'}`).toBeGreaterThan(volume(false));
                     }
                 }
             }
-        }
-
-        expect(checked).toBeGreaterThan(200);
-    });
-
-    it('fait passer l’activation derrière sur toute place, pas seulement les places principales', () => {
-        const context = buildContext({ date: DATE });
-        const frog = library.get('frog-pump');
-        const plain: ExerciseDefinition = { ...frog, tags: [] };
-
-        for (const role of ['main', 'accessory', 'core'] as const) {
-            const slot: Slot = { key: `essai-${role}`, role, patterns: ['hinge'], kinds: ['strength'] };
-
-            expect(score(frog, slot, context, []), role).toBeCloseTo(score(plain, slot, context, []) * 0.3, 6);
-        }
-    });
-
-    it('met un développé chargé en tête en salle, en force, avec un tirage à côté', () => {
-        const runs = seeds(20).map((seed) => generateSession({ date: DATE, seed, profile: { goal: 'strength', level: 'advanced', bodyweightKg: 80 }, equipment: gym, request: { minutes: 60 } }));
-        const pushOf = (session: Session): SessionItem | undefined => items(session, ['main']).find((item) => ['horizontal-push', 'vertical-push'].includes(library.get(item.exercise).pattern));
-        const loaded = runs.filter((session) => {
-            const push = pushOf(session);
-
-            return push !== undefined && library.get(push.exercise).compound && Boolean(library.get(push.exercise).tags?.includes('loaded'));
         });
 
-        expect(loaded.length / runs.length, runs.map((session) => pushOf(session)?.exercise).join(', ')).toBeGreaterThanOrEqual(0.9);
+        it('garde plusieurs exercices au groupe visé quand une seule famille le sert (pompes sans matériel, tractions avec une barre)', () => {
+            for (const session of runs({ date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate' }, request: { minutes: 45, focus: ['chest'] } }, 12)) {
+                const chest = items(session, ['main']).filter((item) => library.get(item.exercise).muscles.primary.some((muscle) => MUSCLE_INFO[muscle].group === 'chest'));
 
-        // Une place de base passe avant les séries en plus : jamais un développé sans tirage faute de temps.
-        for (const session of runs) {
-            expect(items(session, ['main']).some((item) => ['horizontal-pull', 'vertical-pull'].includes(library.get(item.exercise).pattern)), items(session, ['main']).map((item) => item.exercise).join(', ')).toBe(true);
-        }
-    });
+                expect(chest.length, items(session, ['main']).map((item) => item.exercise).join(', ')).toBeGreaterThanOrEqual(2);
+            }
 
-    it('passe à une variante plus dure au plafond, sur chaque graine, en tirant parmi celles qui se valent', () => {
-        const history: PastSession[] = ['2026-09-26', '2026-09-29'].map((date) => ({ date, exercises: [{ exercise: 'push-up', sets: [{ reps: 15 }, { reps: 15 }, { reps: 15 }] }] }));
-        const chosen = new Set<string>();
-
-        for (const session of many({ date: DATE, history, profile: { goal: 'health', level: 'intermediate' }, request: { type: 'push', minutes: 30 } })) {
-            const pushes = items(session, ['main']).filter((item) => library.get(item.exercise).family === 'push-up');
-
-            expect(pushes.length).toBeGreaterThan(0);
-            expect(Math.max(...pushes.map((item) => library.get(item.exercise).difficulty))).toBeGreaterThan(library.get('push-up').difficulty);
-
-            for (const item of pushes) chosen.add(item.exercise);
-        }
-
-        expect(chosen.size).toBeGreaterThan(1);
-    });
-
-    it('n’ajoute pas d’extensions lombaires après une charnière, en corps entier', () => {
-        const cases: Omit<GenerateInput, 'seed'>[] = [
-            { date: DATE, profile: { goal: 'endurance', level: 'beginner' }, request: { minutes: 60 } },
-            { date: DATE, request: { minutes: 45 } },
-            { date: DATE, profile: { goal: 'fat-loss', level: 'beginner' }, equipment: [{ id: 'dumbbells', loads: [2, 4, 6, 8] }], request: { minutes: 60 } },
-            { date: DATE, readiness: { pain: [{ joint: 'knees', severity: 2 }] }, equipment: [{ id: 'dumbbells', loads: [4, 8, 12] }], request: { minutes: 40 } },
-        ];
-
-        for (const input of cases) {
-            for (const seed of seeds(16)) {
-                const main = items(generateSession({ ...input, seed }), ['main']).map((item) => library.get(item.exercise));
-
-                if (main.some((definition) => definition.pattern === 'hinge' && loadsErectors(definition))) {
-                    expect(main.filter((definition) => definition.pattern === 'trunk-extension').map((definition) => definition.id), `graine ${seed}`).toEqual([]);
+            for (const goal of ['health', 'hypertrophy'] as const) {
+                for (const session of runs({ date: DATE, profile: { goal, level: 'intermediate' }, equipment: ['pullup-bar'], request: { minutes: 45, type: 'pull', focus: ['back'] } }, 12)) {
+                    expect(items(session, ['main']).filter((item) => PULLS.includes(pattern(item))).length, items(session, ['main']).map((item) => item.exercise).join(', ')).toBeGreaterThanOrEqual(2);
                 }
             }
-        }
-    });
+        });
 
-    it('garde les quadriceps au travail quand un genou fait mal et que les haltères le permettent, sans doubler le soulevé de terre', () => {
-        for (const seed of seeds(16)) {
-            const main = items(generateSession({ date: DATE, seed, readiness: { pain: [{ joint: 'knees', severity: 2 }] }, equipment: [{ id: 'dumbbells', loads: [4, 8, 12] }], request: { minutes: 40 } }), ['main']).map((item) =>
-                library.get(item.exercise),
+        it('ne dit « comme demandé » que d’un exercice qui fait travailler le groupe visé', () => {
+            let checked = 0;
+
+            for (const group of MUSCLE_GROUPS) {
+                for (const equipment of [[], dumbbells, ['pullup-bar', 'resistance-band']] as EquipmentInput[][]) {
+                    for (const session of many({ date: DATE, equipment, request: { minutes: 45, focus: [group] } })) {
+                        for (const item of items(session, ['main']).filter(asked)) {
+                            checked++;
+                            expect(works(library.get(item.exercise), group), `${group} · ${item.exercise}`).toBe(true);
+                        }
+                    }
+                }
+            }
+
+            expect(checked).toBeGreaterThan(300);
+        });
+
+        it('travaille le dos visé au sol quand rien ne permet de tirer', () => {
+            for (const goal of ['health', 'hypertrophy', 'endurance'] as const) {
+                for (const session of many({ date: DATE, profile: { goal }, request: { minutes: 45, focus: ['back'] } })) {
+                    const focus = items(session, ['main']).filter(asked);
+
+                    expect(focus.length, `${goal} · ${items(session, ['main']).map((item) => item.exercise).join(', ')}`).toBeGreaterThan(0);
+                    for (const item of focus) expect(works(library.get(item.exercise), 'back'), item.exercise).toBe(true);
+                }
+            }
+        });
+
+        it('garde la durée demandée en santé et en endurance, à 10 % près, comme sans focus', () => {
+            // Les abdominaux visés font une séance de tronc, un peu courte avec ou sans focus (programmation-8) : à part.
+            for (const goal of ['health', 'endurance'] as const) {
+                for (const group of ['chest', 'shoulders', 'lower-back', 'glutes', 'legs'] as const) {
+                    for (const equipment of [[], [{ id: 'dumbbells', loads: [4, 8, 12, 16] }]] as EquipmentInput[][]) {
+                        const short = (focus: boolean): number =>
+                            runs({ date: DATE, profile: { goal, level: 'intermediate' }, equipment, request: { minutes: 45, ...(focus ? { focus: [group] } : {}) } }, 12).filter(
+                                (session) => session.estimatedMinutes < 45 * 0.9,
+                            ).length;
+                        const label = `${goal} · ${group} · ${equipment.length ? 'haltères' : 'rien'}`;
+
+                        expect(short(true), label).toBeLessThanOrEqual(Math.max(2, short(false)));
+                    }
+                }
+            }
+        });
+
+        it('met ce qu’on vise dans le premier circuit, avec un gros mouvement', () => {
+            let split = 0;
+
+            for (const [label, input] of focusCases) {
+                for (const session of many({ ...input, request: { ...input.request, format: 'circuit' } })) {
+                    const circuits = session.blocks.filter((block) => block.role === 'main' && block.format === 'circuit');
+
+                    if (circuits.length < 2) continue;
+
+                    split++;
+
+                    for (const item of circuits.slice(1).flatMap((block) => block.items)) expect(asked(item), `${label} · ${item.exercise}`).toBe(false);
+
+                    // Les gros mouvements ne partent pas tous dans le second circuit, fait fatigué.
+                    const compounds = (index: number): number => circuits[index]!.items.filter((item) => !asked(item) && library.get(item.exercise).compound).length;
+
+                    if (compounds(1) > 0) expect(compounds(0), `${label} · ${circuits.map((block) => block.items.map((item) => item.exercise).join(' + ')).join(' | ')}`).toBeGreaterThan(0);
+                }
+            }
+
+            expect(split).toBeGreaterThan(10);
+        });
+
+        it('ne met aucun exercice d’activation dans une place du focus quand un autre est faisable', () => {
+            const equipments: EquipmentInput[][] = [[], dumbbells, ['resistance-band', 'two-chairs', 'table']];
+            let checked = 0;
+
+            for (const group of MUSCLE_GROUPS) {
+                for (const equipment of equipments) {
+                    for (const seed of SEEDS) {
+                        const context = buildContext({ date: DATE, seed, equipment, request: { focus: [group] } });
+
+                        for (const slot of FOCUS_SLOTS[group]) {
+                            const workable = rank(slot, context, []).some((entry) => !warmupOnly(entry.definition) && entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
+                            const picked = pick(slot, context, []);
+
+                            if (!workable || !picked) continue;
+
+                            checked++;
+                            expect(warmupOnly(picked), `${group} · ${slot.key} · ${picked.id}`).toBe(false);
+                        }
+                    }
+                }
+            }
+
+            expect(checked).toBeGreaterThan(200);
+        });
+
+        it('ne donne pas d’exercice d’activation en plus à des fessiers ou des cuisses visés, et sert des haltères déclarés', () => {
+            for (const equipment of [dumbbells, []]) {
+                for (const focus of ['glutes', 'legs'] as const) {
+                    for (const session of runs({ date: DATE, equipment, request: { minutes: 40, focus: [focus] } })) {
+                        expect(items(session, ['main']).filter((item) => warmupOnly(library.get(item.exercise))).map((item) => item.exercise), focus).toEqual([]);
+                    }
+                }
+            }
+
+            // Séance 24 : des haltères de 6 à 14 kg font au moins un exercice du bas du corps, pas seulement les mollets.
+            const loaded = share(runs({ date: DATE, equipment: dumbbells, request: { minutes: 40, focus: ['glutes'] } }), (session) =>
+                items(session, ['main']).some((item) => item.load?.equipment === 'dumbbells' && ['squat', 'lunge', 'hinge'].includes(pattern(item))),
             );
 
-            expect(main.some((definition) => definition.muscles.primary.includes('quads')), `graine ${seed} : ${main.map((definition) => definition.id).join(', ')}`).toBe(true);
-            expect(main.filter((definition) => definition.pattern === 'hinge' && definition.compound && loadsErectors(definition)).length, `graine ${seed}`).toBeLessThanOrEqual(1);
-        }
+            expect(loaded).toBeGreaterThanOrEqual(0.8);
+        });
+
+        it('fait passer l’activation derrière sur toute place, pas seulement les places principales', () => {
+            const context = buildContext({ date: DATE });
+            const frog = library.get('frog-pump');
+            const plain: ExerciseDefinition = { ...frog, tags: [] };
+
+            for (const role of ['main', 'accessory', 'core'] as const) {
+                const slot: Slot = { key: `essai-${role}`, role, patterns: ['hinge'], kinds: ['strength'] };
+
+                expect(score(frog, slot, context, []), role).toBeCloseTo(score(plain, slot, context, []) * 0.3, 6);
+            }
+        });
+
+        it('garde le rôle d’un exercice visé qu’on remplace : ses séries et « comme demandé »', () => {
+            const input: GenerateInput = { date: DATE, seed: 4, profile: { goal: 'hypertrophy', level: 'intermediate' }, equipment: homeDumbbells, request: { minutes: 45, format: 'straight', focus: ['arms'] } };
+            const session = generateSession(input);
+            const block = session.blocks.find((entry) => entry.role === 'main' && entry.items.some(asked))!;
+            const index = block.items.findIndex(asked);
+            const replacement = alternativesFor(session, input, block.id, index, 10).find((entry) => works(library.get(entry.id), 'arms'))!;
+            const swapped = replaceExercise(session, input, block.id, index, replacement.id).blocks.find((entry) => entry.id === block.id)!.items[index]!;
+            const asAccessory = prescribe(library.get(replacement.id), 'accessory', buildContext(input));
+
+            expect(swapped.reasons[0]?.code, swapped.exercise).toBe('item-focus');
+            expect(swapped.sets).toBeGreaterThanOrEqual(asAccessory.sets);
+        });
     });
 
-    it('n’enchaîne pas deux exercices qui chargent les érecteurs, ni en circuit ni par deux', () => {
-        const planned = (ids: readonly string[]): PlannedItem[] => ids.map((id) => ({ definition: library.get(id) }) as PlannedItem);
-        const adjacent = (order: readonly string[], a: string, b: string): boolean => Math.abs(order.indexOf(a) - order.indexOf(b)) === 1;
+    describe('le développé chargé', () => {
+        it('met un développé chargé en tête en salle, en force, avec un vrai tirage à côté', () => {
+            const sessions = runs({ date: DATE, profile: { goal: 'strength', level: 'advanced', bodyweightKg: 80 }, equipment: gym, request: { minutes: 60 } });
+            const pushOf = (session: Session): SessionItem | undefined => items(session, ['main']).find((item) => PUSHES.includes(pattern(item)));
+            const pullOf = (session: Session): SessionItem | undefined => items(session, ['main']).find((item) => PULLS.includes(pattern(item)));
 
-        const lumbar = alternateRegions(planned(['bodyweight-good-morning', 'superman', 'push-up', 'crunch'])).map((item) => item.definition.id);
-        const squat = alternateRegions(planned(['prisoner-squat', 'bodyweight-good-morning', 'wall-isometric-external-rotation', 'split-squat'])).map((item) => item.definition.id);
+            expect(
+                share(sessions, (session) => {
+                    const push = pushOf(session);
 
-        expect(adjacent(lumbar, 'bodyweight-good-morning', 'superman'), lumbar.join(', ')).toBe(false);
-        expect(adjacent(squat, 'prisoner-squat', 'bodyweight-good-morning'), squat.join(', ')).toBe(false);
+                    return push !== undefined && library.get(push.exercise).compound && Boolean(library.get(push.exercise).tags?.includes('loaded'));
+                }),
+                sessions.map((session) => pushOf(session)?.exercise).join(', '),
+            ).toBeGreaterThanOrEqual(0.9);
 
-        for (const pair of pairUp(planned(['sumo-kettlebell-deadlift', 'bodyweight-good-morning', 'crunch', 'calf-raise']))) {
-            expect(pair.filter((item) => loadsErectors(item.definition)).length, pair.map((item) => item.definition.id).join(', ')).toBeLessThanOrEqual(1);
-        }
+            // Jamais un développé sans tirage, et le tirage principal n'est pas un renegade row, que le gainage limite.
+            for (const session of sessions) expect(pullOf(session), items(session, ['main']).map((item) => item.exercise).join(', ')).toBeDefined();
+            expect(share(sessions, (session) => pullOf(session)?.exercise !== 'renegade-row'), sessions.map((session) => pullOf(session)?.exercise).join(', ')).toBeGreaterThanOrEqual(0.8);
+        });
+
+        it('ne remplace pas ce qu’on fait progresser par un exercice chargé', () => {
+            const pushUps = runs({ date: DATE, history: series('push-up', [[10, 10, 9], [12, 12, 11], [14, 14, 13]], [12, 8, 4]), profile: { goal: 'hypertrophy', level: 'intermediate', bodyweightKg: 75 }, equipment: [{ id: 'dumbbells', loads: [2, 4] }], request: { minutes: 45 } });
+            const pullUps = runs({ date: DATE, history: series('pull-up', [[5, 5, 4], [6, 6, 5], [7, 7, 6]], [12, 8, 4]), profile: { goal: 'strength', level: 'intermediate', bodyweightKg: 75 }, equipment: ['pullup-bar', { id: 'dumbbells', loads: [4, 6, 8, 10, 12, 14, 16, 20] }], request: { minutes: 45, type: 'upper' } });
+            // Refaites deux jours plus tard sur une place principale : l'exercice qu'on fait progresser garde sa place.
+            const archer = runs({ date: DATE, history: series('archer-pull-up', [[4, 4, 3]], [10, 6, 2]), profile: { goal: 'strength', level: 'advanced', bodyweightKg: 75 }, equipment: ['pullup-bar', 'dip-bars', 'bench', { id: 'dumbbells', loads: [4, 6, 8, 10, 12, 14, 16, 20, 24, 28] }], request: { minutes: 45, type: 'upper' } });
+            const family = (name: string) => (session: Session): boolean => items(session, ['main']).some((item) => library.get(item.exercise).family === name);
+
+            expect(share(pushUps, family('push-up'))).toBeGreaterThanOrEqual(0.85);
+            expect(share(pullUps, family('pull-up'))).toBeGreaterThanOrEqual(0.9);
+            expect(share(archer, (session) => items(session, ['main']).some((item) => item.exercise === 'archer-pull-up'))).toBeGreaterThanOrEqual(0.7);
+        });
+
+        it('ne prend pas un exercice chargé à une charge dérisoire pour l’objectif', () => {
+            // Force, haltères de 2 à 6 kg : des pompes, pas un développé au sol à 6 kg.
+            const light = runs({ date: DATE, profile: { goal: 'strength', level: 'intermediate', bodyweightKg: 75 }, equipment: [{ id: 'dumbbells', loads: [2, 4, 6] }], request: { minutes: 45 } });
+
+            expect(share(light, (session) => items(session, ['main']).some((item) => PUSHES.includes(pattern(item)) && !item.load))).toBeGreaterThanOrEqual(0.9);
+
+            // Force, avancé, une kettlebell de 12 kg : pas de squat à 12 kg comme flexion de jambes principale.
+            for (const session of runs({ date: DATE, profile: { goal: 'strength', level: 'advanced', bodyweightKg: 80 }, equipment: [{ id: 'kettlebell', loads: [12] }], request: { minutes: 45 } })) {
+                expect(items(session, ['main']).filter((item) => ['squat', 'lunge'].includes(pattern(item)) && item.load).map((item) => item.exercise)).toEqual([]);
+            }
+        });
+
+        it('garde l’exercice au plateau, même au haut de sa fourchette, et passe à plus dur au plafond sans plateau', () => {
+            const plateau = runs({ date: DATE, history: series('push-up', [[15, 15, 15]], [12, 9, 6, 3]), profile: { goal: 'health', level: 'intermediate' }, equipment: ['table'], request: { type: 'push', minutes: 30 } });
+
+            expect(share(plateau, (session) => items(session, ['main']).some((item) => item.exercise === 'push-up'))).toBeGreaterThanOrEqual(0.9);
+
+            const chosen = new Set<string>();
+
+            for (const session of many({ date: DATE, history: series('push-up', [[15, 15, 15]], [7, 4]), profile: { goal: 'health', level: 'intermediate' }, request: { type: 'push', minutes: 30 } })) {
+                const pushes = items(session, ['main']).filter((item) => library.get(item.exercise).family === 'push-up');
+
+                expect(pushes.length).toBeGreaterThan(0);
+                expect(Math.max(...pushes.map((item) => library.get(item.exercise).difficulty))).toBeGreaterThan(library.get('push-up').difficulty);
+
+                for (const item of pushes) chosen.add(item.exercise);
+            }
+
+            expect(chosen.size).toBeGreaterThan(1);
+        });
+    });
+
+    describe('les séries et le temps', () => {
+        it('fait entrer le tirage sans aplatir la séance à deux séries', () => {
+            // Séance 5 : focus bras, 30 min. Au plus un gros exercice à deux séries.
+            for (const session of many({ date: DATE, profile: { goal: 'hypertrophy', level: 'intermediate', bodyweightKg: 75 }, equipment: homeDumbbells, request: { minutes: 30, focus: ['arms'] } })) {
+                const flat = totals(session).filter((entry) => library.get(entry.item.exercise).compound && entry.total <= 2);
+
+                expect(flat.length, totals(session).map((entry) => `${entry.item.exercise} ${entry.total}`).join(', ')).toBeLessThanOrEqual(1);
+            }
+
+            // Corps entier en force, 45 min : le tirage passe avant la charnière, jamais de poussée sans tirage (en séries
+            // classiques ou par deux ; une échelle, qui allonge beaucoup son premier exercice, peut encore l'écarter).
+            for (const [equipment, format] of [gym, homeDumbbells].flatMap((kit) => (['straight', 'superset'] as const).map((entry) => [kit, entry] as const))) {
+                for (const session of runs({ date: DATE, profile: { goal: 'strength', level: 'intermediate', bodyweightKg: 75 }, equipment, request: { minutes: 45, type: 'full-body', format } }, 12)) {
+                    expect(items(session, ['main']).some((item) => PULLS.includes(pattern(item))), items(session, ['main']).map((item) => item.exercise).join(', ')).toBe(true);
+                }
+            }
+        });
+
+        it('ne fait jamais dépasser son plafond du jour à un exercice, un jour léger, en circuit comme par deux', () => {
+            const light = buildContext({ date: DATE, readiness: { energy: 2, sleepQuality: 3 } });
+            const normal = buildContext({ date: DATE, profile: { goal: 'endurance', level: 'beginner' } });
+            const planned = (id: string, sets: number, maxSets: number, context: typeof light): PlannedItem => {
+                const prescription = prescribe(library.get(id), 'main', context);
+
+                return { definition: library.get(id), sets, maxSets, target: prescription.target, restSeconds: prescription.restSeconds, equipment: prescription.equipment, reasons: [] };
+            };
+
+            expect(lightDay(light)).toBe(true);
+
+            for (const format of ['circuit', 'superset'] as const) {
+                const list = [planned('air-squat', 3, 3, light), planned('push-up', 2, 2, light), planned('reverse-lunge', 3, 3, light), planned('superman', 3, 3, light)];
+
+                for (const block of buildMainBlocks(list, format, light, 1200).filter((entry) => entry.format !== 'straight')) {
+                    for (const item of block.items) expect(block.rounds, `${format} · ${item.definition.id}`).toBeLessThanOrEqual(item.maxSets ?? Infinity);
+                }
+            }
+
+            // Un jour ordinaire, un exercice plafonné par l'objectif seul (l'endurance d'un débutant) suit son circuit.
+            const ordinary = buildMainBlocks([planned('air-squat', 3, 3, normal), planned('push-up', 2, 2, normal), planned('reverse-lunge', 3, 3, normal)], 'circuit', normal, 1200);
+
+            expect(ordinary.map((block) => block.format)).toEqual(['circuit']);
+        });
+    });
+
+    describe('les lombaires', () => {
+        it('n’ajoute pas d’extensions lombaires après une charnière, en corps entier et en bas du corps chez un débutant', () => {
+            const cases: Omit<GenerateInput, 'seed'>[] = [
+                { date: DATE, profile: { goal: 'endurance', level: 'beginner' }, request: { minutes: 60 } },
+                { date: DATE, request: { minutes: 45 } },
+                { date: DATE, profile: { goal: 'fat-loss', level: 'beginner' }, equipment: [{ id: 'dumbbells', loads: [2, 4, 6, 8] }], request: { minutes: 60 } },
+                { date: DATE, readiness: { pain: [{ joint: 'knees', severity: 2 }] }, equipment: [{ id: 'dumbbells', loads: [4, 8, 12] }], request: { minutes: 40 } },
+                { date: DATE, profile: { level: 'beginner' }, request: { minutes: 45, type: 'lower' } },
+                { date: DATE, profile: { goal: 'endurance', level: 'beginner' }, request: { minutes: 60, type: 'lower' } },
+            ];
+
+            for (const input of cases) {
+                for (const seed of seeds(16)) {
+                    const main = items(generateSession({ ...input, seed }), ['main']).map((item) => library.get(item.exercise));
+
+                    if (main.some((definition) => definition.pattern === 'hinge' && loadsErectors(definition))) {
+                        expect(main.filter((definition) => definition.pattern === 'trunk-extension').map((definition) => definition.id), `graine ${seed}`).toEqual([]);
+                    }
+                }
+            }
+        });
+
+        it('garde les quadriceps au travail quand un genou fait mal et que les haltères le permettent, sans doubler le soulevé de terre', () => {
+            for (const seed of seeds(16)) {
+                const main = items(generateSession({ date: DATE, seed, readiness: { pain: [{ joint: 'knees', severity: 2 }] }, equipment: [{ id: 'dumbbells', loads: [4, 8, 12] }], request: { minutes: 40 } }), ['main']).map((item) =>
+                    library.get(item.exercise),
+                );
+
+                expect(main.some((definition) => definition.muscles.primary.includes('quads')), `graine ${seed} : ${main.map((definition) => definition.id).join(', ')}`).toBe(true);
+                expect(main.filter((definition) => definition.pattern === 'hinge' && definition.compound && loadsErectors(definition)).length, `graine ${seed}`).toBeLessThanOrEqual(1);
+            }
+        });
+
+        it('n’enchaîne pas deux exercices qui chargent les érecteurs, ni en circuit ni par deux', () => {
+            const planned = (ids: readonly string[]): PlannedItem[] => ids.map((id) => ({ definition: library.get(id) }) as PlannedItem);
+            const adjacent = (order: readonly string[], a: string, b: string): boolean => Math.abs(order.indexOf(a) - order.indexOf(b)) === 1;
+
+            const lumbar = alternateRegions(planned(['bodyweight-good-morning', 'superman', 'push-up', 'crunch'])).map((item) => item.definition.id);
+            const squat = alternateRegions(planned(['prisoner-squat', 'bodyweight-good-morning', 'wall-isometric-external-rotation', 'split-squat'])).map((item) => item.definition.id);
+
+            expect(adjacent(lumbar, 'bodyweight-good-morning', 'superman'), lumbar.join(', ')).toBe(false);
+            expect(adjacent(squat, 'prisoner-squat', 'bodyweight-good-morning'), squat.join(', ')).toBe(false);
+
+            for (const pair of pairUp(planned(['sumo-kettlebell-deadlift', 'bodyweight-good-morning', 'crunch', 'calf-raise']))) {
+                expect(pair.filter((item) => loadsErectors(item.definition)).length, pair.map((item) => item.definition.id).join(', ')).toBeLessThanOrEqual(1);
+            }
+        });
     });
 
     describe('les doublons', () => {
@@ -715,7 +926,9 @@ describe('la deuxième relecture : focus, développé chargé, lombaires et doub
             ['fessiers, sans matériel', { date: DATE, request: { minutes: 40, focus: ['glutes'] } }],
             ['jambes, haltères', { date: DATE, equipment: [{ id: 'dumbbells', loads: [6, 10, 14] }], request: { minutes: 45, focus: ['legs'] } }],
             ['jambes, sans matériel', { date: DATE, request: { minutes: 45, focus: ['legs'] } }],
+            ['pectoraux, sans matériel', { date: DATE, request: { minutes: 45, focus: ['chest'] } }],
             ['corps entier, haltères', { date: DATE, equipment: [{ id: 'dumbbells', loads: [6, 10, 14] }], request: { minutes: 45 } }],
+            ['haut du corps, haltères', { date: DATE, equipment: [{ id: 'dumbbells', loads: [6, 10, 14] }], request: { minutes: 60, type: 'upper' } }],
         ];
         const SMALL = new Set(['de', 'des', 'du', 'en', 'avec', 'la', 'le', 'les', 'à', 'au', 'aux', 'sur', 'une', 'un', 'et']);
         /** Les mots qui comptent dans un nom, sans les petits mots ni le pluriel. */
@@ -728,18 +941,35 @@ describe('la deuxième relecture : focus, développé chargé, lombaires et doub
                     .filter((word) => word && !SMALL.has(word)),
             );
 
-        it('ne met jamais deux fois le même mouvement, chargé ou non', () => {
+        it('ne met jamais un exercice et son jumeau chargé, ni deux fois un mouvement que la séance ne vise pas', () => {
             for (const [label, input] of cases) {
                 for (const seed of seeds(12)) {
-                    const keys = items(generateSession({ ...input, seed }), ['main']).map((item) => movementKey(library.get(item.exercise)));
+                    const session = generateSession({ ...input, seed });
+                    const main = items(session, ['main']).map((item) => library.get(item.exercise));
+                    const families = new Set(main.map((definition) => definition.family));
+                    const detail = `${label} · graine ${seed} : ${main.map((definition) => definition.id).join(', ')}`;
 
-                    expect(new Set(keys).size, `${label} · graine ${seed} : ${keys.join(', ')}`).toBe(keys.length);
+                    // Des fentes statiques et des fentes statiques avec haltères : jamais les deux.
+                    expect([...families].filter((family) => families.has(`loaded-${family}`)), detail).toEqual([]);
+
+                    // Deux variantes d'un même mouvement, seulement pour le groupe demandé (sans matériel, toutes les
+                    // poussées des pectoraux sont des pompes).
+                    const asked = (input.request?.focus ?? []) as readonly string[];
+
+                    for (const key of new Set(main.map(movementKey))) {
+                        const same = main.filter((definition) => movementKey(definition) === key);
+
+                        if (same.length > 1) {
+                            for (const definition of same) expect(definition.muscles.primary.some((muscle) => asked.includes(MUSCLE_INFO[muscle].group)), detail).toBe(true);
+                        }
+                    }
                 }
             }
         });
 
         it('ne donne pas deux noms dont l’un contient l’autre (« Fentes statiques », « Fentes statiques avec haltères »)', () => {
-            for (const [label, input] of cases) {
+            // Sans matériel, un focus pectoraux n'a que des pompes : « Pompes » et « Pompes diamant » sont deux exercices.
+            for (const [label, input] of cases.filter(([name]) => name !== 'pectoraux, sans matériel')) {
                 for (const seed of seeds(12)) {
                     const names = items(generateSession({ ...input, seed }), ['main']).map((item) => item.name);
 
@@ -760,5 +990,22 @@ describe('la deuxième relecture : focus, développé chargé, lombaires et doub
             expect(library.findByName('Ponts avec marche du talon sur une jambe')?.id).toBe('single-leg-hamstring-walkout');
             expect(library.name('hamstring-walkout', 'fr').split(' ')[0]).not.toBe(library.name('marching-glute-bridge', 'fr').split(' ')[0]);
         });
+    });
+
+    it('arrondit à un nombre pair, à l’échauffement, la version facile d’un exercice en alternance', () => {
+        let checked = 0;
+
+        for (const goal of ['health', 'hypertrophy', 'strength', 'endurance'] as const) {
+            for (const equipment of [[], [{ id: 'dumbbells', loads: [2, 4, 6] }], homeDumbbells] as EquipmentInput[][]) {
+                for (const session of many({ date: DATE, profile: { goal, level: 'intermediate' }, equipment, request: { minutes: 45 } })) {
+                    for (const item of items(session, ['warmup']).filter((entry) => library.get(entry.exercise).alternating && entry.target.measure === 'reps')) {
+                        checked++;
+                        expect(item.target.value % 2, `${item.exercise} ${item.target.value}`).toBe(0);
+                    }
+                }
+            }
+        }
+
+        expect(checked).toBeGreaterThan(20);
     });
 });
