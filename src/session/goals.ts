@@ -91,7 +91,7 @@ export const GOAL_SETTINGS: Readonly<Record<Goal, GoalSettings>> = {
     endurance: {
         reps: [15, 25],
         hold: [45, 90],
-        sets: { beginner: [2, 2], intermediate: [2, 3], advanced: [3, 4], expert: [3, 4] },
+        sets: { beginner: [2, 3], intermediate: [2, 3], advanced: [3, 4], expert: [3, 4] },
         rest: { compound: 45, isolation: 30 },
         rir: 3,
         difficultyShift: -1,

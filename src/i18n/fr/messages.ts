@@ -151,6 +151,7 @@ export const MESSAGES_FR = {
     'slot-empty-equipment': 'Rien pour « {pattern} » avec ce matériel : {equipment} suffirait.',
     'slot-empty-joint': 'Rien pour « {pattern} » qui ménage aujourd’hui : {joints}.',
     'slot-fallback-equipment': 'Pas de quoi faire un vrai « {pattern} » : le haut du dos travaille au sol. {equipment} suffirait.',
+    'session-shorter': 'La séance tient en {minutes} min : assez pour bien travailler à ce niveau, le reste du temps est libre.',
     'session-lighter': 'Séance allégée : moins de travail que d’habitude, le reste du temps pour récupérer.',
     'list-or': 'ou',
     'nothing-feasible': 'Rien de faisable aujourd’hui avec ces douleurs et ce matériel : mobilité douce ou repos.',

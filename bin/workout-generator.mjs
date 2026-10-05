@@ -545,6 +545,7 @@ var MESSAGES_FR = {
   "slot-empty-equipment": "Rien pour \xAB {pattern} \xBB avec ce mat\xE9riel\u202F: {equipment} suffirait.",
   "slot-empty-joint": "Rien pour \xAB {pattern} \xBB qui m\xE9nage aujourd\u2019hui\u202F: {joints}.",
   "slot-fallback-equipment": "Pas de quoi faire un vrai \xAB {pattern} \xBB\u202F: le haut du dos travaille au sol. {equipment} suffirait.",
+  "session-shorter": "La s\xE9ance tient en {minutes}\xA0min\u202F: assez pour bien travailler \xE0 ce niveau, le reste du temps est libre.",
   "session-lighter": "S\xE9ance all\xE9g\xE9e\u202F: moins de travail que d\u2019habitude, le reste du temps pour r\xE9cup\xE9rer.",
   "list-or": "ou",
   "nothing-feasible": "Rien de faisable aujourd\u2019hui avec ces douleurs et ce mat\xE9riel\u202F: mobilit\xE9 douce ou repos.",
@@ -20738,7 +20739,7 @@ var GOAL_SETTINGS = {
   endurance: {
     reps: [15, 25],
     hold: [45, 90],
-    sets: { beginner: [2, 2], intermediate: [2, 3], advanced: [3, 4], expert: [3, 4] },
+    sets: { beginner: [2, 3], intermediate: [2, 3], advanced: [3, 4], expert: [3, 4] },
     rest: { compound: 45, isolation: 30 },
     rir: 3,
     difficultyShift: -1,
@@ -21122,13 +21123,14 @@ function prescribe(definition, role, context, options = {}) {
   }
   const volume = Math.min(1, readiness.volume);
   const leading = role === "main" || role === "skill" || Boolean(options.focus);
+  const firstDescent = firstExposure && Boolean(definition.tags?.includes("eccentric"));
   let sets = leading ? most : fewest;
   if (firstExposure) sets = fewest;
-  if (firstExposure && definition.tags?.includes("eccentric")) sets = Math.min(sets, 2);
   sets = Math.max(1, Math.round((sets + extraSets) * readiness.volume));
+  if (firstDescent) sets = Math.min(sets, 2);
   const usual = leading || role === "conditioning" ? most + 1 : role === "core" ? fewest + 1 : most;
-  const ceiling = firstExposure && definition.tags?.includes("eccentric") ? sets : step === "harder" || step === "comeback" ? Math.min(usual, fewest + 1) : step === "start" ? Math.min(usual, options.focus ? most + 1 : most) : usual;
-  const maxSets = Math.max(sets, Math.round(Math.max(sets, ceiling + extraSets) * volume));
+  const ceiling = step === "harder" || step === "comeback" ? Math.min(usual, fewest + 1) : step === "start" ? Math.min(usual, options.focus ? most + 1 : most) : usual;
+  const maxSets = firstDescent ? sets : Math.max(sets, Math.round(Math.max(sets, ceiling + extraSets) * volume));
   let restSeconds = role === "main" && definition.compound ? settings.rest.compound : settings.rest.isolation;
   if (role === "core") restSeconds = Math.min(restSeconds, 45);
   if (definition.kind === "power") restSeconds = Math.max(restSeconds, 60);
@@ -21510,10 +21512,10 @@ function score(definition, slot2, context, chosen) {
   }
   const seen = context.exerciseRecency.get(definition.id);
   const family = context.familyRecency.get(definition.family);
-  if (seen && seen.days <= 2 && slot2.role !== "main") value *= 0.5;
+  if (seen && seen.days <= 2 && (slot2.role !== "main" || seen.days < 2 || seen.count < 2)) value *= 0.5;
   if (slot2.role === "main" && family && family.days <= 14) value *= 1.25;
   if (seen && seen.count >= 10) value *= 0.7;
-  if (slot2.role === "main" && seen && seen.days <= 14) {
+  if (slot2.role === "main" && seen && seen.days >= 2 && seen.days <= 14) {
     const own = performancesOf(context.input.history ?? [], definition, context.date);
     const plateau = onPlateau(own);
     const topped = !definition.tags?.includes("loaded") && own[0] !== void 0 && Math.min(...own[0].sets.map((set) => valueOf(set, definition.measure))) >= targetRange(definition, context.settings)[1];
@@ -21535,7 +21537,7 @@ function score(definition, slot2, context, chosen) {
   if (strong && slot2.role === "main" && trunkLimited(definition)) value *= 0.5;
   if (chosen.some((other) => movementKey(other) === movementKey(definition))) value *= 0.15;
   if (chosen.some((other) => other.pattern === definition.pattern)) value *= 0.4;
-  if (loadsErectors(definition) && chosen.some((other) => other.pattern === definition.pattern && loadsErectors(other))) value *= 0.4;
+  if (loadsErectors(definition) && chosen.some((other) => other.pattern === definition.pattern && loadsErectors(other))) value *= context.level === "beginner" ? 0.15 : 0.4;
   return value;
 }
 var byScore = (a, b) => b.score - a.score || a.definition.id.localeCompare(b.definition.id);
@@ -21549,14 +21551,22 @@ function rank(slot2, context, chosen) {
   const strong = (definition) => definition.compound && heavyEnough(definition, context);
   const loadedPatterns = (context.goal === "strength" || context.goal === "hypertrophy") && slot2.role === "main" && slot2.patterns.some((pattern) => LOADED_FIRST.includes(pattern)) ? new Set(pool.filter((entry) => strong(entry.definition)).map((entry) => entry.definition.pattern)) : /* @__PURE__ */ new Set();
   const behind = (definition) => loadedPatterns.has(definition.pattern) && !strong(definition) && (context.familyRecency.get(definition.family)?.days ?? Infinity) > 14;
-  return loadedPatterns.size ? pool.map((entry) => behind(entry.definition) ? { ...entry, score: entry.score * 0.3 } : entry).sort(byScore) : pool;
+  const progressing = (definition) => {
+    const recency = context.familyRecency.get(definition.family);
+    return recency !== void 0 && recency.count >= 2 && recency.days <= 14;
+  };
+  const progressed = new Set(slot2.role === "main" ? pool.filter((entry) => progressing(entry.definition)).map((entry) => movementKey(entry.definition)) : []);
+  const weight = (definition) => (behind(definition) ? 0.3 : 1) * (progressed.size && !progressed.has(movementKey(definition)) ? 0.5 : 1);
+  return loadedPatterns.size || progressed.size ? pool.map((entry) => ({ ...entry, score: entry.score * weight(entry.definition) })).sort(byScore) : pool;
 }
 var CEILING = 1.5;
 function pick(slot2, context, chosen, strict = false) {
   const ranked = rank(slot2, context, chosen);
   const reachable = ranked.filter((entry) => entry.definition.difficulty - targetDifficulty(entry.definition, context) <= CEILING);
   const firstDescent = (definition) => Boolean(definition.tags?.includes("eccentric")) && performancesOf(context.input.history ?? [], definition, context.date).length === 0;
-  const working = isFocusSlot(slot2) ? reachable.filter((entry) => !warmupOnly(entry.definition) && !firstDescent(entry.definition)) : [];
+  const pulling = slot2.patterns.some((pattern) => pattern === "horizontal-pull" || pattern === "vertical-pull");
+  const thin = slot2.role === "main" && context.settings.sets[context.level][0] > 2;
+  const working = isFocusSlot(slot2) ? reachable.filter((entry) => !warmupOnly(entry.definition) && !firstDescent(entry.definition)) : pulling || thin ? reachable.filter((entry) => !firstDescent(entry.definition)) : [];
   const within2 = working.length ? working : reachable;
   if (within2.length === 0) {
     if (strict || ranked.length === 0) return void 0;
@@ -21875,12 +21885,24 @@ function alternateRegions(items) {
 var TRUNK = /* @__PURE__ */ new Set(["anti-extension", "anti-rotation", "anti-lateral-flexion", "trunk-flexion", "trunk-rotation", "trunk-extension"]);
 var perRound = (item2) => ({ ...item2, sets: 1, reasons: [...item2.reasons] });
 function buildMainBlocks(items, format2, context, mainSeconds) {
+  const descent = (item2) => Boolean(item2.definition.tags?.includes("eccentric")) && (item2.maxSets ?? Infinity) <= 2;
+  const descents = format2 === "amrap" || format2 === "emom" ? items.filter(descent) : [];
+  if (descents.length && descents.length < items.length) {
+    const before = { id: "main-1", role: "main", format: "straight", title: title("block-main", context), rounds: 1, restBetweenRounds: 0, items: descents };
+    const timed = assembleBlocks(
+      items.filter((item2) => !descents.includes(item2)),
+      format2,
+      context,
+      Math.max(0, mainSeconds - plannedBlockSeconds(before) - BLOCK_TRANSITION_SECONDS)
+    );
+    return [before, ...timed].map((block, index) => ({ ...block, id: `main-${index + 1}` }));
+  }
   const blocks = assembleBlocks(items, format2, context, mainSeconds);
   const held = [];
   const kept = [];
   for (const block of blocks) {
     const capped = (item2) => (Boolean(item2.definition.tags?.includes("eccentric")) || lightDay(context)) && (item2.maxSets ?? Infinity) < block.rounds && (item2.maxSets ?? Infinity) <= 2;
-    const out = block.format === "straight" || block.format === "ladder" ? [] : block.items.filter(capped);
+    const out = ["straight", "ladder", "amrap", "emom"].includes(block.format) ? [] : block.items.filter(capped);
     if (!out.length) {
       kept.push(block);
       continue;
@@ -21919,6 +21941,7 @@ function focusFirst(items, count) {
   const kept = [...items.filter((item2) => item2.focus), ...items.filter((item2) => !item2.focus)].slice(0, count);
   return items.filter((item2) => kept.includes(item2));
 }
+var paired = (item2, value, round) => item2.definition.alternating && item2.target.measure === "reps" ? Math.max(2, round(value / 2) * 2) : Math.max(1, round(value));
 function assembleBlocks(items, format2, context, mainSeconds) {
   if (items.length === 0) {
     return [];
@@ -21983,10 +22006,10 @@ function assembleBlocks(items, format2, context, mainSeconds) {
   }
   if (format2 === "amrap") {
     const minutes = Math.max(5, Math.min(20, Math.round(mainSeconds / 60)));
-    const chosen = focusFirst(items, 5).map((item2) => ({
-      ...perRound(item2),
-      target: { ...item2.target, value: Math.max(1, Math.round(item2.target.value * 0.7)), range: [Math.min(item2.target.range[0], Math.max(1, Math.round(item2.target.value * 0.7))), item2.target.range[1]] }
-    }));
+    const chosen = focusFirst(items, 5).map((item2) => {
+      const value = paired(item2, item2.target.value * 0.7, Math.round);
+      return { ...perRound(item2), target: { ...item2.target, value, range: [Math.min(item2.target.range[0], value), item2.target.range[1]] } };
+    });
     const oneRound = chosen.reduce((sum, item2) => sum + workSeconds(item2.definition, item2.target, item2.tempo) + 10, 0);
     return [
       {
@@ -22004,7 +22027,8 @@ function assembleBlocks(items, format2, context, mainSeconds) {
   if (format2 === "emom") {
     const chosen = focusFirst(items, 3).map((item2) => {
       const capped = item2.target.measure === "reps" ? Math.min(item2.target.value, Math.max(1, Math.floor(40 / ((item2.tempo ? repSeconds(item2.tempo) : item2.definition.secondsPerRep ?? 3) * (item2.target.perSide ? 2 : 1))))) : Math.min(item2.target.value, item2.target.perSide ? 20 : 40);
-      return { ...perRound(item2), target: { ...item2.target, value: capped, range: [Math.min(item2.target.range[0], capped), item2.target.range[1]] } };
+      const value = paired(item2, capped, Math.floor);
+      return { ...perRound(item2), target: { ...item2.target, value, range: [Math.min(item2.target.range[0], value), item2.target.range[1]] } };
     });
     const cycles = Math.max(2, Math.floor(mainSeconds / 60 / chosen.length));
     return [
@@ -22126,10 +22150,18 @@ function slotsFor(type, context) {
   const template = TEMPLATES[type];
   const avoided = (slot2) => slot2.patterns.every((pattern) => (PATTERN_GROUPS[pattern] ?? []).length > 0 && (PATTERN_GROUPS[pattern] ?? []).every((group) => context.avoidGroups.includes(group)));
   const focus = context.focusGroups.flatMap((group) => FOCUS_SLOTS[group]);
-  return [...template.base.filter((slot2) => !avoided(slot2)), ...focus, ...template.extras.filter((slot2) => !avoided(slot2))];
+  const base = template.base.filter((slot2) => !avoided(slot2));
+  const pull = base.find((slot2) => slot2.key === "pull");
+  const hinge = base.find((slot2) => slot2.key === "hinge");
+  if (type === "full-body" && pull && hinge && !context.library.filter({ kinds: pull.kinds, patterns: pull.patterns }).some((definition) => feasible(definition, context))) {
+    base.splice(base.indexOf(pull), 1);
+    base.splice(base.indexOf(hinge) + 1, 0, pull);
+  }
+  return [...base, ...focus, ...template.extras.filter((slot2) => !avoided(slot2))];
 }
 var PUSHES = ["horizontal-push", "vertical-push"];
 var PULLS = ["horizontal-pull", "vertical-pull"];
+var MOVEMENTS = [["squat", "lunge"], PUSHES, PULLS, ["hinge", "knee-flexion"]];
 var isPush = (definition) => PUSHES.includes(definition.pattern) || definition.pattern === "elbow-extension" && definition.posture === "support";
 var BALANCED = ["full-body", "upper"];
 function missingEquipment(slot2, context) {
@@ -22236,10 +22268,14 @@ function finish(context, choice, type, blocks, extra = {}) {
   const volume = plannedVolume(blocks);
   const focus = context.focusGroups.length ? [...context.focusGroups] : Object.entries(volume).filter(([, sets]) => sets >= 2).sort((a, b) => b[1] - a[1]).map(([group]) => group);
   const seconds = totalSeconds(blocks);
-  const reasons = [...context.readiness.reasons, ...choice.reasons, ...extra.reasons ?? []];
-  const typeName = reason(`session-${type}`, {}, context.locale).text;
   const rest2 = choice.rest;
-  const summary = summarize(context, choice, extra.reasons ?? []);
+  const lighter = (extra.reasons ?? []).some((entry) => entry.code === "session-lighter");
+  const estimated = Math.round(seconds / 60);
+  const shorter = !rest2 && !lighter && estimated < context.minutes * 0.9 ? [reason("session-shorter", { minutes: estimated }, context.locale)] : [];
+  const extraReasons = [...extra.reasons ?? [], ...shorter];
+  const reasons = [...context.readiness.reasons, ...choice.reasons, ...extraReasons];
+  const typeName = reason(`session-${type}`, {}, context.locale).text;
+  const summary = summarize(context, choice, extraReasons);
   return {
     version: 1,
     date: context.date,
@@ -22297,7 +22333,7 @@ function summarize(context, choice, extra) {
     ...choice.rest ? [reason("rest-session", {}, context.locale)] : [],
     ...readiness.slice(0, choice.rest ? 1 : 1),
     ...choice.rest ? [] : typeReasons.slice(0, 1),
-    ...choice.rest ? [] : extra.filter((entry) => entry.code.startsWith("format-") || entry.code === "session-lighter").slice(0, 2)
+    ...choice.rest ? [] : extra.filter((entry) => entry.code.startsWith("format-") || entry.code === "session-lighter" || entry.code === "session-shorter").slice(0, 2)
   ];
   return parts.map((entry) => entry.text).join(" ");
 }
@@ -22408,19 +22444,25 @@ function strengthSession(context, choice, type) {
   const pushIds = new Set(context.library.filter({}).filter(isPush).map((definition) => definition.id));
   const erectorIds = new Set(context.library.filter({}).filter(loadsErectors).map((definition) => definition.id));
   const warmupIds = new Set(context.library.filter({}).filter(warmupOnly).map((definition) => definition.id));
+  const lumbarIds = new Set(
+    context.library.filter({}).filter((definition) => (definition.pattern === "hinge" || definition.pattern === "trunk-extension") && loadsErectors(definition)).map((definition) => definition.id)
+  );
   const wantsPush = new Set(context.focusGroups.filter((group) => group === "chest" || group === "shoulders"));
   const [fewest] = context.settings.sets[context.level];
-  const leastSets = (entry) => entry.slotRole === "main" && entry.definition.compound ? Math.max(2, fewest) : 2;
-  const restoresBalance = (planned) => PULLS.includes(planned.definition.pattern) && !items.some((entry) => PULLS.includes(entry.definition.pattern)) && items.some((entry) => isPush(entry.definition));
-  const makeRoom = (planned) => {
-    if (!restoresBalance(planned)) return false;
+  const leastSets = (entry) => entry.slotRole === "main" && entry.definition.compound ? Math.max(2, Math.min(3, fewest)) : 2;
+  const movementOf = (definition) => MOVEMENTS.find((group) => group.includes(definition.pattern))?.[0];
+  const opensMovement = (planned, slot2) => baseKeys.has(slot2.key) && slot2.role === "main" && movementOf(planned.definition) !== void 0 && !items.some((entry) => movementOf(entry.definition) === movementOf(planned.definition));
+  const makeRoom = (planned, slot2) => {
+    if (!opensMovement(planned, slot2)) return false;
     const trial = [...items, planned];
     const before = trial.map((entry) => entry.sets);
     for (let guard = 0; guard < 30 && !fits(trial); guard++) {
-      const shrinkable = [...order(trial)].reverse().filter((entry) => entry.sets > leastSets(entry)).sort((a, b) => b.sets - a.sets || Number(Boolean(a.focus)) - Number(Boolean(b.focus)))[0];
+      const shrinkable = [...order(trial)].reverse().filter((entry) => !entry.focus && entry.sets > leastSets(entry)).sort((a, b) => b.sets - a.sets)[0];
       if (!shrinkable) break;
       shrinkable.sets -= 1;
     }
+    const alone = !items.some((entry) => entry.definition.compound && entry.sets <= 2);
+    while (alone && !fits(trial) && planned.sets > 2) planned.sets -= 1;
     if (fits(trial)) return true;
     trial.forEach((entry, index) => {
       entry.sets = before[index];
@@ -22441,23 +22483,31 @@ function strengthSession(context, choice, type) {
     }
     const lowerFocus = context.focusGroups.filter((group) => GROUP_REGION[group] === "lower");
     const servesFocus = slot2.patterns.some((pattern) => (PATTERN_GROUPS[pattern] ?? []).some((group) => lowerFocus.includes(group)));
-    const excluded = [...pushBlocked ? pushIds : [], ...lumbarBusy ? erectorIds : [], ...optional && servesFocus ? warmupIds : []];
-    const slotContext = excluded.length ? { ...context, exclude: /* @__PURE__ */ new Set([...context.exclude, ...excluded]) } : context;
+    const lowerSlot = slot2.patterns.every((pattern) => (PATTERN_GROUPS[pattern] ?? []).length > 0 && (PATTERN_GROUPS[pattern] ?? []).every((group) => GROUP_REGION[group] === "lower"));
+    const noActivation = lowerFocus.length > 0 && (servesFocus || lowerSlot);
+    const lumbarTaken = (type === "full-body" || type === "lower") && context.level === "beginner" && !context.focusGroups.includes("lower-back") && chosen().some((other) => other.pattern === "hinge" && loadsErectors(other));
+    const always = [...pushBlocked ? pushIds : [], ...lumbarBusy ? erectorIds : []];
+    const rather = [...lumbarTaken ? lumbarIds : [], ...noActivation ? warmupIds : []];
+    const contextWithout = (ids) => ids.length ? { ...context, exclude: /* @__PURE__ */ new Set([...context.exclude, ...ids]) } : context;
     const repeats = (found) => chosen().some((other) => movementKey(other) === movementKey(found));
     const twin = (found) => chosen().some((other) => movementKey(other) === movementKey(found) && other.family !== found.family);
-    const direct = pick(slot2, slotContext, chosen(), optional);
-    const repeated = direct !== void 0 && baseKeys.has(slot2.key) && twin(direct);
-    let rescue;
-    let repeatedRescue;
-    for (const pattern of !direct || repeated ? slot2.fallback ?? [] : []) {
-      const found = pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional);
-      if (found && !twin(found)) {
-        rescue = found;
-        break;
+    const choose = (slotContext) => {
+      const direct2 = pick(slot2, slotContext, chosen(), optional);
+      const repeated = direct2 !== void 0 && baseKeys.has(slot2.key) && twin(direct2);
+      let rescue;
+      let repeatedRescue;
+      for (const pattern of !direct2 || repeated ? slot2.fallback ?? [] : []) {
+        const found = pick({ ...slot2, key: `${slot2.key}-fallback`, patterns: [pattern] }, slotContext, chosen(), optional);
+        if (found && !twin(found)) {
+          rescue = found;
+          break;
+        }
+        repeatedRescue ??= found;
       }
-      repeatedRescue ??= found;
-    }
-    const definition = direct && !repeated ? direct : rescue ?? (direct ? void 0 : repeatedRescue);
+      return { direct: direct2, definition: direct2 && !repeated ? direct2 : rescue ?? (direct2 ? void 0 : repeatedRescue) };
+    };
+    const preferred = choose(contextWithout([...always, ...rather]));
+    const { direct, definition } = preferred.definition || optional || !rather.length ? preferred : choose(contextWithout(always));
     if (definition && !direct && baseKeys.has(slot2.key)) {
       const missing = missingEquipment(slot2, context);
       if (missing.length) {
@@ -22494,14 +22544,14 @@ function strengthSession(context, choice, type) {
     const planned = plan(definition, slot2, context);
     if (slot2.role === "skill") {
       skillItems.push(planned);
-    } else if (items.length < 2 || items.length < maxItems && (fits([...items, planned]) || baseKeys.has(slot2.key) && makeRoom(planned))) {
+    } else if (items.length < 2 || items.length < maxItems && (fits([...items, planned]) || makeRoom(planned, slot2))) {
       items.push(planned);
     }
   };
   const focusKeys = new Set(context.focusGroups.flatMap((group) => FOCUS_SLOTS[group].map((slot2) => slot2.key)));
   const first = [...slots.filter((entry) => focusKeys.has(entry.key)), ...slots.filter((entry) => baseKeys.has(entry.key))];
   for (const slot2 of first) place(slot2);
-  grow((item2) => item2.slotRole === "main" || item2.focus ? most : most - 1);
+  grow((item2) => item2.focus ? most + 1 : item2.slotRole === "main" ? most : most - 1);
   rebalance();
   for (const slot2 of slots.filter((entry) => !baseKeys.has(entry.key) && !focusKeys.has(entry.key))) {
     if (items.length >= maxItems || mainSeconds(items) >= mainBudget * 0.92) break;

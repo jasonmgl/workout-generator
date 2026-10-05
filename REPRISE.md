@@ -50,7 +50,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## État au 4 octobre 2026
 
-- **Version utilisable sur `master`.** 285 tests au vert, types propres.
+- **Version utilisable sur `master`.** 312 tests au vert, types propres.
 - **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
   `main`, derrière l’interrupteur `DIDIT_GENERATEUR`) : `app/Support/WorkoutGenerator.php`
   appelle la commande JSON, dépend de `github:jasonmgl/workout-generator#master`
@@ -116,22 +116,25 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
      demandé (securite-1, -2) ;
    - [x] poussée / tirage : pompes sphinx comptées en poussée, places de
      base du haut du corps en commençant par le tirage (programmation-2) ;
-   - [ ] **à reprendre ici, sur la branche `lot3-fin-en-cours`** (poussée,
-     `125a518`, PAS au vert : 2 tests sur 297 échouent, non relue jusqu'au
-     bout). L'implémentation était au vert, mais trois relecteurs ont trouvé
-     trois effets de bord graves : un focus pectoraux sans matériel tombe
-     à un seul exercice (9,9 → 3 séries), la règle « du chargé d'abord »
-     écrase la progression et donne des charges dérisoires, les séances
-     avec focus raccourcissent en santé et en endurance. Le correcteur a été
-     arrêté en cours de route. Tout est dans
-     `docs/relectures/2026-10-04-lot3-relecture.md` (sur la branche).
-     Repartir de la branche, corriger ces trois points, faire relire, puis
-     fusionner dans `master`. Le lot : focus servi d'abord (un rôle « focus »,
-     plafond d'une place principale, servi en premier par `grow`, dans le
-     premier circuit ; pénalité d'activation sur toute place) ; développé
-     chargé en salle (une fiche par famille au tirage) ; pas d'extensions
-     lombaires après une charnière ; doublons de mouvement (famille sans
-     « loaded- ») (programmation-6, -7, -11 ; clarte-12) ;
+   - [x] focus, développé chargé, lombaires, doublons (programmation-6, -7,
+     -11 ; clarte-12), plus les trois effets de bord trouvés par les
+     relecteurs le 04/10 (focus pectoraux sans matériel, « chargé d'abord »
+     qui écrasait la progression, séances avec focus plus courtes) et les
+     séances courtes (programmation-8 : endurance débutant à 3 séries ;
+     clarte-8 : une séance nettement plus courte le dit). Restes mineurs
+     signalés par les relecteurs : le test par groupe de programmation-6
+     n'est écrit que par exercice ; le renegade row reste souvent en haut du
+     corps en salle ; un genou douloureux sans matériel n'a toujours aucun
+     travail des quadriceps ; les séances avec focus restent souvent sous
+     90 % à 45 et 60 min (annoncé dans le résumé) ;
+   - [ ] **à reprendre ici** : le tempo de DidIt (2, 1 et 0,5 s par phase,
+     demandé le 05/10 par la session DidIt pour Jason) est prêt sur la
+     branche `tempo-didit` (`456259e`, pas au vert : les séances
+     raccourcissent) ; l'appliquer sur `master`, vérifier les durées,
+     corriger le remplissage s'il le faut, pousser, et donner le numéro de
+     commit à la session DidIt (elle passera son verrou au dernier master).
+     Puis supprimer le worktree `wt-tempo` du dossier de travail
+     (`git worktree remove`, après avoir retiré la jonction node_modules) ;
    - [ ] cardio en continu : retour au calme de 2 à 3 min, échauffement en
      un tour, durée tenue ; « très facile » écrit ; machine et corde
      utilisées (programmation-3, -9 ; securite-9 ; clarte-3, -4, -10) ;
@@ -253,6 +256,26 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
   de cycle, dans une séance : la semaine allégée commence par un test court
   (le plus de pompes, de tractions, la planche la plus longue) qui recale
   les niveaux.
+- **Le focus** (05/10, lot 3) : un exercice est « comme demandé » et servi
+  en premier s'il tient une place du focus et fait travailler le groupe
+  visé ; il a le plafond de séries d'une place principale, les autres
+  exercices ne le dépassent pas ; en circuit il est dans le premier. Une
+  place du focus ne prend ni activation ni première descente freinée quand
+  autre chose est faisable ; la pénalité d'activation vaut sur toute place.
+- **Doublons** : jamais un exercice et son jumeau chargé (famille sans
+  « loaded- ») ; deux variantes d'une même famille seulement pour le groupe
+  demandé (sans matériel, toutes les poussées des pectoraux sont des pompes).
+- **Le chargé d'abord** : en force et en prise de muscle, sur une place
+  principale de poussée, de tirage ou de jambes, quand la charge déclarée
+  sert vraiment pour l'objectif, et jamais contre une famille faite ces 14
+  derniers jours. Le tirage au hasard pèse un mouvement par ses deux
+  meilleures variantes. L'exercice exact refait à partir de deux jours
+  passe devant ses sœurs (×2, ×3 au plateau) ; celui de la veille, non.
+- **Corps entier** : le tirage avant la charnière quand un vrai tirage est
+  faisable, sinon la charnière d'abord (le secours au sol ne vaut pas une
+  charnière). Pas d'extensions lombaires après une charnière.
+- **Une séance nettement plus courte que demandé le dit** (« La séance
+  tient en … min ») au lieu de se remplir d'exercices en plus.
 - **Le dosage dépend du rôle** : seuls les gros mouvements suivent la
   fourchette de l'objectif ; un exercice d'appoint se fait à 8-12 au moins,
   le gainage à 8-15 ou en tenue, avec moins de repos.
@@ -383,3 +406,14 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
   correction, à 58 % de la consommation de la semaine : le travail est mis
   de côté sur la branche `lot3-fin-en-cours` (pas au vert), `master`
   reste à `c808737` plus cette passation.
+- **05/10** — L'utilisateur lève puis remet la limite (arrêt à 80 % des
+  5 h ou de la semaine) et choisit de travailler sans workflow, avec une
+  relecture ciblée. La fin du lot 3 reprise sur sa branche par un workflow
+  (coupé par la limite d'usage) : l'implémenteur corrige les trois effets
+  de bord graves (focus pectoraux sans matériel 9,9 → 11,4 séries, tractions
+  en progression gardées 1 → 19 sur 20, séances avec focus sous 90 % 387 →
+  260 sur 2880), puis terminé à la main : bonus de l'exercice exact plus
+  donné la veille, endurance débutant à 3 séries, séance courte annoncée.
+  Séances sous 90 % sans matériel, à 45 / 60 min : sans focus 20 / 15 →
+  10 / 10, avec focus 32 / 44 → 25 / 28. Fusionné dans `master`. 312
+  tests. Le tempo de DidIt attend sur `tempo-didit`.

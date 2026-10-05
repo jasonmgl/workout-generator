@@ -1009,3 +1009,44 @@ describe('la deuxième relecture : focus, développé chargé, lombaires et doub
         expect(checked).toBeGreaterThan(20);
     });
 });
+
+describe('la deuxième relecture : séances courtes et lendemain', () => {
+    it('dit quand une séance reste nettement sous la durée demandée, sans se remplir pour rien', () => {
+        for (const goal of ['health', 'endurance', 'hypertrophy'] as const) {
+            for (const minutes of [45, 60]) {
+                for (const request of [{ minutes }, { minutes, focus: ['chest' as const] }]) {
+                    for (const session of many({ date: DATE, profile: { goal }, request })) {
+                        const announced = session.reasons.some((entry) => entry.code === 'session-shorter');
+
+                        expect(announced, `${goal} · ${minutes} min · ${session.estimatedMinutes} min`).toBe(session.estimatedMinutes < minutes * 0.9);
+                        if (announced) expect(session.summary).toMatch(/tient en/);
+                    }
+                }
+            }
+        }
+    });
+
+    it('fait travailler un débutant en endurance trois séries quand le temps le permet', () => {
+        const sets = many({ date: DATE, profile: { goal: 'endurance', level: 'beginner' }, request: { minutes: 60 } }).flatMap((session) =>
+            session.blocks.filter((block) => block.role === 'main').flatMap((block) => block.items.map((item) => item.sets * block.rounds)),
+        );
+
+        expect(Math.max(...sets)).toBeGreaterThanOrEqual(3);
+    });
+
+    it('ne redonne pas la séance de la veille, exercice pour exercice', () => {
+        let same = 0;
+
+        for (const seed of SEEDS) {
+            const yesterday = generateSession({ date: '2026-10-02T18:00', seed, equipment: ['pullup-bar', 'dip-bars'], request: { minutes: 45, type: 'upper' } });
+            const done = items(yesterday, ['main']);
+            const history: PastSession[] = [{ date: '2026-10-02T18:00', exercises: done.map((item) => ({ exercise: item.exercise, sets: [{ reps: item.target.value }] })) }];
+            const today = generateSession({ date: DATE, seed: seed + 100, equipment: ['pullup-bar', 'dip-bars'], history, request: { minutes: 45, type: 'upper' } });
+            const before = new Set(done.map((item) => item.exercise));
+
+            if (items(today, ['main']).every((item) => before.has(item.exercise))) same++;
+        }
+
+        expect(same).toBe(0);
+    });
+});

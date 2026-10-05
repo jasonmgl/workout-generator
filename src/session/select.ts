@@ -172,7 +172,7 @@ export function score(definition: ExerciseDefinition, slot: Slot, context: Conte
     // on progresse sur ce qu’on refait, et au plateau on le garde pour en changer le rythme (prescribe), pas l’exercice.
     // Au haut de sa fourchette, un exercice qui ne se charge pas a fini son escalier : place à la variante plus dure,
     // sauf au plateau, où l’on ne passe pas à plus dur (ci-dessous) : on le garde, plus lent.
-    if (slot.role === 'main' && seen && seen.days <= 14) {
+    if (slot.role === 'main' && seen && seen.days >= 2 && seen.days <= 14) {
         const own = performancesOf(context.input.history ?? [], definition, context.date);
         const plateau = onPlateau(own);
         const topped = !definition.tags?.includes('loaded') && own[0] !== undefined && Math.min(...own[0].sets.map((set) => valueOf(set, definition.measure))) >= targetRange(definition, context.settings)[1];

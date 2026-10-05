@@ -260,10 +260,16 @@ function finish(
               .sort((a, b) => b[1] - a[1])
               .map(([group]) => group);
     const seconds = totalSeconds(blocks);
-    const reasons = [...context.readiness.reasons, ...choice.reasons, ...(extra.reasons ?? [])];
-    const typeName = reason(`session-${type}`, {}, context.locale).text;
     const rest = choice.rest;
-    const summary = summarize(context, choice, extra.reasons ?? []);
+    // Une séance nettement plus courte que demandé, sans que la forme du jour l’explique, le dit plutôt que de se
+    // remplir d’exercices en plus : à ce niveau, c’est assez pour bien travailler.
+    const lighter = (extra.reasons ?? []).some((entry) => entry.code === 'session-lighter');
+    const estimated = Math.round(seconds / 60);
+    const shorter = !rest && !lighter && estimated < context.minutes * 0.9 ? [reason('session-shorter', { minutes: estimated }, context.locale)] : [];
+    const extraReasons = [...(extra.reasons ?? []), ...shorter];
+    const reasons = [...context.readiness.reasons, ...choice.reasons, ...extraReasons];
+    const typeName = reason(`session-${type}`, {}, context.locale).text;
+    const summary = summarize(context, choice, extraReasons);
 
     return {
         version: 1,
@@ -332,7 +338,7 @@ function summarize(context: Context, choice: TypeChoice, extra: readonly Reason[
         ...(choice.rest ? [reason('rest-session', {}, context.locale)] : []),
         ...readiness.slice(0, choice.rest ? 1 : 1),
         ...(choice.rest ? [] : typeReasons.slice(0, 1)),
-        ...(choice.rest ? [] : extra.filter((entry) => entry.code.startsWith('format-') || entry.code === 'session-lighter').slice(0, 2)),
+        ...(choice.rest ? [] : extra.filter((entry) => entry.code.startsWith('format-') || entry.code === 'session-lighter' || entry.code === 'session-shorter').slice(0, 2)),
     ];
 
     return parts.map((entry) => entry.text).join(' ');
