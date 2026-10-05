@@ -164,7 +164,12 @@ describe('toutes les séances de la grille', () => {
     it('se lisent en texte, se déplient en étapes et en arbre', () => {
         for (const { session } of sessions) {
             const steps = toTimeline(session);
-            const seconds = steps.reduce((sum, step) => sum + step.seconds, 0);
+            const stepSeconds = (list: readonly { seconds: number }[]): number => list.reduce((sum, step) => sum + step.seconds, 0);
+            // Un AMRAP dure sa limite de temps (le lecteur la donne au premier pas), pas la somme d’un tour par tour estimé.
+            const capped = session.blocks
+                .filter((block) => block.format === 'amrap' && block.durationSeconds)
+                .reduce((sum, block) => sum + block.durationSeconds! - stepSeconds(toTimeline({ ...session, blocks: [block] })), 0);
+            const seconds = stepSeconds(steps) + capped;
 
             expect(sessionToText(session)).toContain(session.title);
             expect(steps.length).toBeGreaterThan(3);

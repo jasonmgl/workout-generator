@@ -13,6 +13,7 @@ import { comebackLoadFactor, estimatedLoad, prescribe } from '../src/session/pre
 import { CEILING, loadsErectors, movementKey, pick, rank, score, targetDifficulty } from '../src/session/select';
 import { alternativesFor, replaceExercise } from '../src/session/swap';
 import { FOCUS_SLOTS, type Slot } from '../src/session/templates';
+import { repSeconds, TEMPO_PHASE_SECONDS } from '../src/session/timing';
 import type { PlannedItem } from '../src/session/blocks';
 import { POSTURE_ORDER } from '../src/session/warmup';
 import type { GenerateInput, PastSession, Session, SessionItem } from '../src/types';
@@ -1048,5 +1049,46 @@ describe('la deuxième relecture : séances courtes et lendemain', () => {
         }
 
         expect(same).toBe(0);
+    });
+});
+
+describe('le tempo de DidIt et le temps qui reste', () => {
+    it('chronomètre une phase en 2, 1 et 0,5 s, comme DidIt', () => {
+        expect(TEMPO_PHASE_SECONDS).toEqual({ slow: 2, normal: 1, fast: 0.5 });
+        expect(repSeconds('slow')).toBe(4);
+        expect(repSeconds('normal')).toBe(2);
+        expect(repSeconds('fast')).toBe(1);
+    });
+
+    it('comble le temps libre d’un finisher doux plutôt que de finir en avance', () => {
+        for (const goal of ['health', 'endurance', 'hypertrophy'] as const) {
+            const at45 = many({ date: DATE, profile: { goal }, request: { minutes: 45 } });
+            const at60 = many({ date: DATE, profile: { goal }, request: { minutes: 60 } });
+
+            for (const session of at45) expect(session.estimatedMinutes, `${goal} · 45 min`).toBeGreaterThanOrEqual(45 * 0.9);
+            // À 60 minutes, un débutant plafonne à une demi-heure de renforcement et dix minutes de finisher : la séance
+            // tient au moins 85 % du temps, et dit sa vraie durée quand elle reste sous 90 %.
+            for (const session of at60) expect(session.estimatedMinutes, `${goal} · 60 min`).toBeGreaterThanOrEqual(60 * 0.85);
+        }
+    });
+
+    it('ne met pas de finisher de temps libre un jour léger', () => {
+        for (const session of many({ date: DATE, readiness: { energy: 2, sleepQuality: 2 }, request: { minutes: 60 } })) {
+            expect(session.blocks.some((block) => block.role === 'finisher')).toBe(false);
+        }
+    });
+
+    it('donne au retour au calme la durée voulue, même sous le bas de la fiche', () => {
+        for (const session of many({ date: DATE, request: { minutes: 10 } })) {
+            const breathing = session.blocks.find((block) => block.role === 'cooldown')!.items.find((item) => library.get(item.exercise).kind === 'breathing');
+
+            if (breathing) expect(breathing.target.value).toBeLessThanOrEqual(30);
+        }
+
+        const ride = generateSession({ date: DATE, equipment: ['bike'], request: { minutes: 45, type: 'cardio' } });
+        const easy = ride.blocks.find((block) => block.role === 'cooldown')!.items[0]!;
+
+        expect(easy.target.measure).toBe('time');
+        expect(easy.target.value).toBeLessThanOrEqual(180);
     });
 });

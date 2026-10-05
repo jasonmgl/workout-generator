@@ -565,7 +565,7 @@ var MESSAGES_FR = {
   "text-rest-rounds": "{rest} entre les tours",
   "text-rounds": "{n} {n|tour|tours}",
   "text-intervals": "{n} {n|tour|tours} de {work}\xA0s d\u2019effort / {rest}\xA0s de r\xE9cup\xE9ration",
-  "text-tempo-slow": "lentement (3\xA0s pour descendre, 3\xA0s pour remonter)",
+  "text-tempo-slow": "lentement (2\xA0s pour descendre, 2\xA0s pour remonter)",
   "text-tempo-normal": "tempo normal",
   "text-tempo-fast": "vite et contr\xF4l\xE9",
   "text-rir": "r\xE9serve\u202F: {rir} {rir|r\xE9p\xE9tition|r\xE9p\xE9titions}",
@@ -20324,7 +20324,7 @@ function toTree(session) {
 // src/session/timing.ts
 var TRANSITION_SECONDS = 15;
 var BLOCK_TRANSITION_SECONDS = 30;
-var TEMPO_PHASE_SECONDS = { slow: 3, normal: 2, fast: 1 };
+var TEMPO_PHASE_SECONDS = { slow: 2, normal: 1, fast: 0.5 };
 function repSeconds(tempo) {
   return 2 * TEMPO_PHASE_SECONDS[tempo];
 }
@@ -20427,8 +20427,8 @@ function toSessionBlock(block, context, transition = 0) {
 }
 var REPS_GRID = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80, 100];
 var SECONDS_GRID = [5, 10, 15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 420, 480, 600];
-function coachValue(definition, raw) {
-  const [low, high] = definition.range;
+function coachValue(definition, raw, exact = false) {
+  const [low, high] = exact ? [1, Infinity] : definition.range;
   const grid = definition.measure === "time" ? SECONDS_GRID : definition.measure === "reps" ? REPS_GRID : [];
   const candidates = grid.filter((value) => value >= low && value <= high && (!definition.alternating || value % 2 === 0));
   const nearest = candidates.length ? candidates.reduce((best, value) => Math.abs(value - raw) < Math.abs(best - raw) ? value : best) : Math.round(raw);
@@ -20440,13 +20440,13 @@ function easyTarget(definition, share = 0.3) {
   const value = coachValue(definition, raw);
   return { measure: definition.measure, value, range: [low, high], perSide: Boolean(definition.unilateral) };
 }
-function targetForSeconds(definition, seconds) {
+function targetForSeconds(definition, seconds, exact = false) {
   const sides = definition.unilateral ? 2 : 1;
   const [low, high] = definition.range;
   const raw = definition.measure === "time" ? seconds / sides : definition.measure === "distance" ? seconds * 1.4 : seconds / ((definition.secondsPerRep ?? 3) * sides);
-  const clamped = Math.min(high, Math.max(low, raw));
-  const value = coachValue(definition, clamped);
-  return { measure: definition.measure, value, range: [low, high], perSide: Boolean(definition.unilateral) };
+  const clamped = exact ? Math.max(1, raw) : Math.min(high, Math.max(low, raw));
+  const value = coachValue(definition, clamped, exact);
+  return { measure: definition.measure, value, range: [Math.min(low, value), Math.max(high, value)], perSide: Boolean(definition.unilateral) };
 }
 
 // src/session/choose.ts
@@ -21740,18 +21740,18 @@ function buildCooldown(load, context, options = {}) {
     restBetweenRounds: 0,
     items
   };
-  const add = (definition, seconds, code) => {
+  const add = (definition, seconds, code, exact = false) => {
     items.push({
       definition,
       sets: 1,
-      target: targetForSeconds(definition, seconds),
+      target: targetForSeconds(definition, seconds, exact),
       restSeconds: 0,
       equipment: [],
       reasons: code ? [reason(code, {}, context.locale)] : []
     });
   };
   if (options.continueWith) {
-    add(options.continueWith, 150, "cooldown-easy");
+    add(options.continueWith, 150, "cooldown-easy", true);
   } else if (options.afterCardio) {
     const walk = context.library.filter({ kinds: ["conditioning"], maxImpact: "low", measures: ["time"], maxDifficulty: 2 }).filter((definition) => feasible(definition, context) && definition.met <= 4.5 && !definition.tags?.includes("machine") && !definition.tags?.includes("outdoor")).sort((a, b) => a.met - b.met || a.id.localeCompare(b.id))[0];
     if (walk) {
@@ -21784,7 +21784,7 @@ function buildCooldown(load, context, options = {}) {
   items.splice(0, items.length, ...moving, ...stretched);
   const breathing = context.library.filter({ kinds: ["breathing"] }).filter((definition) => feasible(definition, context));
   if (breathing.length) {
-    add(breathing.find((definition) => definition.id === "diaphragmatic-breathing") ?? breathing[0], breathingTime, "cooldown-breathing");
+    add(breathing.find((definition) => definition.id === "diaphragmatic-breathing") ?? breathing[0], breathingTime, "cooldown-breathing", true);
   }
   return block;
 }
@@ -22123,7 +22123,8 @@ function buildFinisher(context, seconds, used, legsLoaded = false) {
   if (picked.length === 0) {
     return void 0;
   }
-  const tabata = context.maxImpact === "high" && context.level !== "beginner" && !legsLoaded && context.random.next() < 0.5;
+  const roll = context.random.next();
+  const tabata = context.maxImpact === "high" && context.level !== "beginner" && !legsLoaded && seconds <= 300 && roll < 0.5;
   return buildIntervals("finisher", "finisher", picked, seconds, context, tabata);
 }
 
@@ -22585,7 +22586,14 @@ function strengthSession(context, choice, type) {
   const used = new Set(mainDefinitions.map((definition) => definition.id));
   const loadSoFar = muscleLoad(blocks);
   const legsLoaded = Math.max(loadSoFar.get("quads") ?? 0, loadSoFar.get("glute-max") ?? 0) >= 6;
-  const finisher = canFinish ? buildFinisher(context, finisherBudget, used, legsLoaded) : void 0;
+  let finisher = canFinish ? buildFinisher(context, finisherBudget, used, legsLoaded) : void 0;
+  const projected = totalSeconds([...blocks, ...finisher ? [finisher] : []]) + (coolBudget > 0 ? coolBudget + BLOCK_TRANSITION_SECONDS : 0);
+  const spare = total - projected;
+  const mayFinish = !lighter && type !== "skill" && context.minutes >= 25 && (context.readiness.level === "normal" || context.readiness.level === "push") && cardioCandidates(context).length > 0;
+  if (mayFinish && spare >= 240) {
+    const seconds = Math.min(600, (finisher ? finisherBudget : -BLOCK_TRANSITION_SECONDS) + spare);
+    finisher = buildFinisher(context, seconds, used, legsLoaded) ?? finisher;
+  }
   const extraReasons = [];
   const explained = formatReason(main2, context);
   if (explained) extraReasons.push(explained);

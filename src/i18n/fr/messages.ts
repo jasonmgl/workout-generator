@@ -172,7 +172,7 @@ export const MESSAGES_FR = {
     'text-rest-rounds': '{rest} entre les tours',
     'text-rounds': '{n} {n|tour|tours}',
     'text-intervals': '{n} {n|tour|tours} de {work} s d’effort / {rest} s de récupération',
-    'text-tempo-slow': 'lentement (3 s pour descendre, 3 s pour remonter)',
+    'text-tempo-slow': 'lentement (2 s pour descendre, 2 s pour remonter)',
     'text-tempo-normal': 'tempo normal',
     'text-tempo-fast': 'vite et contrôlé',
     'text-rir': 'réserve : {rir} {rir|répétition|répétitions}',

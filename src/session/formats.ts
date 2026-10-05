@@ -544,7 +544,10 @@ export function buildFinisher(context: Context, seconds: number, used: ReadonlyS
         return undefined;
     }
 
-    const tabata = context.maxImpact === 'high' && context.level !== 'beginner' && !legsLoaded && context.random.next() < 0.5;
+    // Un tabata dure quatre minutes, quoi qu’on lui donne : au-delà de cinq minutes à remplir, des intervalles. Le tirage
+    // se fait toujours, pour garder l’ordre du hasard.
+    const roll = context.random.next();
+    const tabata = context.maxImpact === 'high' && context.level !== 'beginner' && !legsLoaded && seconds <= 300 && roll < 0.5;
 
     return buildIntervals('finisher', 'finisher', picked, seconds, context, tabata);
 }

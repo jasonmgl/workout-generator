@@ -50,7 +50,7 @@ réutilisable tel quel. Dépôt : `github.com/jasonmgl/workout-generator`
 
 ## État au 4 octobre 2026
 
-- **Version utilisable sur `master`.** 312 tests au vert, types propres.
+- **Version utilisable sur `master`.** 316 tests au vert, types propres.
 - **DidIt l’a déjà branché** (version 0.13.0 de DidIt, fusionnée sur son
   `main`, derrière l’interrupteur `DIDIT_GENERATEUR`) : `app/Support/WorkoutGenerator.php`
   appelle la commande JSON, dépend de `github:jasonmgl/workout-generator#master`
@@ -127,14 +127,15 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
      corps en salle ; un genou douloureux sans matériel n'a toujours aucun
      travail des quadriceps ; les séances avec focus restent souvent sous
      90 % à 45 et 60 min (annoncé dans le résumé) ;
-   - [ ] **à reprendre ici** : le tempo de DidIt (2, 1 et 0,5 s par phase,
-     demandé le 05/10 par la session DidIt pour Jason) est prêt sur la
-     branche `tempo-didit` (`456259e`, pas au vert : les séances
-     raccourcissent) ; l'appliquer sur `master`, vérifier les durées,
-     corriger le remplissage s'il le faut, pousser, et donner le numéro de
-     commit à la session DidIt (elle passera son verrou au dernier master).
-     Puis supprimer le worktree `wt-tempo` du dossier de travail
-     (`git worktree remove`, après avoir retiré la jonction node_modules) ;
+   - [x] le tempo de DidIt (2, 1 et 0,5 s par phase, demandé le 05/10) et
+     le temps qu'il libère : finisher de cardio doux sur le temps resté
+     libre, durées exactes au retour au calme (respiration, machine) ;
+   - [ ] **à reprendre ici** : le lot cardio. Le retour au calme sur la
+     machine est réglé (2 min 30 au lieu de 10), mais l'échauffement d'un
+     cardio continu à 45 et 60 min fait encore deux tours de 13 à 15 min
+     (45 → 52 min, 60 → 66 min). Repérés aussi : avec une barre, un
+     intermédiaire en prise de muscle reçoit parfois une suspension bras
+     fléchis comme seul tirage au lieu de tractions ;
    - [ ] cardio en continu : retour au calme de 2 à 3 min, échauffement en
      un tour, durée tenue ; « très facile » écrit ; machine et corde
      utilisées (programmation-3, -9 ; securite-9 ; clarte-3, -4, -10) ;
@@ -176,8 +177,10 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
   identifiants en anglais (02/10).
 - **La bibliothèque est un produit à part entière** : point d'entrée
   `workout-generator/library`, utilisable sans le générateur (02/10).
-- **Le tempo comme dans DidIt** (demande de l'utilisateur, 02/10) : 3, 2 et
-  1 s par phase en lent, normal et rapide ; une répétition fait deux phases.
+- **Le tempo comme dans DidIt** (demande de l'utilisateur, 02/10) : 2, 1 et
+  0,5 s par phase en lent, normal et rapide (DidIt est passé à ces durées le
+  05/10, retour #115, et Jason a demandé l'alignement ; c'était 3, 2 et 1 s) ;
+  une répétition fait deux phases, soit 4, 2 et 1 s.
   Chaque exercice de renforcement en répétitions porte un tempo, et la durée
   prévue de ses séries se calcule dessus. Chaque exercice dit le temps d'une
   série (`setSeconds`) et de tout son bloc. Les durées proposées sont celles
@@ -274,6 +277,12 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
 - **Corps entier** : le tirage avant la charnière quand un vrai tirage est
   faisable, sinon la charnière d'abord (le secours au sol ne vaut pas une
   charnière). Pas d'extensions lombaires après une charnière.
+- **Le temps resté libre** quand le renforcement est plein (places,
+  séries et longueur au plafond) devient un finisher de cardio doux, jusqu'à
+  10 min, à partir de 25 min et pas un jour léger ; un tabata ne sert que
+  sous 5 min à remplir. Une durée de retour au calme (respiration, machine)
+  est donnée telle quelle, même sous le bas de la fiche (`targetForSeconds`
+  avec `exact`).
 - **Une séance nettement plus courte que demandé le dit** (« La séance
   tient en … min ») au lieu de se remplir d'exercices en plus.
 - **Le dosage dépend du rôle** : seuls les gros mouvements suivent la
@@ -416,4 +425,9 @@ plusieurs semaines seulement ensuite, jusqu'à 80 % de la consommation.
   donné la veille, endurance débutant à 3 séries, séance courte annoncée.
   Séances sous 90 % sans matériel, à 45 / 60 min : sans focus 20 / 15 →
   10 / 10, avec focus 32 / 44 → 25 / 28. Fusionné dans `master`. 312
-  tests. Le tempo de DidIt attend sur `tempo-didit`.
+  tests. Puis le tempo de DidIt (2, 1 et 0,5 s par phase) : il faisait
+  tomber les séances de 60 min sans matériel à 78 % de la durée (60 sur 60
+  sous 90 %). Corrigé par le finisher de temps libre et des durées exactes
+  au retour au calme : sans focus, 0 séance sur 60 sous 90 % à 45 min, 10
+  sur 60 à 60 min (95 % en moyenne) ; le retour au calme du vélo passe de
+  12 à 3-7 min. 316 tests. Session DidIt prévenue.

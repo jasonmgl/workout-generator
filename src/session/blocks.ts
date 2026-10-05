@@ -116,8 +116,8 @@ const REPS_GRID = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80, 
 const SECONDS_GRID = [5, 10, 15, 20, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 420, 480, 600];
 
 /** Arrondir une cible d’échauffement ou de retour au calme sur la grille d’un coach, dans la fourchette de la fiche, paire pour une alternance. */
-export function coachValue(definition: ExerciseDefinition, raw: number): number {
-    const [low, high] = definition.range;
+export function coachValue(definition: ExerciseDefinition, raw: number, exact = false): number {
+    const [low, high] = exact ? [1, Infinity] : definition.range;
     const grid = definition.measure === 'time' ? SECONDS_GRID : definition.measure === 'reps' ? REPS_GRID : [];
     const candidates = grid.filter((value) => value >= low && value <= high && (!definition.alternating || value % 2 === 0));
     const nearest = candidates.length ? candidates.reduce((best, value) => (Math.abs(value - raw) < Math.abs(best - raw) ? value : best)) : Math.round(raw);
@@ -134,7 +134,7 @@ export function easyTarget(definition: ExerciseDefinition, share = 0.3): Target 
 }
 
 /** Une cible qui prend environ ce nombre de secondes, ramenée dans la fourchette de la fiche. */
-export function targetForSeconds(definition: ExerciseDefinition, seconds: number): Target {
+export function targetForSeconds(definition: ExerciseDefinition, seconds: number, exact = false): Target {
     const sides = definition.unilateral ? 2 : 1;
     const [low, high] = definition.range;
     const raw =
@@ -143,8 +143,10 @@ export function targetForSeconds(definition: ExerciseDefinition, seconds: number
             : definition.measure === 'distance'
               ? seconds * 1.4
               : seconds / ((definition.secondsPerRep ?? 3) * sides);
-    const clamped = Math.min(high, Math.max(low, raw));
-    const value = coachValue(definition, clamped);
+    // `exact` : la durée voulue, même sous le bas de la fiche (deux minutes de vélo très facile au retour au calme, pas
+    // les dix minutes d’une sortie ; trente secondes de respiration dans une séance de dix minutes).
+    const clamped = exact ? Math.max(1, raw) : Math.min(high, Math.max(low, raw));
+    const value = coachValue(definition, clamped, exact);
 
-    return { measure: definition.measure, value, range: [low, high], perSide: Boolean(definition.unilateral) };
+    return { measure: definition.measure, value, range: [Math.min(low, value), Math.max(high, value)], perSide: Boolean(definition.unilateral) };
 }

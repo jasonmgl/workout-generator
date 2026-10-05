@@ -763,7 +763,21 @@ function strengthSession(context: Context, choice: TypeChoice, type: SessionType
     // Des sauts en fin de séance sur des cuisses qui ont déjà fait six séries ou plus : non.
     const loadSoFar = muscleLoad(blocks);
     const legsLoaded = Math.max(loadSoFar.get('quads') ?? 0, loadSoFar.get('glute-max') ?? 0) >= 6;
-    const finisher = canFinish ? buildFinisher(context, finisherBudget, used, legsLoaded) : undefined;
+    let finisher = canFinish ? buildFinisher(context, finisherBudget, used, legsLoaded) : undefined;
+    // Le temps resté libre quand le renforcement est plein (places, séries et répétitions au plafond) : un finisher de
+    // cardio doux, à la taille de ce temps, plutôt qu’une séance qui finit en avance. Jamais un jour léger, ni pour les
+    // figures, ni sous 25 minutes ; sous quatre minutes de libre, la séance s’annonce plus courte (finish).
+    const projected = totalSeconds([...blocks, ...(finisher ? [finisher] : [])]) + (coolBudget > 0 ? coolBudget + BLOCK_TRANSITION_SECONDS : 0);
+    const spare = total - projected;
+    const mayFinish =
+        !lighter && type !== 'skill' && context.minutes >= 25 && (context.readiness.level === 'normal' || context.readiness.level === 'push') && cardioCandidates(context).length > 0;
+
+    if (mayFinish && spare >= 240) {
+        const seconds = Math.min(600, (finisher ? finisherBudget : -BLOCK_TRANSITION_SECONDS) + spare);
+
+        finisher = buildFinisher(context, seconds, used, legsLoaded) ?? finisher;
+    }
+
     const extraReasons: Reason[] = [];
     const explained = formatReason(main, context);
 

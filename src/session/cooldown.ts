@@ -70,11 +70,11 @@ export function buildCooldown(
         restBetweenRounds: 0,
         items,
     };
-    const add = (definition: ExerciseDefinition, seconds: number, code?: string): void => {
+    const add = (definition: ExerciseDefinition, seconds: number, code?: string, exact = false): void => {
         items.push({
             definition,
             sets: 1,
-            target: targetForSeconds(definition, seconds),
+            target: targetForSeconds(definition, seconds, exact),
             restSeconds: 0,
             equipment: [],
             reasons: code ? [reason(code, {}, context.locale)] : [],
@@ -84,7 +84,7 @@ export function buildCooldown(
     // Après un effort cardio, on continue de bouger pendant que le pouls redescend : sur la même machine en douceur,
     // ou en marchant.
     if (options.continueWith) {
-        add(options.continueWith, 150, 'cooldown-easy');
+        add(options.continueWith, 150, 'cooldown-easy', true);
     } else if (options.afterCardio) {
         const walk = context.library
             .filter({ kinds: ['conditioning'], maxImpact: 'low', measures: ['time'], maxDifficulty: 2 })
@@ -139,7 +139,7 @@ export function buildCooldown(
     const breathing = context.library.filter({ kinds: ['breathing'] }).filter((definition) => feasible(definition, context));
 
     if (breathing.length) {
-        add(breathing.find((definition) => definition.id === 'diaphragmatic-breathing') ?? breathing[0]!, breathingTime, 'cooldown-breathing');
+        add(breathing.find((definition) => definition.id === 'diaphragmatic-breathing') ?? breathing[0]!, breathingTime, 'cooldown-breathing', true);
     }
 
     return block;

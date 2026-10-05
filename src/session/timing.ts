@@ -15,12 +15,13 @@ export const TRANSITION_SECONDS = 15;
 export const BLOCK_TRANSITION_SECONDS = 30;
 
 /**
- * Le tempo, comme dans DidIt : chaque phase (descente, montée) dure 3 s en
- * lent, 2 s en normal, 1 s en rapide ; une répétition fait deux phases. Un
+ * Le tempo, comme dans DidIt : chaque phase (descente, montée) dure 2 s en
+ * lent, 1 s en normal, une demi-seconde en rapide ; une répétition fait deux
+ * phases, soit 4, 2 et 1 s. Un
  * exercice qui porte un tempo se chronomètre sur lui, les bips du lecteur
  * aussi ; sans tempo, on prend le temps noté sur la fiche.
  */
-export const TEMPO_PHASE_SECONDS: Readonly<Record<Tempo, number>> = { slow: 3, normal: 2, fast: 1 };
+export const TEMPO_PHASE_SECONDS: Readonly<Record<Tempo, number>> = { slow: 2, normal: 1, fast: 0.5 };
 
 /** Le temps d’une répétition à un tempo donné. */
 export function repSeconds(tempo: Tempo): number {

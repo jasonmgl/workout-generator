@@ -67,8 +67,8 @@ code stable, `session.reasons`, et une phrase en français) :
   - de la variété, et des favoris.
 - **Le dosage**. Séries, répétitions ou secondes, repos et réserve suivent
   l'objectif. Chaque exercice en répétitions a un **tempo** comme dans
-  DidIt : 3, 2 ou 1 s par phase en lent, normal, rapide, une répétition
-  faisant deux phases. La charge est prise parmi celles qu'on a. La
+  DidIt : 2, 1 ou 0,5 s par phase en lent, normal, rapide, une répétition
+  faisant deux phases (4, 2 ou 1 s). La charge est prise parmi celles qu'on a. La
   progression monte en escalier : une répétition de plus, une série de
   plus, la charge au-dessus, la variante plus dure ; quatre séances sans
   progrès, c'est un plateau, on passe en tempo lent.
@@ -188,7 +188,7 @@ Les commandes :
 | Zone `abdominaux` | `core` |
 | Zone `gainage` | `core` et `lower-back` |
 | Zone `cardio` | `request.type: 'cardio'` ou `'hiit'` |
-| Tempo `lent`, `normal`, `rapide` | `slow`, `normal`, `fast` (mêmes 3, 2, 1 s par phase) |
+| Tempo `lent`, `normal`, `rapide` | `slow`, `normal`, `fast` (mêmes 2, 1, 0,5 s par phase) |
 | Rôle de boucle `echauffement`, `retour` | rôle de bloc `warmup`, `cooldown` |
 | Nom d'exercice de la bibliothèque | `library.findByName(nom)` : les noms de DidIt sont des noms ou des alias du catalogue |
 | `session_entries` (nom, séries, meilleur nombre) | `history[].exercises` : le nom suffit, le moteur retrouve la fiche (`resolveHistory`) et ignore un nom inconnu |
